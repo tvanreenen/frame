@@ -36,10 +36,13 @@ struct ResizeCommand: Command { // todo cover with tests
         guard let parent else { return io.err("resize command doesn't support floating windows yet https://github.com/nikitabobko/AeroSpace/issues/9") }
         guard let orientation else { return false }
         guard let node else { return false }
+        // When the node is the last child its active boundary is the leading edge
+        // (left for columns, top for rows), so directional resize must be flipped.
+        let directionSign: CGFloat = parent.children.last == node ? -1 : 1
         let diff: CGFloat = switch args.units.val {
             case .set(let unit): CGFloat(unit) - node.getWeight(orientation)
-            case .add(let unit): CGFloat(unit)
-            case .subtract(let unit): -CGFloat(unit)
+            case .add(let unit): directionSign * CGFloat(unit)
+            case .subtract(let unit): directionSign * -CGFloat(unit)
         }
 
         guard let childDiff = diff.div(parent.children.count - 1) else { return false }
