@@ -162,11 +162,9 @@ extension String {
 }
 
 private func toLayoutString(tc: TilingContainer) -> String {
-    switch (tc.layout, tc.orientation) {
-        case (.tiles, .h): return LayoutCmdArgs.LayoutDescription.h_tiles.rawValue
-        case (.tiles, .v): return LayoutCmdArgs.LayoutDescription.v_tiles.rawValue
-        case (.accordion, .h): return LayoutCmdArgs.LayoutDescription.h_accordion.rawValue
-        case (.accordion, .v): return LayoutCmdArgs.LayoutDescription.v_accordion.rawValue
+    switch tc.orientation {
+        case .h: return LayoutCmdArgs.LayoutDescription.h_tiles.rawValue
+        case .v: return LayoutCmdArgs.LayoutDescription.v_tiles.rawValue
     }
 }
 

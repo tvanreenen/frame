@@ -14,16 +14,10 @@ struct LayoutCommand: Command {
             ?? args.toggleBetween.val.first.orDie()
         if window.matchesDescription(targetDescription) { return false }
         switch targetDescription {
-            case .h_accordion:
-                return changeTilingLayout(io, targetLayout: .accordion, targetOrientation: .h, window: window)
-            case .v_accordion:
-                return changeTilingLayout(io, targetLayout: .accordion, targetOrientation: .v, window: window)
             case .h_tiles:
                 return changeTilingLayout(io, targetLayout: .tiles, targetOrientation: .h, window: window)
             case .v_tiles:
                 return changeTilingLayout(io, targetLayout: .tiles, targetOrientation: .v, window: window)
-            case .accordion:
-                return changeTilingLayout(io, targetLayout: .accordion, targetOrientation: nil, window: window)
             case .tiles:
                 return changeTilingLayout(io, targetLayout: .tiles, targetOrientation: nil, window: window)
             case .horizontal:
@@ -71,12 +65,9 @@ struct LayoutCommand: Command {
 extension Window {
     fileprivate func matchesDescription(_ layout: LayoutCmdArgs.LayoutDescription) -> Bool {
         return switch layout {
-            case .accordion:   (parent as? TilingContainer)?.layout == .accordion
             case .tiles:       (parent as? TilingContainer)?.layout == .tiles
             case .horizontal:  (parent as? TilingContainer)?.orientation == .h
             case .vertical:    (parent as? TilingContainer)?.orientation == .v
-            case .h_accordion: (parent as? TilingContainer).map { $0.layout == .accordion && $0.orientation == .h } == true
-            case .v_accordion: (parent as? TilingContainer).map { $0.layout == .accordion && $0.orientation == .v } == true
             case .h_tiles:     (parent as? TilingContainer).map { $0.layout == .tiles && $0.orientation == .h } == true
             case .v_tiles:     (parent as? TilingContainer).map { $0.layout == .tiles && $0.orientation == .v } == true
             case .tiling:      parent is TilingContainer

@@ -19,7 +19,6 @@ extension Workspace {
         for child in Array(root.children) {
             guard let column = child as? TilingContainer else { continue }
             if column.orientation != .v { column.setOrientation(.v) }
-            if column.layout != .tiles { column.layout = .tiles }
             flattenColumn(column)
         }
 

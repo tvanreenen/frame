@@ -19,9 +19,9 @@ public struct LayoutCmdArgs: CmdArgs {
     }
 
     public enum LayoutDescription: String, CaseIterable, Equatable, Sendable {
-        case accordion, tiles
+        case tiles
         case horizontal, vertical
-        case h_accordion, v_accordion, h_tiles, v_tiles
+        case h_tiles, v_tiles
         case tiling, floating
     }
 }
@@ -63,6 +63,8 @@ extension String {
             return .h_tiles
         } else if self == "v_list" {
             return .v_tiles
+        } else if self == "accordion" || self == "h_accordion" || self == "v_accordion" {
+            return .tiles // graceful fallback for old configs
         }
         return nil
     }

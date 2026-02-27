@@ -62,14 +62,11 @@ extension TilingContainer {
 
 enum Layout: String {
     case tiles
-    case accordion
 }
 
 extension String {
     func parseLayout() -> Layout? {
-        if let parsed = Layout(rawValue: self) {
-            return parsed
-        } else if self == "list" {
+        if self == "tiles" || self == "list" {
             return .tiles
         } else {
             return nil
