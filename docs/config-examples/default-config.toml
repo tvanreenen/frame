@@ -1,8 +1,7 @@
-# Place a copy of this config to ~/.simple-wm.toml
-# After that, you can edit ~/.aerospace.toml to your liking
+# Place a copy of this config to ~/.simple-wm.toml and edit to your liking
 
 # Config version for compatibility and deprecations
-config-version = 2
+config-version = 1
 
 # You can use it to add commands that run after simple-wm startup.
 after-startup-command = []
@@ -53,13 +52,11 @@ on-mode-changed = []
     alt-shift-k = 'move up'
     alt-shift-l = 'move right'
 
-    # Column management
-    alt-rightSquareBracket = 'add-column'
-    alt-leftSquareBracket  = 'remove-column'
-
-    # Resize column width
-    alt-comma  = 'resize width -50'
-    alt-period = 'resize width +50'
+    # Resize: ctrl-shift-alt + hjkl
+    ctrl-shift-alt-h = 'resize width -50'
+    ctrl-shift-alt-l = 'resize width +50'
+    ctrl-shift-alt-j = 'resize height +50'
+    ctrl-shift-alt-k = 'resize height -50'
 
     # Workspaces (alt-1 through alt-0)
     alt-1 = 'workspace 1'
