@@ -87,6 +87,22 @@ struct Parser<S: ConvenienceCopyable, T>: ParserProtocol {
 private let keyMappingConfigRootKey = "key-mapping"
 private let bindingConfigRootKey = "binding"
 private let persistentWorkspacesKey = "persistent-workspaces"
+private let configAllowedCmdKinds: Set<CmdKind> = [
+    .addColumn,
+    .balanceSizes,
+    .enable,
+    .focus,
+    .focusMonitor,
+    .fullscreen,
+    .layout,
+    .move,
+    .moveMouse,
+    .moveNodeToWorkspace,
+    .reloadConfig,
+    .removeColumn,
+    .resize,
+    .workspace,
+]
 
 // For every new config option you add, think:
 // 1. Does it make sense to have different value
@@ -118,7 +134,7 @@ extension ParsedCmd where T == any Command {
     fileprivate func toEither() -> Parsed<T> {
         return switch self {
             case .cmd(let a):
-                a.info.allowInConfig
+                configAllowedCmdKinds.contains(a.info.kind)
                     ? .success(a)
                     : .failure("Command '\(a.info.kind.rawValue)' cannot be used in config")
             case .help(let a): .failure(a)

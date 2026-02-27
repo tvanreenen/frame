@@ -3,7 +3,6 @@ public struct AddColumnCmdArgs: CmdArgs {
     public init(rawArgs: StrArrSlice) { self.commonState = .init(rawArgs) }
     public static let parser: CmdParser<Self> = cmdParser(
         kind: .addColumn,
-        allowInConfig: true,
         help: add_column_help_generated,
         flags: [:],
         posArgs: [],

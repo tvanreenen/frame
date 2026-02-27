@@ -54,14 +54,13 @@ public struct CmdParser<T: ConvenienceCopyable>: Sendable {
 
 public func cmdParser<T>(
     kind: CmdKind,
-    allowInConfig: Bool,
     help: String,
     flags: [String: any SubArgParserProtocol<T>],
     posArgs: [any ArgParserProtocol<T>],
     conflictingOptions: [Set<String>] = [],
 ) -> CmdParser<T> {
     CmdParser(
-        info: CmdStaticInfo(help: help, kind: kind, allowInConfig: allowInConfig),
+        info: CmdStaticInfo(help: help, kind: kind),
         flags: flags,
         positionalArgs: posArgs,
         conflictingOptions: conflictingOptions,
@@ -71,15 +70,12 @@ public func cmdParser<T>(
 public struct CmdStaticInfo: Equatable, Sendable {
     public let help: String
     public let kind: CmdKind
-    public let allowInConfig: Bool // Query commands are prohibited in config
 
     public init(
         help: String,
         kind: CmdKind,
-        allowInConfig: Bool,
     ) {
         self.help = help
         self.kind = kind
-        self.allowInConfig = allowInConfig
     }
 }
