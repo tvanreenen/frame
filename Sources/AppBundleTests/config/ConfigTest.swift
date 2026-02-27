@@ -162,10 +162,6 @@ final class ConfigTest: XCTestCase {
         )
     }
 
-    func testMoveWorkspaceToMonitorCommandParsing() {
-        XCTAssertTrue(parseCommand("move-workspace-to-monitor --wrap-around next").cmdOrNil is MoveWorkspaceToMonitorCommand)
-    }
-
     func testParseLayout() {
         let command = parseCommand("layout tiling floating").cmdOrNil
         XCTAssertTrue(command is LayoutCommand)

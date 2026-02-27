@@ -517,8 +517,6 @@ When you switch to a workspace:
 . AeroSpace takes the assigned monitor of the workspace and makes the workspace visible on the monitor
 . AeroSpace focuses the workspace
 
-You can move workspace to a different monitor with xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command.
-
 The idea of making pool of workspaces shared is based on [#observation]*the observation* that most users have a limited set of workspaces on their secondary monitors.
 Secondary monitors are frequently dedicated to specific tasks (browser, shell), or for monitoring various activities such as logs and dashboards.
 Thus, using one workspace per secondary monitor and "the rest" on the main monitor often makes sense.
@@ -563,7 +561,7 @@ Supported monitor patterns:
 You can specify multiple patterns as an array.
 The first matching pattern will be used
 
-xref:commands.adoc#move-workspace-to-monitor[move-workspace-to-monitor] command has no effect for workspaces that have monitor assignment
+Workspace-to-monitor force assignment always takes precedence over dynamic workspace placement.
 
 == Dialog heuristics
 

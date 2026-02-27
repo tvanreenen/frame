@@ -81,6 +81,3 @@ on-mode-changed = []
 
     # Fullscreen toggle
     alt-f = 'fullscreen'
-
-    # Workspace back and forth
-    alt-tab = 'workspace-back-and-forth'

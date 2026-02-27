@@ -23,9 +23,6 @@ struct WorkspaceCommand: Command {
                 workspaceName = workspace.name
             case .direct(let name):
                 workspaceName = name.raw
-                if args.autoBackAndForth && focusedWs.name == workspaceName {
-                    return WorkspaceBackAndForthCommand(args: WorkspaceBackAndForthCmdArgs(rawArgs: [])).run(env, io)
-                }
         }
         if focusedWs.name == workspaceName {
             if !args.failIfNoop {

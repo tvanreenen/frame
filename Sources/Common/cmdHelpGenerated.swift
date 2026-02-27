@@ -27,9 +27,6 @@ let enable_help_generated = """
 let exec_and_forget_help_generated = """
     USAGE: exec-and-forget <bash-script>
     """
-let focus_back_and_forth_help_generated = """
-    USAGE: focus-back-and-forth [-h|--help]
-    """
 let focus_monitor_help_generated = """
     USAGE: focus-monitor [-h|--help] [--wrap-around] (left|down|up|right)
        OR: focus-monitor [-h|--help] [--wrap-around] (next|prev)
@@ -80,23 +77,12 @@ let mode_help_generated = """
 let move_mouse_help_generated = """
     USAGE: move-mouse [-h|--help] [--fail-if-noop] <mouse-position>
     """
-let move_node_to_monitor_help_generated = """
-    USAGE: move-node-to-monitor [-h|--help] [--window-id <window-id>] [--focus-follows-window]
-                                [--wrap-around] (left|down|up|right|next|prev)
-       OR: move-node-to-monitor [-h|--help] [--window-id <window-id>] [--focus-follows-window]
-                                [--fail-if-noop] <monitor-pattern>...
-    """
 let move_node_to_workspace_help_generated = """
     USAGE: move-node-to-workspace [-h|--help] [--focus-follows-window] [--wrap-around]
                                   [--stdin|--no-stdin]
                                   (next|prev)
        OR: move-node-to-workspace [-h|--help] [--focus-follows-window] [--fail-if-noop]
                                   [--window-id <window-id>] <workspace-name>
-    """
-let move_workspace_to_monitor_help_generated = """
-    USAGE: move-workspace-to-monitor [-h|--help] [--workspace <workspace>] [--wrap-around] (left|down|up|right)
-       OR: move-workspace-to-monitor [-h|--help] [--workspace <workspace>] [--wrap-around] (next|prev)
-       OR: move-workspace-to-monitor [-h|--help] [--workspace <workspace>] <monitor-pattern>...
     """
 let move_help_generated = """
     USAGE: move [-h|--help] [--window-id <window-id>] (left|down|up|right)
@@ -107,21 +93,10 @@ let reload_config_help_generated = """
 let resize_help_generated = """
     USAGE: resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|width|height) [+|-]<number>
     """
-let summon_workspace_help_generated = """
-    USAGE: summon-workspace [-h|--help] [--fail-if-noop] <workspace>
-    """
-let swap_help_generated = """
-    USAGE: swap [-h|--help] [--window-id <window-id>] [--swap-focus]
-                [--wrap-around]
-                (left|down|up|right)
-    """
 let trigger_binding_help_generated = """
     USAGE: trigger-binding [-h|--help] <binding> --mode <mode-id>
     """
-let workspace_back_and_forth_help_generated = """
-    USAGE: workspace-back-and-forth [-h|--help]
-    """
 let workspace_help_generated = """
-    USAGE: workspace [-h|--help] [--auto-back-and-forth] [--fail-if-noop] <workspace-name>
+    USAGE: workspace [-h|--help] [--fail-if-noop] <workspace-name>
        OR: workspace [-h|--help] [--wrap-around] [--stdin|--no-stdin] (next|prev)
     """

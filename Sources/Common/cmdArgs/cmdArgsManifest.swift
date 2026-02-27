@@ -8,7 +8,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case enable
     case execAndForget = "exec-and-forget"
     case focus
-    case focusBackAndForth = "focus-back-and-forth"
     case focusMonitor = "focus-monitor"
     case fullscreen
     case layout
@@ -21,17 +20,12 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case mode
     case move = "move"
     case moveMouse = "move-mouse"
-    case moveNodeToMonitor = "move-node-to-monitor"
     case moveNodeToWorkspace = "move-node-to-workspace"
-    case moveWorkspaceToMonitor = "move-workspace-to-monitor"
     case reloadConfig = "reload-config"
     case removeColumn = "remove-column"
     case resize
-    case summonWorkspace = "summon-workspace"
-    case swap
     case triggerBinding = "trigger-binding"
     case workspace
-    case workspaceBackAndForth = "workspace-back-and-forth"
 }
 
 func initSubcommands() -> [String: any SubCommandParserProtocol] {
@@ -52,8 +46,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 break // exec-and-forget is parsed separately
             case .focus:
                 result[kind.rawValue] = SubCommandParser(parseFocusCmdArgs)
-            case .focusBackAndForth:
-                result[kind.rawValue] = SubCommandParser(FocusBackAndForthCmdArgs.init)
             case .focusMonitor:
                 result[kind.rawValue] = SubCommandParser(parseFocusMonitorCmdArgs)
             case .fullscreen:
@@ -78,28 +70,18 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseMoveCmdArgs)
             case .moveMouse:
                 result[kind.rawValue] = SubCommandParser(parseMoveMouseCmdArgs)
-            case .moveNodeToMonitor:
-                result[kind.rawValue] = SubCommandParser(parseMoveNodeToMonitorCmdArgs)
             case .moveNodeToWorkspace:
                 result[kind.rawValue] = SubCommandParser(parseMoveNodeToWorkspaceCmdArgs)
-            case .moveWorkspaceToMonitor:
-                result[kind.rawValue] = SubCommandParser(parseWorkspaceToMonitorCmdArgs)
             case .reloadConfig:
                 result[kind.rawValue] = SubCommandParser(ReloadConfigCmdArgs.init)
             case .removeColumn:
                 result[kind.rawValue] = SubCommandParser(RemoveColumnCmdArgs.init)
             case .resize:
                 result[kind.rawValue] = SubCommandParser(parseResizeCmdArgs)
-            case .summonWorkspace:
-                result[kind.rawValue] = SubCommandParser(SummonWorkspaceCmdArgs.init)
-            case .swap:
-                result[kind.rawValue] = SubCommandParser(parseSwapCmdArgs)
             case .triggerBinding:
                 result[kind.rawValue] = SubCommandParser(parseTriggerBindingCmdArgs)
             case .workspace:
                 result[kind.rawValue] = SubCommandParser(parseWorkspaceCmdArgs)
-            case .workspaceBackAndForth:
-                result[kind.rawValue] = SubCommandParser(WorkspaceBackAndForthCmdArgs.init)
         }
     }
     return result
