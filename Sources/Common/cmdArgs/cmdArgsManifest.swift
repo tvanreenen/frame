@@ -88,8 +88,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(ModeCmdArgs.init)
             case .move:
                 result[kind.rawValue] = SubCommandParser(parseMoveCmdArgs)
-                // deprecated
-                result["move-through"] = SubCommandParser(parseMoveCmdArgs)
             case .moveMouse:
                 result[kind.rawValue] = SubCommandParser(parseMoveMouseCmdArgs)
             case .moveNodeToMonitor:
@@ -98,8 +96,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseMoveNodeToWorkspaceCmdArgs)
             case .moveWorkspaceToMonitor:
                 result[kind.rawValue] = SubCommandParser(parseWorkspaceToMonitorCmdArgs)
-                // deprecated
-                result["move-workspace-to-display"] = SubCommandParser(MoveWorkspaceToMonitorCmdArgs.init)
             case .reloadConfig:
                 result[kind.rawValue] = SubCommandParser(ReloadConfigCmdArgs.init)
             case .removeColumn:

@@ -154,7 +154,6 @@ final class ConfigTest: XCTestCase {
 
     func testMoveWorkspaceToMonitorCommandParsing() {
         XCTAssertTrue(parseCommand("move-workspace-to-monitor --wrap-around next").cmdOrNil is MoveWorkspaceToMonitorCommand)
-        XCTAssertTrue(parseCommand("move-workspace-to-display --wrap-around next").cmdOrNil is MoveWorkspaceToMonitorCommand)
     }
 
     func testParseLayout() {
