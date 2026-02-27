@@ -10,8 +10,6 @@ include::util/man-attributes.adoc[]
 [verse]
 // tag::synopsis[]
 aerospace list-workspaces [-h|--help] --monitor <monitor>... [--visible [no]] [--empty [no]] [--count] [--json]
-aerospace list-workspaces [-h|--help] --all [--count] [--json]
-aerospace list-workspaces [-h|--help] --focused [--count] [--json]
 
 // end::synopsis[]
 
@@ -25,12 +23,6 @@ aerospace list-workspaces [-h|--help] --focused [--count] [--json]
 include::util/conditional-options-header.adoc[]
 
 -h, --help:: Print help
-
-include::util/all-monitors-option.adoc[]
-
---focused::
-Alias for `--monitor focused --visible`.
-Always prints a single workspace
 
 include::util/monitor-option.adoc[]
 

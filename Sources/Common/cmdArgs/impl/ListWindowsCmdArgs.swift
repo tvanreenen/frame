@@ -7,8 +7,6 @@ public struct ListWindowsCmdArgs: CmdArgs {
         kind: .listWindows,
         help: list_windows_help_generated,
         flags: [
-            "--all": trueBoolFlag(\.all),
-
             // Filtering flags
             "--focused": trueBoolFlag(\.filteringOptions.focused),
             "--monitor": SubArgParser(\.filteringOptions.monitors, parseMonitorIds),
@@ -20,13 +18,9 @@ public struct ListWindowsCmdArgs: CmdArgs {
         ],
         posArgs: [],
         conflictingOptions: [
-            ["--all", "--focused", "--workspace"],
-            ["--all", "--focused", "--monitor"],
             ["--count", "--json"],
         ],
     )
-
-    fileprivate var all: Bool = false // ALIAS
 
     public var filteringOptions = FilteringOptions()
     public var outputOnlyCount: Bool = false
@@ -42,19 +36,12 @@ public struct ListWindowsCmdArgs: CmdArgs {
 }
 
 public func parseListWindowsCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWindowsCmdArgs> {
-    let args = args.map { $0 == "--app-id" ? "--app-bundle-id" : $0 }.slice // Compatibility
-    return parseSpecificCmdArgs(ListWindowsCmdArgs(commonState: .init(args)), args)
-        .filter("Mandatory option is not specified (--focused|--all|--monitor|--workspace)") { raw in
-            raw.filteringOptions.focused || raw.all || !raw.filteringOptions.monitors.isEmpty || !raw.filteringOptions.workspaces.isEmpty
-        }
-        .filter("--all conflicts with \"filtering\" flags. Please use '--monitor all' instead of '--all' alias") { raw in
-            raw.all.implies(raw.filteringOptions == ListWindowsCmdArgs.FilteringOptions())
+    parseSpecificCmdArgs(ListWindowsCmdArgs(commonState: .init(args)), args)
+        .filter("Mandatory option is not specified (--focused|--monitor|--workspace)") { raw in
+            raw.filteringOptions.focused || !raw.filteringOptions.monitors.isEmpty || !raw.filteringOptions.workspaces.isEmpty
         }
         .filter("--focused conflicts with other \"filtering\" flags") { raw in
             raw.filteringOptions.focused.implies(raw.filteringOptions.copy(\.focused, false) == ListWindowsCmdArgs.FilteringOptions())
-        }
-        .map { raw in
-            raw.all ? raw.copy(\.filteringOptions.monitors, [.all]).copy(\.all, false) : raw // Normalize alias
         }
 }
 

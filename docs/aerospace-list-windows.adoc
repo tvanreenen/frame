@@ -13,7 +13,6 @@ aerospace list-windows [-h|--help] (--workspace <workspace>...|--monitor <monito
                        [--monitor <monitor>...] [--workspace <workspace>...]
                        [--pid <pid>] [--app-bundle-id <app-bundle-id>]
                        [--count] [--json]
-aerospace list-windows [-h|--help] --all [--count] [--json]
 aerospace list-windows [-h|--help] --focused [--count] [--json]
 
 // end::synopsis[]
@@ -28,8 +27,6 @@ aerospace list-windows [-h|--help] --focused [--count] [--json]
 include::util/conditional-options-header.adoc[]
 
 -h, --help:: Print help
-
-include::util/all-monitors-option.adoc[]
 
 --focused::
 Print the focused window.
@@ -52,8 +49,6 @@ include::util/monitor-option.adoc[]
 
 --app-bundle-id <app-bundle-id>::
 Filter results to only print windows that belong to the Application with specified https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids[Bundle ID]
-+
-Deprecated (but still supported) flag name: `--app-id`
 
 --count:: Output only the number of windows.
 Incompatible with `--json`

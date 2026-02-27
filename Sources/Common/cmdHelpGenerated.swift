@@ -40,13 +40,10 @@ let list_windows_help_generated = """
                         [--monitor <monitor>...] [--workspace <workspace>...]
                         [--pid <pid>] [--app-bundle-id <app-bundle-id>]
                         [--count] [--json]
-       OR: list-windows [-h|--help] --all [--count] [--json]
        OR: list-windows [-h|--help] --focused [--count] [--json]
     """
 let list_workspaces_help_generated = """
     USAGE: list-workspaces [-h|--help] --monitor <monitor>... [--visible [no]] [--empty [no]] [--count] [--json]
-       OR: list-workspaces [-h|--help] --all [--count] [--json]
-       OR: list-workspaces [-h|--help] --focused [--count] [--json]
     """
 let move_mouse_help_generated = """
     USAGE: move-mouse [-h|--help] [--fail-if-noop] <mouse-position>

@@ -9,10 +9,6 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
         kind: .listWorkspaces,
         help: list_workspaces_help_generated,
         flags: [
-            // Aliases
-            "--focused": trueBoolFlag(\.focused),
-            "--all": trueBoolFlag(\.all),
-
             // Filtering flags
             "--visible": boolFlag(\.filteringOptions.visible),
             "--empty": boolFlag(\.filteringOptions.empty),
@@ -22,13 +18,9 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
         ],
         posArgs: [],
         conflictingOptions: [
-            ["--all", "--focused", "--monitor"],
             ["--count", "--json"],
         ],
     )
-
-    fileprivate var all: Bool = false // Alias
-    fileprivate var focused: Bool = false // Alias
 
     public var filteringOptions = FilteringOptions()
     public var outputOnlyCount: Bool = false
@@ -43,24 +35,8 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
 
 public func parseListWorkspacesCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWorkspacesCmdArgs> {
     parseSpecificCmdArgs(ListWorkspacesCmdArgs(commonState: .init(args)), args)
-        .filter("Mandatory option is not specified (--all|--focused|--monitor)") { raw in
-            raw.all || raw.focused || !raw.filteringOptions.onMonitors.isEmpty
-        }
-        .filter("--all conflicts with any other \"filtering\" options") { raw in
-            raw.all.implies(raw.filteringOptions == ListWorkspacesCmdArgs.FilteringOptions())
-        }
-        .filter("--focused conflicts with all other \"filtering\" options") { raw in
-            raw.focused.implies(raw.filteringOptions == ListWorkspacesCmdArgs.FilteringOptions())
-        }
-        .map { raw in
-            raw.all ? raw.copy(\.filteringOptions.onMonitors, [.all]).copy(\.all, false) : raw
-        }
-        .map { raw in // Expand alias
-            raw.focused
-                ? raw.copy(\.filteringOptions.onMonitors, [.focused])
-                    .copy(\.filteringOptions.visible, true)
-                    .copy(\.focused, false)
-                : raw
+        .filter("Mandatory option is not specified (--monitor)") { raw in
+            !raw.filteringOptions.onMonitors.isEmpty
         }
 }
 
