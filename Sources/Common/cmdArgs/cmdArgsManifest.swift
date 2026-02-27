@@ -3,8 +3,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
 
     case addColumn = "add-column"
     case balanceSizes = "balance-sizes"
-    case close
-    case closeAllWindowsButCurrent = "close-all-windows-but-current"
     case config
     case debugWindows = "debug-windows"
     case enable
@@ -20,8 +18,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case listMonitors = "list-monitors"
     case listWindows = "list-windows"
     case listWorkspaces = "list-workspaces"
-    case macosNativeFullscreen = "macos-native-fullscreen"
-    case macosNativeMinimize = "macos-native-minimize"
     case mode
     case move = "move"
     case moveMouse = "move-mouse"
@@ -46,10 +42,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(AddColumnCmdArgs.init)
             case .balanceSizes:
                 result[kind.rawValue] = SubCommandParser(BalanceSizesCmdArgs.init)
-            case .close:
-                result[kind.rawValue] = SubCommandParser(CloseCmdArgs.init)
-            case .closeAllWindowsButCurrent:
-                result[kind.rawValue] = SubCommandParser(CloseAllWindowsButCurrentCmdArgs.init)
             case .config:
                 result[kind.rawValue] = SubCommandParser(parseConfigCmdArgs)
             case .debugWindows:
@@ -80,10 +72,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseListWindowsCmdArgs)
             case .listWorkspaces:
                 result[kind.rawValue] = SubCommandParser(parseListWorkspacesCmdArgs)
-            case .macosNativeFullscreen:
-                result[kind.rawValue] = SubCommandParser(parseMacosNativeFullscreenCmdArgs)
-            case .macosNativeMinimize:
-                result[kind.rawValue] = SubCommandParser(MacosNativeMinimizeCmdArgs.init)
             case .mode:
                 result[kind.rawValue] = SubCommandParser(ModeCmdArgs.init)
             case .move:

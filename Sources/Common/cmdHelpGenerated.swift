@@ -1,4 +1,4 @@
-// FILE IS GENERATED FROM docs/simple-wm-*.adoc files
+// FILE IS GENERATED FROM docs/aerospace-*.adoc files
 // TO REGENERATE THE FILE RUN generate.sh
 
 let add_column_help_generated = """
@@ -9,12 +9,6 @@ let remove_column_help_generated = """
     """
 let balance_sizes_help_generated = """
     USAGE: balance-sizes [-h|--help] [--workspace <workspace>]
-    """
-let close_all_windows_but_current_help_generated = """
-    USAGE: close-all-windows-but-current [-h|--help] [--quit-if-last-window]
-    """
-let close_help_generated = """
-    USAGE: close [-h|--help] [--quit-if-last-window] [--window-id <window-id>]
     """
 let config_help_generated = """
     USAGE: config [-h|--help] --get <name> [--json] [--keys]
@@ -80,14 +74,6 @@ let list_workspaces_help_generated = """
        OR: list-workspaces [-h|--help] --all [--format <output-format>] [--count] [--json]
        OR: list-workspaces [-h|--help] --focused [--format <output-format>] [--count] [--json]
     """
-let macos_native_fullscreen_help_generated = """
-    USAGE: macos-native-fullscreen [-h|--help] [--window-id <window-id>]
-       OR: macos-native-fullscreen [-h|--help] [--window-id <window-id>] [--fail-if-noop] on
-       OR: macos-native-fullscreen [-h|--help] [--window-id <window-id>] [--fail-if-noop] off
-    """
-let macos_native_minimize_help_generated = """
-    USAGE: macos-native-minimize [-h|--help] [--window-id <window-id>]
-    """
 let mode_help_generated = """
     USAGE: mode [-h|--help] <binding-mode>
     """
@@ -113,7 +99,7 @@ let move_workspace_to_monitor_help_generated = """
        OR: move-workspace-to-monitor [-h|--help] [--workspace <workspace>] <monitor-pattern>...
     """
 let move_help_generated = """
-    USAGE: move [-h|--help] [--window-id <window-id>] [--boundaries <boundary>] [--boundaries-action <boundary-action>] (left|down|up|right)
+    USAGE: move [-h|--help] [--window-id <window-id>] (left|down|up|right)
     """
 let reload_config_help_generated = """
     USAGE: reload-config [-h|--help] [--no-gui] [--dry-run]

@@ -36,26 +36,47 @@ final class MoveCommandTest: XCTestCase {
         assertEquals(col1.children.map { ($0 as! Window).windowId }, [1, 2])
     }
 
-    func testMove_rightAtEdge_stops() async throws {
+    func testMove_rightAtEdge_createsImplicitColumn() async throws {
         let workspace = Workspace.get(byName: name)
         let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
+        TestWindow.new(id: 2, parent: col1)
         assertEquals(w1.focusWindow(), true)
 
         let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
 
-        assertEquals(col1.children.count, 1)
+        assertEquals(workspace.columns.count, 2)
+        assertEquals(workspace.columns[0].children.map { ($0 as! Window).windowId }, [2])
+        assertEquals(workspace.columns[1].children.map { ($0 as! Window).windowId }, [1])
         assertEquals(result.exitCode, 0)
     }
 
-    func testMove_leftAtEdge_stops() async throws {
+    func testMove_leftAtEdge_createsImplicitColumn() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        TestWindow.new(id: 2, parent: col1)
+        assertEquals(w1.focusWindow(), true)
+
+        let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .left)).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(workspace.columns.count, 2)
+        assertEquals(workspace.columns[0].children.map { ($0 as! Window).windowId }, [1])
+        assertEquals(workspace.columns[1].children.map { ($0 as! Window).windowId }, [2])
+        assertEquals(result.exitCode, 0)
+    }
+
+    func testMove_leftAtEdge_stopActionStops() async throws {
         let workspace = Workspace.get(byName: name)
         let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         assertEquals(w1.focusWindow(), true)
 
-        let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .left)).run(.defaultEnv, .emptyStdin)
+        var args = MoveCmdArgs(rawArgs: [], .left)
+        args.rawBoundariesAction = .stop
+        let result = try await MoveCommand(args: args).run(.defaultEnv, .emptyStdin)
 
+        assertEquals(workspace.columns.count, 1)
         assertEquals(col1.children.count, 1)
         assertEquals(result.exitCode, 0)
     }

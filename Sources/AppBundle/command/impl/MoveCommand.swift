@@ -16,7 +16,7 @@ struct MoveCommand: Command {
             case .tilingContainer(let parent):
                 switch direction.orientation {
                     case .h: // left/right — push window to adjacent column
-                        return moveWindowBetweenColumns(currentWindow, direction: direction, io)
+                        return moveWindowBetweenColumns(currentWindow, direction: direction, args, io)
                     case .v: // up/down — reorder within column
                         guard parent.orientation == .v else { return true }
                         let indexOfCurrent = currentWindow.ownIndex.orDie()
@@ -42,6 +42,7 @@ private let moveOutMacosUnconventionalWindow =
 @MainActor private func moveWindowBetweenColumns(
     _ window: Window,
     direction: CardinalDirection,
+    _ args: MoveCmdArgs,
     _ io: CmdIo,
 ) -> Bool {
     guard let workspace = window.nodeWorkspace else { return false }
@@ -54,10 +55,26 @@ private let moveOutMacosUnconventionalWindow =
     }
 
     let targetIndex = currentIndex + direction.focusOffset
-    guard cols.indices.contains(targetIndex) else {
-        return true // At edge, stop
+    let targetColumn: Column
+    if cols.indices.contains(targetIndex) {
+        targetColumn = cols[targetIndex]
+    } else {
+        switch args.boundariesAction {
+            case .stop:
+                return true
+            case .fail:
+                return false
+            case .createImplicitContainer:
+                if args.boundaries != .workspace {
+                    return io.err("create-implicit-container only supports --boundaries workspace")
+                }
+                targetColumn = switch direction {
+                    case .left: workspace.addColumn(before: currentColumn)
+                    case .right: workspace.addColumn(after: currentColumn)
+                    case .up, .down: dieT("Unreachable: up/down don't call moveWindowBetweenColumns")
+                }
+        }
     }
-    let targetColumn = cols[targetIndex]
     window.bind(to: targetColumn, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
     return true
 }

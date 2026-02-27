@@ -3,8 +3,6 @@
 
 let subcommandDescriptions = [
     ["  balance-sizes", "Balance sizes of all windows in the current workspace"],
-    ["  close-all-windows-but-current", "On the focused workspace, close all windows but current"],
-    ["  close", "Close the focused window"],
     ["  config", "Query AeroSpace config options"],
     ["  debug-windows", "Interactive command to record Accessibility API debug information to create bug reports"],
     ["  enable", "Temporarily disable window management"],
@@ -19,8 +17,6 @@ let subcommandDescriptions = [
     ["  list-monitors", "Print monitors that satisfy conditions"],
     ["  list-windows", "Print windows that satisfy conditions"],
     ["  list-workspaces", "Print workspaces that satisfy conditions"],
-    ["  macos-native-fullscreen", "Toggle macOS fullscreen for the focused window"],
-    ["  macos-native-minimize", "Minimize focused window"],
     ["  mode", "Activate the specified binding mode"],
     ["  move-mouse", "Move mouse to the requested position"],
     ["  move-node-to-monitor", "Move window to monitor targeted by relative direction, by order, or by pattern"],

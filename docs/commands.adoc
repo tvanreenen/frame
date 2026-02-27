@@ -12,20 +12,6 @@ include::aerospace-balance-sizes.adoc[tags=synopsis]
 include::aerospace-balance-sizes.adoc[tags=purpose]
 include::aerospace-balance-sizes.adoc[tags=body]
 
-== close
-----
-include::aerospace-close.adoc[tags=synopsis]
-----
-include::aerospace-close.adoc[tags=purpose]
-include::aerospace-close.adoc[tags=body]
-
-== close-all-windows-but-current
-----
-include::aerospace-close-all-windows-but-current.adoc[tags=synopsis]
-----
-include::aerospace-close-all-windows-but-current.adoc[tags=purpose]
-include::aerospace-close-all-windows-but-current.adoc[tags=body]
-
 == enable
 ----
 include::aerospace-enable.adoc[tags=synopsis]
@@ -75,20 +61,6 @@ include::aerospace-layout.adoc[tags=synopsis]
 ----
 include::aerospace-layout.adoc[tags=purpose]
 include::aerospace-layout.adoc[tags=body]
-
-== macos-native-fullscreen
-----
-include::aerospace-macos-native-fullscreen.adoc[tags=synopsis]
-----
-include::aerospace-macos-native-fullscreen.adoc[tags=purpose]
-include::aerospace-macos-native-fullscreen.adoc[tags=body]
-
-== macos-native-minimize
-----
-include::aerospace-macos-native-minimize.adoc[tags=synopsis]
-----
-include::aerospace-macos-native-minimize.adoc[tags=purpose]
-include::aerospace-macos-native-minimize.adoc[tags=body]
 
 == mode
 ----

@@ -8,10 +8,6 @@ extension CmdArgs {
                 command = AddColumnCommand(args: self as! AddColumnCmdArgs)
             case .balanceSizes:
                 command = BalanceSizesCommand(args: self as! BalanceSizesCmdArgs)
-            case .close:
-                command = CloseCommand(args: self as! CloseCmdArgs)
-            case .closeAllWindowsButCurrent:
-                command = CloseAllWindowsButCurrentCommand(args: self as! CloseAllWindowsButCurrentCmdArgs)
             case .config:
                 command = ConfigCommand(args: self as! ConfigCmdArgs)
             case .debugWindows:
@@ -42,10 +38,6 @@ extension CmdArgs {
                 command = ListWindowsCommand(args: self as! ListWindowsCmdArgs)
             case .listWorkspaces:
                 command = ListWorkspacesCommand(args: self as! ListWorkspacesCmdArgs)
-            case .macosNativeFullscreen:
-                command = MacosNativeFullscreenCommand(args: self as! MacosNativeFullscreenCmdArgs)
-            case .macosNativeMinimize:
-                command = MacosNativeMinimizeCommand(args: self as! MacosNativeMinimizeCmdArgs)
             case .mode:
                 command = ModeCommand(args: self as! ModeCmdArgs)
             case .move:
