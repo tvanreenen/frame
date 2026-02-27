@@ -58,8 +58,8 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
             let _answer: Result<ServerAnswer, Error> = await Result {
                 try await runLightSession(.socketServer) { () throws in
                     let env = CmdEnv.init(
-                        windowId: request.windowId.flatMap { $0 },
-                        workspaceName: request.workspace.flatMap { $0 },
+                        windowId: request.windowId,
+                        workspaceName: request.workspace,
                     )
                     let cmdResult = try await command.run(env, CmdStdin(request.stdin))
                     return ServerAnswer(
@@ -70,15 +70,12 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
                     )
                 }
             }
-            var answer = _answer.getOrNil() ??
+            let answer = _answer.getOrNil() ??
                 ServerAnswer(
                     exitCode: 1,
                     stderr: "Fail to await main thread. \(_answer.failureOrNil?.localizedDescription ?? "")",
                     serverVersionAndHash: serverVersionAndHash,
                 )
-            if request.windowId == nil || request.workspace == nil {
-                answer.stderr += "\n\nsimple-wm client has sent incomplete JSON request. 'windowId' or/and 'workspace' fields are missing. Please forward your SIMPLEWM_WINDOW_ID and SIMPLEWM_WORKSPACE environment variables to these JSON fields. If the appropriate environment variables are empty, pass explict 'null' in the JSON."
-            }
             await answerToClient(answer)
             continue
         }
