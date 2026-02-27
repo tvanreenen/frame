@@ -25,9 +25,9 @@ public struct WorkspaceCmdArgs: CmdArgs {
 
 public func parseWorkspaceCmdArgs(_ args: StrArrSlice) -> ParsedCmd<WorkspaceCmdArgs> {
     parseSpecificCmdArgs(WorkspaceCmdArgs(rawArgs: args), args)
-        .filter("--wrapAround requires using \(NextPrev.unionLiteral) argument") { ($0._wrapAround != nil).implies($0.target.val.isRelatve) }
-        .filterNot("--fail-if-noop is incompatible with \(NextPrev.unionLiteral)") { $0.failIfNoop && $0.target.val.isRelatve }
-        .filter("--stdin and --no-stdin require using \(NextPrev.unionLiteral) argument") { ($0.explicitStdinFlag != nil).implies($0.target.val.isRelatve) }
+        .filter("--wrap-around requires using \(NextPrev.unionLiteral) argument") { ($0._wrapAround != nil).implies($0.target.val.isRelative) }
+        .filterNot("--fail-if-noop is incompatible with \(NextPrev.unionLiteral)") { $0.failIfNoop && $0.target.val.isRelative }
+        .filter("--stdin and --no-stdin require using \(NextPrev.unionLiteral) argument") { ($0.explicitStdinFlag != nil).implies($0.target.val.isRelative) }
 }
 
 extension WorkspaceCmdArgs {
@@ -39,8 +39,8 @@ public enum WorkspaceTarget: Equatable, Sendable {
     case relative(NextPrev)
     case direct(WorkspaceName)
 
-    var isDirect: Bool { !isRelatve }
-    public var isRelatve: Bool {
+    var isDirect: Bool { !isRelative }
+    public var isRelative: Bool {
         switch self {
             case .relative: true
             default: false

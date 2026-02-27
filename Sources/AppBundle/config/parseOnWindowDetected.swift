@@ -38,7 +38,7 @@ struct WindowDetectedCallbackMatcher: ConvenienceCopyable, Equatable {
             resultParts.append("appId=\"\(appId)\"")
         }
         if appNameRegexSubstring != nil {
-            resultParts.append("appNameRegexSubstrin=Regex")
+            resultParts.append("appNameRegexSubstring=Regex")
         }
         if windowTitleRegexSubstring != nil {
             resultParts.append("windowTitleRegexSubstring=Regex")
@@ -72,8 +72,8 @@ private let windowDetectedParser: [String: any ParserProtocol<WindowDetectedCall
 private let matcherParsers: [String: any ParserProtocol<WindowDetectedCallbackMatcher>] = [
     "app-id": Parser(\.appId, upcast(parseString)),
     "workspace": Parser(\.workspace, upcast(parseString)),
-    "app-name-regex-substring": Parser(\.appNameRegexSubstring, upcast(parseCasInsensitiveRegex)),
-    "window-title-regex-substring": Parser(\.windowTitleRegexSubstring, upcast(parseCasInsensitiveRegex)),
+    "app-name-regex-substring": Parser(\.appNameRegexSubstring, upcast(parseCaseInsensitiveRegexToml)),
+    "window-title-regex-substring": Parser(\.windowTitleRegexSubstring, upcast(parseCaseInsensitiveRegexToml)),
     "during-simple-wm-startup": Parser(\.duringSimpleWmStartup, upcast(parseBool)),
 ]
 
@@ -90,7 +90,7 @@ func parseOnWindowDetectedArray(_ raw: TOMLValueConvertible, _ backtrace: TomlBa
     }
 }
 
-private func parseCasInsensitiveRegex(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Regex<AnyRegexOutput>> {
+private func parseCaseInsensitiveRegexToml(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Regex<AnyRegexOutput>> {
     parseString(raw, backtrace).flatMap { parseCaseInsensitiveRegex($0).toParsedToml(backtrace) }
 }
 

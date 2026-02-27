@@ -1,7 +1,7 @@
 import OrderedCollections
 
-let onitor = "<monitor>"
-let _monitors = "\(onitor)..."
+private let monitorPlaceholder = "<monitor>"
+private let monitorListPlaceholder = "\(monitorPlaceholder)..."
 
 public struct ListWorkspacesCmdArgs: CmdArgs {
     /*conforms*/ public var commonState: CmdArgsCommonState
@@ -42,24 +42,26 @@ public func parseListWorkspacesCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWor
 
 func parseMonitorIds(input: SubArgParserInput) -> ParsedCliArgs<[MonitorId]> {
     let args = input.nonFlagArgs()
-    let possibleValues = "\(onitor) possible values: (<monitor-id>|focused|mouse|all)"
+    let possibleValues = "\(monitorPlaceholder) possible values: (<monitor-id>|focused|mouse|all)"
     if args.isEmpty {
-        return .fail("\(_monitors) is mandatory. \(possibleValues)", advanceBy: args.count)
+        return .fail("\(monitorListPlaceholder) is mandatory. \(possibleValues)", advanceBy: args.count)
     }
     var monitors: [MonitorId] = []
     var i = 0
-    for monitor in args {
-        switch Int.init(monitor) {
-            case .some(let unwrapped):
-                monitors.append(.index(unwrapped - 1))
-            case _ where monitor == "mouse":
+    for rawMonitor in args {
+        switch Int.init(rawMonitor) {
+            case .some(let index1Based) where index1Based > 0:
+                monitors.append(.index(index1Based - 1))
+            case .some:
+                return .fail("Can't parse monitor ID '\(rawMonitor)'. \(possibleValues)", advanceBy: i + 1)
+            case _ where rawMonitor == "mouse":
                 monitors.append(.mouse)
-            case _ where monitor == "all":
+            case _ where rawMonitor == "all":
                 monitors.append(.all)
-            case _ where monitor == "focused":
+            case _ where rawMonitor == "focused":
                 monitors.append(.focused)
             default:
-                return .fail("Can't parse monitor ID '\(monitor)'. \(possibleValues)", advanceBy: i + 1)
+                return .fail("Can't parse monitor ID '\(rawMonitor)'. \(possibleValues)", advanceBy: i + 1)
         }
         i += 1
     }
