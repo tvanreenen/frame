@@ -5,7 +5,7 @@ import Network
 
 let usage =
     """
-    USAGE: \(CommandLine.arguments.first ?? "aerospace") [-h|--help] [-v|--version] <subcommand> [<args>...]
+    USAGE: \(CommandLine.arguments.first ?? "simple-wm") [-h|--help] [-v|--version] <subcommand> [<args>...]
 
     SUBCOMMANDS:
     \(subcommandDescriptions.sortedBy { $0[0] }.toPaddingTable(columnSeparator: "   ").joined(separator: "\n"))
@@ -36,16 +36,16 @@ struct Main {
             }
             print(
                 """
-                aerospace CLI client version: \(cliClientVersionAndHash)
-                AeroSpace.app server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
+                simple-wm CLI client version: \(cliClientVersionAndHash)
+                simple-wm server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
                 """,
             )
             if serverVersionAndHash != nil && cliClientVersionAndHash != serverVersionAndHash {
                 eprint(
                     """
-                    Warning: AeroSpace client/server versions don't match. Possible fixes:
-                      - Restart AeroSpace.app (server restart is required after each update)
-                      - Reinstall and restart AeroSpace (corrupted installation)
+                    Warning: simple-wm client/server versions don't match. Possible fixes:
+                      - Restart simple-wm (server restart is required after each update)
+                      - Reinstall and restart simple-wm (corrupted installation)
                     """,
                 )
             }
@@ -66,7 +66,7 @@ struct Main {
         let connection = NWConnection(to: NWEndpoint.unix(path: socketPath), using: .tcp)
 
         if let e = await connection.startBlocking() {
-            exit(stderrMsg: "Can't connect to AeroSpace server. Is AeroSpace.app running?\n\(e.localizedDescription)")
+            exit(stderrMsg: "Can't connect to simple-wm server. Is simple-wm running?\n\(e.localizedDescription)")
         }
 
         var stdin = ""
@@ -79,10 +79,9 @@ struct Main {
             {
                 exit(
                     stderrMsg: """
-                        ERROR: Implicit stdin is detected (stdin is not TTY). Implicit stdin was forbidden in AeroSpace v0.20.0.
-                        1. Please supply '--stdin' flag to make stdin explicit and preserve old AeroSpace behavior
+                        ERROR: Implicit stdin is detected (stdin is not TTY).
+                        1. Please supply '--stdin' flag to make stdin explicit
                         2. You can also use '--no-stdin' flag to behave as if no stdin was supplied
-                        Breaking change issue: https://github.com/nikitabobko/AeroSpace/issues/1683
                         """,
                 )
             }
@@ -105,12 +104,12 @@ struct Main {
         if ans.exitCode != 0 && ans.serverVersionAndHash != cliClientVersionAndHash {
             eprint(
                 """
-                Warning: AeroSpace client/server versions don't match
-                  - aerospace CLI client version: \(cliClientVersionAndHash)
-                  - AeroSpace.app server version: \(ans.serverVersionAndHash)
+                Warning: simple-wm client/server versions don't match
+                  - simple-wm CLI client version: \(cliClientVersionAndHash)
+                  - simple-wm server version: \(ans.serverVersionAndHash)
                   Possible fixes:
-                  - Restart AeroSpace.app (server restart is required after each update)
-                  - Reinstall and restart AeroSpace (corrupted installation)
+                  - Restart simple-wm (server restart is required after each update)
+                  - Reinstall and restart simple-wm (corrupted installation)
                 """,
             )
         }

@@ -53,6 +53,11 @@ extension TilingContainer {
             (child as? TilingContainer)?.normalizeOppositeOrientationForNestedContainers()
         }
     }
+
+    /// Sets orientation directly without config-dependent side effects.
+    func setOrientation(_ orientation: Orientation) {
+        _orientation = orientation
+    }
 }
 
 enum Layout: String {

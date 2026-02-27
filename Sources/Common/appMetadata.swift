@@ -1,8 +1,8 @@
-public let stableAeroSpaceAppId: String = "bobko.aerospace"
+public let stableSimpleWmAppId: String = "com.simplewm.app"
 #if DEBUG
-    public let aeroSpaceAppId: String = "bobko.aerospace.debug"
-    public let aeroSpaceAppName: String = "AeroSpace-Debug"
+    public let simpleWmAppId: String = "com.simplewm.app.debug"
+    public let simpleWmAppName: String = "simple-wm-Debug"
 #else
-    public let aeroSpaceAppId: String = stableAeroSpaceAppId
-    public let aeroSpaceAppName: String = "AeroSpace"
+    public let simpleWmAppId: String = stableSimpleWmAppId
+    public let simpleWmAppName: String = "simple-wm"
 #endif

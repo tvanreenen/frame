@@ -1,6 +1,7 @@
 public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     // Sorted
 
+    case addColumn = "add-column"
     case balanceSizes = "balance-sizes"
     case close
     case closeAllWindowsButCurrent = "close-all-windows-but-current"
@@ -30,6 +31,7 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case moveNodeToWorkspace = "move-node-to-workspace"
     case moveWorkspaceToMonitor = "move-workspace-to-monitor"
     case reloadConfig = "reload-config"
+    case removeColumn = "remove-column"
     case resize
     case split
     case summonWorkspace = "summon-workspace"
@@ -44,6 +46,8 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
     var result: [String: any SubCommandParserProtocol] = [:]
     for kind in CmdKind.allCases {
         switch kind {
+            case .addColumn:
+                result[kind.rawValue] = SubCommandParser(AddColumnCmdArgs.init)
             case .balanceSizes:
                 result[kind.rawValue] = SubCommandParser(BalanceSizesCmdArgs.init)
             case .close:
@@ -106,6 +110,8 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result["move-workspace-to-display"] = SubCommandParser(MoveWorkspaceToMonitorCmdArgs.init)
             case .reloadConfig:
                 result[kind.rawValue] = SubCommandParser(ReloadConfigCmdArgs.init)
+            case .removeColumn:
+                result[kind.rawValue] = SubCommandParser(RemoveColumnCmdArgs.init)
             case .resize:
                 result[kind.rawValue] = SubCommandParser(parseResizeCmdArgs)
             case .split:

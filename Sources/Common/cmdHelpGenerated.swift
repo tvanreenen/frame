@@ -1,6 +1,12 @@
-// FILE IS GENERATED FROM docs/aerospace-*.adoc files
+// FILE IS GENERATED FROM docs/simple-wm-*.adoc files
 // TO REGENERATE THE FILE RUN generate.sh
 
+let add_column_help_generated = """
+    USAGE: add-column [-h|--help]
+    """
+let remove_column_help_generated = """
+    USAGE: remove-column [-h|--help]
+    """
 let balance_sizes_help_generated = """
     USAGE: balance-sizes [-h|--help] [--workspace <workspace>]
     """

@@ -8,18 +8,22 @@ final class FlattenWorkspaceTreeCommandTest: XCTestCase {
 
     func testSimple() async throws {
         let workspace = Workspace.get(byName: name).apply {
-            $0.rootTilingContainer.apply {
-                TestWindow.new(id: 1, parent: $0)
-                TilingContainer.newHTiles(parent: $0, adaptiveWeight: 1).apply {
-                    TestWindow.new(id: 2, parent: $0)
-                }
-            }
+            // Two columns: col1 → [w1], col2 → [w2]
+            let col1 = TilingContainer.newVTiles(parent: $0.columnsRoot, adaptiveWeight: 1)
+            let col2 = TilingContainer.newVTiles(parent: $0.columnsRoot, adaptiveWeight: 1)
+            TestWindow.new(id: 1, parent: col1)
+            TestWindow.new(id: 2, parent: col2)
             TestWindow.new(id: 3, parent: $0) // floating
         }
         assertEquals(workspace.focusWorkspace(), true)
 
         try await FlattenWorkspaceTreeCommand(args: FlattenWorkspaceTreeCmdArgs(rawArgs: [])).run(.defaultEnv, .emptyStdin)
+        // FlattenWorkspaceTreeCommand moves all windows into rootTilingContainer directly
+        // normalizeContainers then collects them into a single column
         workspace.normalizeContainers()
-        assertEquals(workspace.layoutDescription, .workspace([.h_tiles([.window(1), .window(2)]), .window(3)]))
+        // Both windows end up in one column, floating remains
+        assertEquals(workspace.columns.count, 1)
+        assertEquals(workspace.columns.first?.children.count, 2)
+        assertEquals(workspace.floatingWindows.count, 1)
     }
 }

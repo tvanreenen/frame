@@ -1,31 +1,62 @@
 extension Workspace {
+    /// Enforce the depth-2 columns invariant:
+    ///   Workspace → TilingContainer(h,tiles) → [TilingContainer(v,tiles) → [Window, ...]]
     @MainActor func normalizeContainers() {
-        rootTilingContainer.unbindEmptyAndAutoFlatten() // Beware! rootTilingContainer may change after this line of code
-        if config.enableNormalizationOppositeOrientationForNestedContainers {
-            rootTilingContainer.normalizeOppositeOrientationForNestedContainers()
-        }
+        normalizeColumnsStructure()
     }
 }
 
-extension TilingContainer {
-    @MainActor fileprivate func unbindEmptyAndAutoFlatten() {
-        if let child = children.singleOrNil(), config.enableNormalizationFlattenContainers && (child is TilingContainer || !isRootContainer) {
-            child.unbindFromParent()
-            let mru = parent?.mostRecentChild
-            let previousBinding = unbindFromParent()
-            child.bind(to: previousBinding.parent, adaptiveWeight: previousBinding.adaptiveWeight, index: previousBinding.index)
-            (child as? TilingContainer)?.unbindEmptyAndAutoFlatten()
-            if mru != self {
-                mru?.markAsMostRecentChild()
+extension Workspace {
+    @MainActor fileprivate func normalizeColumnsStructure() {
+        let root = rootTilingContainer
+
+        // 1. Ensure root is h-tiles with tiles layout
+        if root.orientation != .h { root.setOrientation(.h) }
+        if root.layout != .tiles { root.layout = .tiles }
+
+        // Pass A: fix TilingContainer children (make them proper v-tiles columns)
+        //         and flatten any nested containers within each column
+        for child in Array(root.children) {
+            guard let column = child as? TilingContainer else { continue }
+            if column.orientation != .v { column.setOrientation(.v) }
+            if column.layout != .tiles { column.layout = .tiles }
+            flattenColumn(column)
+        }
+
+        // Pass B: remove empty columns
+        for child in Array(root.children) {
+            guard let column = child as? TilingContainer else { continue }
+            if column.children.isEmpty {
+                column.unbindFromParent()
+            }
+        }
+
+        // Pass C: adopt orphan windows (Window children of root) into a column
+        for child in Array(root.children) {
+            guard let window = child as? Window else { continue }
+            let targetColumn: TilingContainer
+            if let last = columns.last {
+                targetColumn = last
             } else {
-                child.markAsMostRecentChild()
+                targetColumn = addColumn(after: nil)
             }
-        } else {
-            for child in children {
-                (child as? TilingContainer)?.unbindEmptyAndAutoFlatten()
+            window.bind(to: targetColumn, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
+        }
+    }
+
+    /// Recursively lift all leaf windows inside `column` up to be direct children of `column`.
+    @MainActor fileprivate func flattenColumn(_ column: TilingContainer) {
+        for child in Array(column.children) {
+            guard let container = child as? TilingContainer else { continue }
+            // Collect all windows from this nested container
+            let windows = container.allLeafWindowsRecursive
+            for window in windows {
+                window.unbindFromParent()
+                window.bind(to: column, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
             }
-            if children.isEmpty && !isRootContainer {
-                unbindFromParent()
+            // Container is now empty; unbind it
+            if container.children.isEmpty {
+                container.unbindFromParent()
             }
         }
     }

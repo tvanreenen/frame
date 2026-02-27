@@ -4,6 +4,8 @@ extension CmdArgs {
     func toCommand() -> any Command {
         let command: any Command
         switch Self.info.kind {
+            case .addColumn:
+                command = AddColumnCommand(args: self as! AddColumnCmdArgs)
             case .balanceSizes:
                 command = BalanceSizesCommand(args: self as! BalanceSizesCmdArgs)
             case .close:
@@ -62,6 +64,8 @@ extension CmdArgs {
                 command = MoveWorkspaceToMonitorCommand(args: self as! MoveWorkspaceToMonitorCmdArgs)
             case .reloadConfig:
                 command = ReloadConfigCommand(args: self as! ReloadConfigCmdArgs)
+            case .removeColumn:
+                command = RemoveColumnCommand(args: self as! RemoveColumnCmdArgs)
             case .resize:
                 command = ResizeCommand(args: self as! ResizeCmdArgs)
             case .split:

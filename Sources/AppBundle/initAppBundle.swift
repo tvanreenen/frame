@@ -59,13 +59,13 @@ struct ServerArgs: Sendable {
 }
 
 private let serverHelp = """
-    USAGE: \(CommandLine.arguments.first ?? "AeroSpace.app/Contents/MacOS/AeroSpace") [<options>]
+    USAGE: \(CommandLine.arguments.first ?? "simple-wm.app/Contents/MacOS/SimpleWMApp") [<options>]
 
     OPTIONS:
       -h, --help              Print help
-      -v, --version           Print AeroSpace.app version
-      --config-path <path>    Config path. It will take priority over ~/.aerospace.toml
-                              and ${XDG_CONFIG_HOME}/aerospace/aerospace.toml
+      -v, --version           Print simple-wm version
+      --config-path <path>    Config path. It will take priority over ~/.simple-wm.toml
+                              and ${XDG_CONFIG_HOME}/simple-wm/simple-wm.toml
       --read-only             Disable window management.
                               Useful if you want to use only debug-windows or other query commands.
     """
@@ -84,7 +84,7 @@ private func initServerArgs() {
         index += 1
         switch current {
             case "--version", "-v":
-                print("\(aeroSpaceAppVersion) \(gitHash)")
+                print("\(simpleWmAppVersion) \(gitHash)")
                 exit(0)
             case "--config-path":
                 if let arg = args.getOrNil(atIndex: index) {

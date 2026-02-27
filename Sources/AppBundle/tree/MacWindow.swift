@@ -225,16 +225,17 @@ private func unbindAndGetBindingDataForNewWindow(_ windowId: UInt32, _ macApp: M
 @MainActor
 private func unbindAndGetBindingDataForNewTilingWindow(_ workspace: Workspace, window: Window?) -> BindingData {
     window?.unbindFromParent() // It's important to unbind to get correct data from below
-    let mruWindow = workspace.mostRecentWindowRecursive
-    if let mruWindow, let tilingParent = mruWindow.parent as? TilingContainer {
+    // Place new window into the focused column, or create one if the workspace is empty.
+    if let column = workspace.focusedColumn {
         return BindingData(
-            parent: tilingParent,
+            parent: column,
             adaptiveWeight: WEIGHT_AUTO,
-            index: mruWindow.ownIndex.orDie() + 1,
+            index: INDEX_BIND_LAST,
         )
     } else {
+        let column = workspace.addColumn(after: nil)
         return BindingData(
-            parent: workspace.rootTilingContainer,
+            parent: column,
             adaptiveWeight: WEIGHT_AUTO,
             index: INDEX_BIND_LAST,
         )
@@ -266,7 +267,7 @@ private func onWindowDetected(_ window: Window) async throws {
 extension WindowDetectedCallback {
     @MainActor
     func matches(_ window: Window) async throws -> Bool {
-        if let startupMatcher = matcher.duringAeroSpaceStartup, startupMatcher != isStartup {
+        if let startupMatcher = matcher.duringSimpleWmStartup, startupMatcher != isStartup {
             return false
         }
         if let regex = matcher.windowTitleRegexSubstring, !(try await window.title).contains(regex) {
