@@ -23,9 +23,8 @@ The dimension to resize is chosen by the first argument
 
 * `width` changes width
 * `height` changes height
-* `smart` changes width if the parent has horizontal orientation, and
-it changes height if the parent has vertical orientation
-* `smart-opposite` resizes the opposite axis of smart
+* `smart` resizes height (the window within its column)
+* `smart-opposite` resizes width (the column within the workspace)
 
 Second argument controls how much the size changes
 

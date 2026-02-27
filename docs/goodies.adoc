@@ -222,16 +222,6 @@ You can configure a custom shortcut to take a screenshot.
 alt-shift-s = 'exec-and-forget screencapture -i -c'
 ----
 
-[#i3-like-config]
-== i3 like config
-
-link:config-examples/i3-like-config-example.toml[Download i3-like-config.toml]
-
-[source,toml,subs="macros+,specialchars+"]
-----
-include::config-examples/i3-like-config-example.toml[]
-----
-
 [#spacelist]
 == Spacelist
 
