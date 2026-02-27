@@ -40,13 +40,6 @@ include::aerospace-exec-and-forget.adoc[tags=synopsis]
 include::aerospace-exec-and-forget.adoc[tags=purpose]
 include::aerospace-exec-and-forget.adoc[tags=body]
 
-== flatten-workspace-tree
-----
-include::aerospace-flatten-workspace-tree.adoc[tags=synopsis]
-----
-include::aerospace-flatten-workspace-tree.adoc[tags=purpose]
-include::aerospace-flatten-workspace-tree.adoc[tags=body]
-
 == focus
 ----
 include::aerospace-focus.adoc[tags=synopsis]
@@ -75,13 +68,6 @@ include::aerospace-fullscreen.adoc[tags=synopsis]
 ----
 include::aerospace-fullscreen.adoc[tags=purpose]
 include::aerospace-fullscreen.adoc[tags=body]
-
-== join-with
-----
-include::aerospace-join-with.adoc[tags=synopsis]
-----
-include::aerospace-join-with.adoc[tags=purpose]
-include::aerospace-join-with.adoc[tags=body]
 
 == layout
 ----
@@ -160,13 +146,6 @@ include::aerospace-resize.adoc[tags=synopsis]
 ----
 include::aerospace-resize.adoc[tags=purpose]
 include::aerospace-resize.adoc[tags=body]
-
-== split
-----
-include::aerospace-split.adoc[tags=synopsis]
-----
-include::aerospace-split.adoc[tags=purpose]
-include::aerospace-split.adoc[tags=body]
 
 == swap
 ----

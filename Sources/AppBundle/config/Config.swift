@@ -34,7 +34,6 @@ var defaultConfigUrl: URL {
 
 struct Config: ConvenienceCopyable {
     var configVersion: Int = 1
-    var afterLoginCommand: [any Command] = []
     var afterStartupCommand: [any Command] = []
     var startAtLogin: Bool = false
     var autoReloadConfig: Bool = false

@@ -9,8 +9,7 @@ include::util/man-attributes.adoc[]
 == Synopsis
 [verse]
 // tag::synopsis[]
-aerospace layout [-h|--help] [--window-id <window-id>]
-                 (h_tiles|v_tiles|h_accordion|v_accordion|tiles|accordion|horizontal|vertical|tiling|floating)...
+aerospace layout [-h|--help] [--window-id <window-id>] (tiling|floating)...
 
 // end::synopsis[]
 
@@ -22,9 +21,6 @@ aerospace layout [-h|--help] [--window-id <window-id>]
 
 If several arguments are supplied then finds the first argument that doesn't describe the currently active layout, and applies the layout.
 
-* Change both tiling layout and orientation in one go: `h_tiles|v_tiles|h_accordion|v_accordion`
-* Change tiling layout but preserve orientation: `tiles|accordion`
-* Change orientation but preserve layout: `horizontal|vertical`
 * Toggle floating/tiling mode: `tiling|floating`
 
 // =========================================================== Options
@@ -40,15 +36,6 @@ include::util/conditional-examples-header.adoc[]
 
 * Toggle between `floating` and `tiling` layouts (order of args doesn't matter): +
 `aerospace layout floating tiling`
-
-* Toggle orientation (order of args doesn't matter): +
-`aerospace layout horizontal vertical`
-
-* Toggle between `tiles` and `accordion` layouts (order of args doesn't matter): +
-`aerospace layout tiles accordion`
-
-* Switch to `tiles` layout. Toggle the layout orientation if already in `tiles` layout: +
-`aerospace layout tiles horizontal vertical`
 
 // end::body[]
 

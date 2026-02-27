@@ -41,7 +41,6 @@ enum TomlParseError: Error, CustomStringConvertible, Equatable {
 
     var description: String {
         return switch self {
-            // todo Make 'split' + flatten normalization prettier
             case .semantic(let backtrace, let message): backtrace.isEmptyRoot ? message : "\(backtrace): \(message)"
             case .syntax(let message): message
         }
@@ -95,7 +94,6 @@ private let persistentWorkspacesKey = "persistent-workspaces"
 private let configParser: [String: any ParserProtocol<Config>] = [
     "config-version": Parser(\.configVersion, parseConfigVersion),
 
-    "after-login-command": Parser(\.afterLoginCommand, parseAfterLoginCommand),
     "after-startup-command": Parser(\.afterStartupCommand) { parseCommandOrCommands($0).toParsedToml($1) },
 
     "on-focus-changed": Parser(\.onFocusChanged) { parseCommandOrCommands($0).toParsedToml($1) },
@@ -135,14 +133,6 @@ extension Command {
     fileprivate var isMacOsNativeCommand: Bool { // Problem ID-B6E178F2
         self is MacosNativeMinimizeCommand || self is MacosNativeFullscreenCommand
     }
-}
-
-func parseAfterLoginCommand(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<[any Command]> {
-    if let array = raw.array, array.count == 0 {
-        return .success([])
-    }
-    let msg = "after-login-command is deprecated since AeroSpace 0.19.0. https://github.com/nikitabobko/AeroSpace/issues/1482"
-    return .failure(.semantic(backtrace, msg))
 }
 
 func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]> {
