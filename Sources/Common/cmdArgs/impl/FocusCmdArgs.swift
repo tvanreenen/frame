@@ -51,14 +51,14 @@ public enum FocusCmdTarget {
 }
 
 extension FocusCmdArgs {
-    public var target: FocusCmdTarget {
+    public var target: FocusCmdTarget? {
         if let direction {
             return .direction(direction)
         }
         if let windowId {
             return .windowId(windowId)
         }
-        die("Parser invariants are broken")
+        return nil
     }
 
     public var boundaries: Boundaries { rawBoundaries ?? .workspace }
@@ -78,7 +78,8 @@ public func parseFocusCmdArgs(_ args: StrArrSlice) -> ParsedCmd<FocusCmdArgs> {
             $0.direction != nil || $0.windowId != nil
         }
         .filter("--window-id is incompatible with other options") {
-            $0.windowId == nil || $0 == FocusCmdArgs(rawArgs: args, windowId: $0.windowId.orDie())
+            guard let windowId = $0.windowId else { return true }
+            return $0 == FocusCmdArgs(rawArgs: args, windowId: windowId)
         }
 }
 

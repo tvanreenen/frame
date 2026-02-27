@@ -33,7 +33,8 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
             await answerToClient(exitCode: 1, stderr: "Error: \(error)")
             return
         }
-        guard let rawRequest else { die() }
+        // EOF / peer closed connection.
+        guard let rawRequest else { return }
         let _request = ClientRequest.decodeJson(rawRequest)
         guard let request: ClientRequest = _request.getOrNil() else {
             await answerToClient(
@@ -45,40 +46,37 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
             )
             continue
         }
-        let (command, help, err) = parseCommand(request.args).unwrap()
-        if let help {
-            await answerToClient(exitCode: 0, stdout: help)
-            continue
-        }
-        if let err {
-            await answerToClient(exitCode: 1, stderr: err)
-            continue
-        }
-        if let command {
-            let _answer: Result<ServerAnswer, Error> = await Result {
-                try await runLightSession(.socketServer) { () throws in
-                    let env = CmdEnv.init(
-                        windowId: request.windowId,
-                        workspaceName: request.workspace,
-                    )
-                    let cmdResult = try await command.run(env, CmdStdin(request.stdin))
-                    return ServerAnswer(
-                        exitCode: cmdResult.exitCode,
-                        stdout: cmdResult.stdout.joined(separator: "\n"),
-                        stderr: cmdResult.stderr.joined(separator: "\n"),
+        switch parseCommand(request.args) {
+            case .help(let help):
+                await answerToClient(exitCode: 0, stdout: help)
+                continue
+            case .failure(let err):
+                await answerToClient(exitCode: 1, stderr: err)
+                continue
+            case .cmd(let command):
+                let _answer: Result<ServerAnswer, Error> = await Result {
+                    try await runLightSession(.socketServer) { () throws in
+                        let env = CmdEnv.init(
+                            windowId: request.windowId,
+                            workspaceName: request.workspace,
+                        )
+                        let cmdResult = try await command.run(env, CmdStdin(request.stdin))
+                        return ServerAnswer(
+                            exitCode: cmdResult.exitCode,
+                            stdout: cmdResult.stdout.joined(separator: "\n"),
+                            stderr: cmdResult.stderr.joined(separator: "\n"),
+                            serverVersionAndHash: serverVersionAndHash,
+                        )
+                    }
+                }
+                let answer = _answer.getOrNil() ??
+                    ServerAnswer(
+                        exitCode: 1,
+                        stderr: "Fail to await main thread. \(_answer.failureOrNil?.localizedDescription ?? "")",
                         serverVersionAndHash: serverVersionAndHash,
                     )
-                }
-            }
-            let answer = _answer.getOrNil() ??
-                ServerAnswer(
-                    exitCode: 1,
-                    stderr: "Fail to await main thread. \(_answer.failureOrNil?.localizedDescription ?? "")",
-                    serverVersionAndHash: serverVersionAndHash,
-                )
-            await answerToClient(answer)
-            continue
+                await answerToClient(answer)
+                continue
         }
-        die("Unreachable")
     }
 }

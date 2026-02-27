@@ -274,7 +274,7 @@ indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
 
     var description: String {
         return switch self {
-            case .emptyRoot: dieT("Impossible")
+            case .emptyRoot: "<root>"
             case .rootKey(let value): value
             case .key(let value): "." + value
             case .index(let index): "[\(index)]"
@@ -301,7 +301,7 @@ indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
             if case .key(let newRoot) = rhs {
                 return .rootKey(newRoot)
             } else {
-                die("Impossible")
+                return rhs
             }
         } else {
             return pair(lhs, rhs)

@@ -68,10 +68,12 @@ private let moveOutMacosUnconventionalWindow =
                 if args.boundaries != .workspace {
                     return io.err("create-implicit-container only supports --boundaries workspace")
                 }
-                targetColumn = switch direction {
-                    case .left: workspace.addColumn(before: currentColumn)
-                    case .right: workspace.addColumn(after: currentColumn)
-                    case .up, .down: dieT("Unreachable: up/down don't call moveWindowBetweenColumns")
+                if direction == .left {
+                    targetColumn = workspace.addColumn(before: currentColumn)
+                } else if direction == .right {
+                    targetColumn = workspace.addColumn(after: currentColumn)
+                } else {
+                    return io.err("Invalid move direction for column move: \(direction.rawValue)")
                 }
         }
     }

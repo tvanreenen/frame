@@ -7,7 +7,10 @@ struct FocusCommand: Command {
 
     func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }
-        switch args.target {
+        guard let cmdTarget = args.target else {
+            return io.err("Focus target is missing")
+        }
+        switch cmdTarget {
             case .direction(let direction):
                 let window = target.windowOrNil
                 if let (parent, ownIndex) = window?.closestParent(hasChildrenInDirection: direction) {
@@ -39,7 +42,8 @@ struct FocusCommand: Command {
                 case .stop: true
                 case .fail: false
                 case .wrapAroundTheWorkspace: wrapAroundTheWorkspace(target, io, direction)
-                case .wrapAroundAllMonitors: dieT("Must be discarded by args parser")
+                case .wrapAroundAllMonitors:
+                    io.err("Invalid boundaries combination: workspace + wrap-around-all-monitors")
             }
         case .allMonitorsOuterFrame:
             let currentMonitor = target.workspace.workspaceMonitor
@@ -100,7 +104,7 @@ extension TreeNode {
                 }
             case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer,
                  .macosPopupWindowsContainer, .macosHiddenAppsWindowsContainer:
-                die("Impossible")
+                return nil
         }
     }
 }

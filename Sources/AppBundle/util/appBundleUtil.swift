@@ -56,9 +56,8 @@ extension String? {
 }
 
 @MainActor
-func terminateApp() -> Never {
+func terminateApp() {
     NSApplication.shared.terminate(nil)
-    die("Unreachable code")
 }
 
 func - (a: CGPoint, b: CGPoint) -> CGPoint {
