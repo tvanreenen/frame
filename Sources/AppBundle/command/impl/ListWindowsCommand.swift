@@ -51,18 +51,42 @@ struct ListWindowsCommand: Command {
             _list = _list.filter { $0.window.isBound }
             _list = _list.sortedBy([{ $0.window.app.name ?? "" }, \.title])
 
-            let list = _list.map { AeroObj.window(window: $0.window, title: $0.title) }
             if args.json {
-                return switch list.formatToJson(args.format, ignoreRightPaddingVar: args._format.isEmpty) {
-                    case .success(let json): io.out(json)
-                    case .failure(let msg): io.err(msg)
-                }
+                return outputJson(_list.map(ListWindowsJsonRow.init), io)
             } else {
-                return switch list.format(args.format) {
-                    case .success(let lines): io.out(lines)
-                    case .failure(let msg): io.err(msg)
-                }
+                let lines = _list.map(ListWindowsTextRow.init).map(\.columns).toPaddingTable()
+                return io.out(lines)
             }
         }
+    }
+}
+
+private struct ListWindowsTextRow {
+    let columns: [String]
+
+    init(_ item: (window: Window, title: String)) {
+        columns = [
+            item.window.windowId.description,
+            item.window.app.name ?? "NULL-APP-NAME",
+            item.title,
+        ]
+    }
+}
+
+private struct ListWindowsJsonRow: Encodable {
+    let windowId: UInt32
+    let appName: String
+    let windowTitle: String
+
+    enum CodingKeys: String, CodingKey {
+        case windowId = "window-id"
+        case appName = "app-name"
+        case windowTitle = "window-title"
+    }
+
+    init(_ item: (window: Window, title: String)) {
+        windowId = item.window.windowId
+        appName = item.window.app.name ?? "NULL-APP-NAME"
+        windowTitle = item.title
     }
 }

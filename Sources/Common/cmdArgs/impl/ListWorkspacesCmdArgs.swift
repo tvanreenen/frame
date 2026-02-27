@@ -17,16 +17,12 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
             "--visible": boolFlag(\.filteringOptions.visible),
             "--empty": boolFlag(\.filteringOptions.empty),
             "--monitor": SubArgParser(\.filteringOptions.onMonitors, parseMonitorIds),
-
-            // Formatting flags
-            "--format": formatParser(\._format, for: .workspace),
             "--count": trueBoolFlag(\.outputOnlyCount),
             "--json": trueBoolFlag(\.json),
         ],
         posArgs: [],
         conflictingOptions: [
             ["--all", "--focused", "--monitor"],
-            ["--count", "--format"],
             ["--count", "--json"],
         ],
     )
@@ -35,7 +31,6 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
     fileprivate var focused: Bool = false // Alias
 
     public var filteringOptions = FilteringOptions()
-    public var _format: [StringInterToken] = [.interVar("workspace")]
     public var outputOnlyCount: Bool = false
     public var json: Bool = false
 
@@ -44,10 +39,6 @@ public struct ListWorkspacesCmdArgs: CmdArgs {
         public var visible: Bool?
         public var empty: Bool?
     }
-}
-
-extension ListWorkspacesCmdArgs {
-    public var format: [StringInterToken] { _format.isEmpty ? [.interVar("workspace")] : _format }
 }
 
 public func parseListWorkspacesCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWorkspacesCmdArgs> {
@@ -71,7 +62,6 @@ public func parseListWorkspacesCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWor
                     .copy(\.focused, false)
                 : raw
         }
-        .flatMap { if $0.json, let msg = getErrorIfFormatIsIncompatibleWithJson($0._format) { .failure(msg) } else { .cmd($0) } }
 }
 
 func parseMonitorIds(input: SubArgParserInput) -> ParsedCliArgs<[MonitorId]> {

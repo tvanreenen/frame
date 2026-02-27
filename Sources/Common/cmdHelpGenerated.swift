@@ -30,23 +30,23 @@ let layout_help_generated = """
     USAGE: layout [-h|--help] [--window-id <window-id>] (tiling|floating)...
     """
 let list_apps_help_generated = """
-    USAGE: list-apps [-h|--help] [--macos-native-hidden [no]] [--format <output-format>] [--count] [--json]
+    USAGE: list-apps [-h|--help] [--macos-native-hidden [no]] [--count] [--json]
     """
 let list_monitors_help_generated = """
-    USAGE: list-monitors [-h|--help] [--focused [no]] [--mouse [no]] [--format <output-format>] [--count] [--json]
+    USAGE: list-monitors [-h|--help] [--focused [no]] [--mouse [no]] [--count] [--json]
     """
 let list_windows_help_generated = """
     USAGE: list-windows [-h|--help] (--workspace <workspace>...|--monitor <monitor>...)
                         [--monitor <monitor>...] [--workspace <workspace>...]
-                        [--pid <pid>] [--app-bundle-id <app-bundle-id>] [--format <output-format>]
+                        [--pid <pid>] [--app-bundle-id <app-bundle-id>]
                         [--count] [--json]
-       OR: list-windows [-h|--help] --all [--format <output-format>] [--count] [--json]
-       OR: list-windows [-h|--help] --focused [--format <output-format>] [--count] [--json]
+       OR: list-windows [-h|--help] --all [--count] [--json]
+       OR: list-windows [-h|--help] --focused [--count] [--json]
     """
 let list_workspaces_help_generated = """
-    USAGE: list-workspaces [-h|--help] --monitor <monitor>... [--visible [no]] [--empty [no]] [--format <output-format>] [--count] [--json]
-       OR: list-workspaces [-h|--help] --all [--format <output-format>] [--count] [--json]
-       OR: list-workspaces [-h|--help] --focused [--format <output-format>] [--count] [--json]
+    USAGE: list-workspaces [-h|--help] --monitor <monitor>... [--visible [no]] [--empty [no]] [--count] [--json]
+       OR: list-workspaces [-h|--help] --all [--count] [--json]
+       OR: list-workspaces [-h|--help] --focused [--count] [--json]
     """
 let move_mouse_help_generated = """
     USAGE: move-mouse [-h|--help] [--fail-if-noop] <mouse-position>

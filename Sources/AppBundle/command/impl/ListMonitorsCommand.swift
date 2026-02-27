@@ -19,18 +19,38 @@ struct ListMonitorsCommand: Command {
         if args.outputOnlyCount {
             return io.out("\(result.count)")
         } else {
-            let list = result.map { AeroObj.monitor($0) }
             if args.json {
-                return switch list.formatToJson(args.format, ignoreRightPaddingVar: args._format.isEmpty) {
-                    case .success(let json): io.out(json)
-                    case .failure(let msg): io.err(msg)
-                }
+                return outputJson(result.map(ListMonitorsJsonRow.init), io)
             } else {
-                return switch list.format(args.format) {
-                    case .success(let lines): io.out(lines)
-                    case .failure(let msg): io.err(msg)
-                }
+                let lines = result.map(ListMonitorsTextRow.init).map(\.columns).toPaddingTable()
+                return io.out(lines)
             }
         }
+    }
+}
+
+private struct ListMonitorsTextRow {
+    let columns: [String]
+
+    init(_ monitor: Monitor) {
+        columns = [
+            monitor.monitorId.map { "\($0 + 1)" } ?? "NULL-MONITOR-ID",
+            monitor.name,
+        ]
+    }
+}
+
+private struct ListMonitorsJsonRow: Encodable {
+    let monitorId: Int?
+    let monitorName: String
+
+    enum CodingKeys: String, CodingKey {
+        case monitorId = "monitor-id"
+        case monitorName = "monitor-name"
+    }
+
+    init(_ monitor: Monitor) {
+        monitorId = monitor.monitorId.map { $0 + 1 }
+        monitorName = monitor.name
     }
 }

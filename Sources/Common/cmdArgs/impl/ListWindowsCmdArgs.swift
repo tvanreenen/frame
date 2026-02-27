@@ -1,5 +1,3 @@
-import OrderedCollections
-
 private let workspace = "<workspace>"
 private let workspaces = "\(workspace)..."
 
@@ -17,9 +15,6 @@ public struct ListWindowsCmdArgs: CmdArgs {
             "--workspace": SubArgParser(\.filteringOptions.workspaces, parseWorkspaces),
             "--pid": singleValueSubArgParser(\.filteringOptions.pidFilter, "<pid>", Int32.init),
             "--app-bundle-id": singleValueSubArgParser(\.filteringOptions.appIdFilter, "<app-bundle-id>") { $0 },
-
-            // Formatting flags
-            "--format": formatParser(\._format, for: .window),
             "--count": trueBoolFlag(\.outputOnlyCount),
             "--json": trueBoolFlag(\.json),
         ],
@@ -27,7 +22,6 @@ public struct ListWindowsCmdArgs: CmdArgs {
         conflictingOptions: [
             ["--all", "--focused", "--workspace"],
             ["--all", "--focused", "--monitor"],
-            ["--count", "--format"],
             ["--count", "--json"],
         ],
     )
@@ -35,7 +29,6 @@ public struct ListWindowsCmdArgs: CmdArgs {
     fileprivate var all: Bool = false // ALIAS
 
     public var filteringOptions = FilteringOptions()
-    public var _format: [StringInterToken] = []
     public var outputOnlyCount: Bool = false
     public var json: Bool = false
 
@@ -45,18 +38,6 @@ public struct ListWindowsCmdArgs: CmdArgs {
         public var workspaces: [WorkspaceFilter] = []
         public var pidFilter: Int32?
         public var appIdFilter: String?
-    }
-}
-
-extension ListWindowsCmdArgs {
-    public var format: [StringInterToken] {
-        _format.isEmpty
-            ? [
-                .interVar("window-id"), .interVar("right-padding"), .literal(" | "),
-                .interVar("app-name"), .interVar("right-padding"), .literal(" | "),
-                .interVar("window-title"),
-            ]
-            : _format
     }
 }
 
@@ -75,24 +56,6 @@ public func parseListWindowsCmdArgs(_ args: StrArrSlice) -> ParsedCmd<ListWindow
         .map { raw in
             raw.all ? raw.copy(\.filteringOptions.monitors, [.all]).copy(\.all, false) : raw // Normalize alias
         }
-        .flatMap { if $0.json, let msg = getErrorIfFormatIsIncompatibleWithJson($0._format) { .failure(msg) } else { .cmd($0) } }
-}
-
-func formatParser<T: ConvenienceCopyable>(
-    _ keyPath: SendableWritableKeyPath<T, [StringInterToken]>,
-    for kind: AeroObjKind,
-) -> SubArgParser<T, [StringInterToken]> {
-    return SubArgParser(keyPath) { input in
-        if let arg = input.nonFlagArgOrNil() {
-            return switch arg.interpolationTokens(interpolationChar: "%") {
-                case .success(let tokens): .succ(tokens, advanceBy: 1)
-                case .failure(let err): .fail("Failed to parse <output-format>. \(err)", advanceBy: 1)
-            }
-        } else {
-            let values = getAvailableInterVars(for: kind).joined(separator: "\n").prependLines("  ")
-            return .fail("<output-format> is mandatory. Possible values:\n\(values)", advanceBy: 0)
-        }
-    }
 }
 
 private func parseWorkspaces(input: SubArgParserInput) -> ParsedCliArgs<[WorkspaceFilter]> {
@@ -122,67 +85,4 @@ public enum WorkspaceFilter: Equatable, Sendable {
     case focused
     case visible
     case name(WorkspaceName)
-}
-
-public enum FormatVar: Equatable {
-    case window(WindowFormatVar)
-    case workspace(WorkspaceFormatVar)
-    case app(AppFormatVar)
-    case monitor(MonitorFormatVar)
-
-    public enum WindowFormatVar: String, Equatable, CaseIterable {
-        case windowId = "window-id"
-        case windowIsFullscreen = "window-is-fullscreen"
-        case windowTitle = "window-title"
-        case windowParentContainerLayout = "window-parent-container-layout"
-    }
-
-    public enum WorkspaceFormatVar: String, Equatable, CaseIterable {
-        case workspaceName = "workspace"
-        case workspaceFocused = "workspace-is-focused"
-        case workspaceVisible = "workspace-is-visible"
-    }
-
-    public enum AppFormatVar: String, Equatable, CaseIterable {
-        case appBundleId = "app-bundle-id"
-        case appName = "app-name"
-        case appPid = "app-pid"
-        case appExecPath = "app-exec-path"
-        case appBundlePath = "app-bundle-path"
-    }
-
-    public enum MonitorFormatVar: String, Equatable, CaseIterable {
-        case monitorId = "monitor-id"
-        case monitorAppKitNsScreenScreensId = "monitor-appkit-nsscreen-screens-id"
-        case monitorName = "monitor-name"
-        case monitorIsMain = "monitor-is-main"
-    }
-}
-
-public enum PlainInterVar: String, CaseIterable {
-    case rightPadding = "right-padding"
-    case newline = "newline"
-    case tab = "tab"
-}
-
-public enum AeroObjKind: CaseIterable, Sendable {
-    case window, workspace, app, monitor
-}
-
-public func getAvailableInterVars(for kind: AeroObjKind) -> [String] {
-    _getAvailableInterVars(for: kind) + PlainInterVar.allCases.map(\.rawValue)
-}
-
-private func _getAvailableInterVars(for kind: AeroObjKind) -> [String] {
-    switch kind {
-        case .app: FormatVar.AppFormatVar.allCases.map(\.rawValue)
-        case .monitor: FormatVar.MonitorFormatVar.allCases.map(\.rawValue)
-        case .workspace:
-            FormatVar.WorkspaceFormatVar.allCases.map(\.rawValue) +
-                _getAvailableInterVars(for: .monitor)
-        case .window:
-            FormatVar.WindowFormatVar.allCases.map(\.rawValue) +
-                _getAvailableInterVars(for: .workspace) +
-                _getAvailableInterVars(for: .app)
-    }
 }

@@ -9,7 +9,7 @@ include::util/man-attributes.adoc[]
 == Synopsis
 [verse]
 // tag::synopsis[]
-aerospace list-apps [-h|--help] [--macos-native-hidden [no]] [--format <output-format>] [--count] [--json]
+aerospace list-apps [-h|--help] [--macos-native-hidden [no]] [--count] [--json]
 
 // end::synopsis[]
 
@@ -30,36 +30,11 @@ include::util/conditional-options-header.adoc[]
 Filter results to only print hidden applications.
 `[no]` inverts the condition
 
---format <output-format>:: Specify output format. See "Output Format" section for more details.
-Incompatible with `--count`
-
 --count:: Output only the number of apps.
-Incompatible with: `--format`, `--json`
+Incompatible with `--json`
 
 --json:: Output in JSON format.
-Can be used in combination with `--format` to specify which data to include into the json.
 Incompatible with `--count`
-
-// =========================================================== Output Format
-include::util/conditional-output-format-header.adoc[]
-
-Output format can be configured with optional `[--format <output-format>]` option.
-`<output-format>` supports https://en.wikipedia.org/wiki/String_interpolation[string interpolation].
-
-If not specified, the default `<output-format>` is: +
-`%{app-pid}%{right-padding} | %{app-bundle-id}%{right-padding} | %{app-name}`
-
-The following variables can be used inside `<output-format>`:
-
-%{app-bundle-id}:: String. Application unique identifier. https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids[Bundle ID]
-%{app-name}:: String. Application name
-%{app-pid}:: Number. https://en.wikipedia.org/wiki/Process_identifier[UNIX process identifier]
-%{app-exec-path}:: String. Application executable path
-%{app-bundle-path}:: String. Application bundle path
-
-%{right-padding}:: A special variable which expands with a minimum number of spaces required to form a right padding in the appropriate column
-%{newline}:: Unicode U+000A newline symbol `\n`
-%{tab}:: Unicode U+0009 tab symbol `\t`
 
 // end::body[]
 
