@@ -31,8 +31,6 @@ extension Command {
     func run(_ env: CmdEnv, _ stdin: CmdStdin) async throws -> CmdResult {
         return try await [self].runCmdSeq(env, stdin)
     }
-
-    var isExec: Bool { self is ExecAndForgetCommand }
 }
 
 // There are 4 entry points for running commands:

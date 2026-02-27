@@ -38,16 +38,7 @@ full-screen-api.transition-duration.leave = 0 0
 
 To highlight the focused window with colored border you can use link:https://github.com/FelixKratz/JankyBorders[JankyBorders].
 
-You can also use `after-startup-command` to start JankyBorders together with AeroSpace
-
-[source,toml]
-----
-after-startup-command = [
-    # JankyBorders has a built-in detection of already running process,
-    # so it won't be run twice on AeroSpace restart
-    'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0'
-]
-----
+Start JankyBorders using launchd or your preferred startup manager.
 
 [#raycast-extension]
 == AeroSpace Raycast extension
@@ -98,11 +89,6 @@ Use these snippets as a starting point.
 .~/.aerospace.toml
 [source,toml]
 ----
-# Run Sketchybar together with AeroSpace
-# sketchybar has a built-in detection of already running process,
-# so it won't be run twice on AeroSpace restart
-after-startup-command = ['exec-and-forget sketchybar']
-
 # Notify Sketchybar about workspace change
 exec-on-workspace-change = ['/bin/bash', '-c',
     'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$SIMPLEWM_FOCUSED_WORKSPACE'
@@ -153,48 +139,12 @@ In order to sync simple-bar with AeroSpace, add these lines to your AeroSpace co
 .~/.aerospace.toml
 [source,toml]
 ----
-# Notify simple-bar about window focus change
-on-focus-changed = [
-  "exec-and-forget osascript -e 'tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\"'",
-]
-
 # Notify simple-bar about workspace change
 exec-on-workspace-change = [
   '/bin/zsh',
   '-c',
   '/usr/bin/osascript -e "tell application id \"tracesOf.Uebersicht\" to refresh widget id \"simple-bar-index-jsx\""',
 ]
-----
-
-[#open-a-new-window-with-applescript]
-== Open a new window with AppleScript
-
-Invoking Safari/Terminal with a command the obvious way (`exec-and-forget open -a Safari`) results in an outcome that is probably not the intended one.
-Namely, that any workspace already containing an instance of Safari/Terminal is brought in focus.
-
-Opening *a new window* of a program that can support multiple windows (such as Safari or Terminal.app) can be accomplished with an AppleScript inlined in `aerospace.toml` as follows:
-
-- Safari
-+
-[source,toml]
-----
-ctrl-g = '''exec-and-forget osascript -e '
-tell application "Safari"
-    make new document at end of documents
-    activate
-end tell'
-'''
-----
-- Terminal
-+
-[source,toml]
-----
-ctrl-g = '''exec-and-forget osascript -e '
-tell application "Terminal"
-    do script
-    activate
-end tell'
-'''
 ----
 
 [#disable-hide-app]
@@ -213,14 +163,7 @@ If `automatically-unhide-macos-hidden-apps` isn't enough, you can disable `cmd-h
 [#screenshoot-shortcut]
 == Take screenshots to clipboard using keyboard shortcut
 
-You can configure a custom shortcut to take a screenshot.
-`screencapture` is a built-in macOS command.
-
-.~/.aerospace.toml
-[source,toml]
-----
-alt-shift-s = 'exec-and-forget screencapture -i -c'
-----
+Use macOS native keyboard shortcuts for screenshots.
 
 [#spacelist]
 == Spacelist

@@ -4,9 +4,11 @@ import XCTest
 
 @MainActor
 final class ExecCommandTest: XCTestCase {
-    override func setUp() async throws { setUpWorkspacesForTests() }
+    func testRemovedCommandsAreRejected() {
+        let execErr = parseCommand("exec-and-forget echo 'foo'").errorOrNil ?? ""
+        XCTAssertTrue(execErr.contains("exec-and-forget"), execErr)
 
-    func testParseExecCommand() {
-        testParseCommandSucc("exec-and-forget echo 'foo'", ExecAndForgetCmdArgs(bashScript: " echo 'foo'"))
+        let envErr = parseCommand("list-exec-env-vars").errorOrNil ?? ""
+        XCTAssertTrue(envErr.contains("list-exec-env-vars"), envErr)
     }
 }

@@ -15,9 +15,6 @@ let enable_help_generated = """
        OR: enable [-h|--help] on [--fail-if-noop]
        OR: enable [-h|--help] off [--fail-if-noop]
     """
-let exec_and_forget_help_generated = """
-    USAGE: exec-and-forget <bash-script>
-    """
 let focus_monitor_help_generated = """
     USAGE: focus-monitor [-h|--help] [--wrap-around] (left|down|up|right)
        OR: focus-monitor [-h|--help] [--wrap-around] (next|prev)
@@ -39,9 +36,6 @@ let layout_help_generated = """
     """
 let list_apps_help_generated = """
     USAGE: list-apps [-h|--help] [--macos-native-hidden [no]] [--format <output-format>] [--count] [--json]
-    """
-let list_exec_env_vars_help_generated = """
-    USAGE: list-exec-env-vars [-h|--help]
     """
 let list_monitors_help_generated = """
     USAGE: list-monitors [-h|--help] [--focused [no]] [--mouse [no]] [--format <output-format>] [--count] [--json]

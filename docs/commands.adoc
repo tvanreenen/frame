@@ -19,13 +19,6 @@ include::aerospace-enable.adoc[tags=synopsis]
 include::aerospace-enable.adoc[tags=purpose]
 include::aerospace-enable.adoc[tags=body]
 
-== exec-and-forget
-----
-include::aerospace-exec-and-forget.adoc[tags=synopsis]
-----
-include::aerospace-exec-and-forget.adoc[tags=purpose]
-include::aerospace-exec-and-forget.adoc[tags=body]
-
 == focus
 ----
 include::aerospace-focus.adoc[tags=synopsis]
@@ -111,13 +104,6 @@ include::aerospace-list-apps.adoc[tags=synopsis]
 ----
 include::aerospace-list-apps.adoc[tags=purpose]
 include::aerospace-list-apps.adoc[tags=body]
-
-=== list-exec-env-vars
-----
-include::aerospace-list-exec-env-vars.adoc[tags=synopsis]
-----
-include::aerospace-list-exec-env-vars.adoc[tags=purpose]
-include::aerospace-list-exec-env-vars.adoc[tags=body]
 
 === list-monitors
 ----

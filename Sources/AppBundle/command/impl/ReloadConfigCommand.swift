@@ -29,7 +29,6 @@ struct ReloadConfigCommand: Command {
     switch readConfig(forceConfigUrl: forceConfigUrl) {
         case .success(let (parsedConfig, url)):
             if !args.dryRun {
-                resetHotKeys()
                 config = parsedConfig
                 configUrl = url
                 syncHotKeys()

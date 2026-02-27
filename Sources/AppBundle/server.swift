@@ -77,10 +77,6 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
             await answerToClient(exitCode: 1, stderr: err)
             continue
         }
-        if command?.isExec == true {
-            await answerToClient(exitCode: 1, stderr: "exec-and-forget is prohibited in CLI")
-            continue
-        }
         if let command {
             let _answer: Result<ServerAnswer, Error> = await Result {
                 try await runLightSession(.socketServer, token) { () throws in

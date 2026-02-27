@@ -10,8 +10,6 @@ extension CmdArgs {
                 command = BalanceSizesCommand(args: self as! BalanceSizesCmdArgs)
             case .enable:
                 command = EnableCommand(args: self as! EnableCmdArgs)
-            case .execAndForget:
-                die("exec-and-forget is parsed separately")
             case .focus:
                 command = FocusCommand(args: self as! FocusCmdArgs)
             case .focusMonitor:
@@ -22,8 +20,6 @@ extension CmdArgs {
                 command = LayoutCommand(args: self as! LayoutCmdArgs)
             case .listApps:
                 command = ListAppsCommand(args: self as! ListAppsCmdArgs)
-            case .listExecEnvVars:
-                command = ListExecEnvVarsCommand(args: self as! ListExecEnvVarsCmdArgs)
             case .listMonitors:
                 command = ListMonitorsCommand(args: self as! ListMonitorsCmdArgs)
             case .listWindows:

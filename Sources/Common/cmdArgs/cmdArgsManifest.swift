@@ -4,13 +4,11 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case addColumn = "add-column"
     case balanceSizes = "balance-sizes"
     case enable
-    case execAndForget = "exec-and-forget"
     case focus
     case focusMonitor = "focus-monitor"
     case fullscreen
     case layout
     case listApps = "list-apps"
-    case listExecEnvVars = "list-exec-env-vars"
     case listMonitors = "list-monitors"
     case listWindows = "list-windows"
     case listWorkspaces = "list-workspaces"
@@ -33,8 +31,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(BalanceSizesCmdArgs.init)
             case .enable:
                 result[kind.rawValue] = SubCommandParser(parseEnableCmdArgs)
-            case .execAndForget:
-                break // exec-and-forget is parsed separately
             case .focus:
                 result[kind.rawValue] = SubCommandParser(parseFocusCmdArgs)
             case .focusMonitor:
@@ -45,8 +41,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseLayoutCmdArgs)
             case .listApps:
                 result[kind.rawValue] = SubCommandParser(parseListAppsCmdArgs)
-            case .listExecEnvVars:
-                result[kind.rawValue] = SubCommandParser(ListExecEnvVarsCmdArgs.init)
             case .listMonitors:
                 result[kind.rawValue] = SubCommandParser(parseListMonitorsCmdArgs)
             case .listWindows:

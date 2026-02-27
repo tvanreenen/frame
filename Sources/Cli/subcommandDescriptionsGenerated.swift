@@ -9,7 +9,6 @@ let subcommandDescriptions = [
     ["  fullscreen", "Toggle the fullscreen mode for the focused window"],
     ["  layout", "Change layout of the focused window to the given layout"],
     ["  list-apps", "Print the list of running applications that appears in the Dock and may have a user interface"],
-    ["  list-exec-env-vars", "List environment variables that exec-* commands and callbacks are run with"],
     ["  list-monitors", "Print monitors that satisfy conditions"],
     ["  list-windows", "Print windows that satisfy conditions"],
     ["  list-workspaces", "Print workspaces that satisfy conditions"],
