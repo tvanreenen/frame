@@ -31,7 +31,7 @@ import Foundation
         _ = Workspace.all.first?.focusWorkspace()
         try await runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
         try await runLightSession(.startup) {
-            _ = try await config.afterStartupCommand.runCmdSeq(.defaultEnv, .emptyStdin)
+            _ = try await runtimeContext.config.afterStartupCommand.runCmdSeq(.defaultEnv, .emptyStdin)
         }
     }
 }

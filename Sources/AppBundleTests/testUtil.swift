@@ -15,12 +15,12 @@ let projectRoot: URL = {
 
 @MainActor
 func setUpWorkspacesForTests() {
-    config = defaultConfig
-    configUrl = defaultConfigUrl
+    runtimeContext.config = defaultConfig
+    runtimeContext.configUrl = defaultConfigUrl
 
     // Don't create any bindings and workspaces for tests
-    config.bindings = [:]
-    config.persistentWorkspaces = []
+    runtimeContext.config.bindings = [:]
+    runtimeContext.config.persistentWorkspaces = []
 
     for workspace in Workspace.all {
         for child in workspace.children {

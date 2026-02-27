@@ -15,7 +15,7 @@ public final class SecureInputPanel: NSPanelHud {
 
     @MainActor
     public func refresh() {
-        if !config.bindings.isEmpty && IsSecureEventInputEnabled() {
+        if !runtimeContext.config.bindings.isEmpty && IsSecureEventInputEnabled() {
             if isVisible { return }
             self.contentView?.subviews.removeAll()
             hostingView = NSHostingView(rootView: SecureInputView())

@@ -29,11 +29,22 @@ var defaultConfigUrl: URL {
     }
     return parsedConfig.config
 }()
-@MainActor var config: Config = defaultConfig // todo move to Ctx?
-@MainActor var configUrl: URL = defaultConfigUrl
+
+@MainActor
+final class RuntimeContext {
+    var config: Config
+    var configUrl: URL
+
+    init(config: Config, configUrl: URL) {
+        self.config = config
+        self.configUrl = configUrl
+    }
+}
+
+@MainActor
+let runtimeContext = RuntimeContext(config: defaultConfig, configUrl: defaultConfigUrl)
 
 struct Config: ConvenienceCopyable {
-    var configVersion: Int = 2
     var afterStartupCommand: [any Command] = []
     var startAtLogin: Bool = false
     var autoReloadConfig: Bool = false

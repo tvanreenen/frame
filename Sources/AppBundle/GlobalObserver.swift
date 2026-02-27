@@ -22,7 +22,7 @@ enum GlobalObserver {
         let notifName = notification.name.rawValue
         Task { @MainActor in
             try await runLightSession(.globalObserver(notifName)) {
-                if config.automaticallyUnhideMacosHiddenApps {
+                if runtimeContext.config.automaticallyUnhideMacosHiddenApps {
                     if let w = prevFocus?.windowOrNil,
                        w.app.isHidden,
                        // "Hide others" (cmd-alt-h) -> don't force focus

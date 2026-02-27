@@ -26,7 +26,7 @@ private func _normalizeLayoutReason(workspace: Workspace, windows: [Window]) asy
         let isMacosFullscreen = try await window.isMacosFullscreen
         let isMacosMinimized = try await (!isMacosFullscreen).andAsync { @MainActor @Sendable in try await window.isMacosMinimized }
         let isMacosWindowOfHiddenApp = !isMacosFullscreen && !isMacosMinimized &&
-            !config.automaticallyUnhideMacosHiddenApps && window.app.isHidden
+            !runtimeContext.config.automaticallyUnhideMacosHiddenApps && window.app.isHidden
         switch window.layoutReason {
             case .standard:
                 guard let parent = window.parent else { continue }

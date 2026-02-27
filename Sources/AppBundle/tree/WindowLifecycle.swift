@@ -61,7 +61,7 @@ func tryOnWindowDetected(_ window: Window) async throws {
 
 @MainActor
 private func onWindowDetected(_ window: Window) async throws {
-    for callback in config.onWindowDetected where try await callback.matches(window) {
+    for callback in runtimeContext.config.onWindowDetected where try await callback.matches(window) {
         _ = try await callback.run.runCmdSeq(.defaultEnv.copy(\.windowId, window.windowId), .emptyStdin)
         if !callback.checkFurtherCallbacks {
             return

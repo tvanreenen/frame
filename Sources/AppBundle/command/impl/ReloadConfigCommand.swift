@@ -29,8 +29,8 @@ struct ReloadConfigCommand: Command {
     switch readConfig(forceConfigUrl: forceConfigUrl) {
         case .success(let (parsedConfig, url)):
             if !args.dryRun {
-                config = parsedConfig
-                configUrl = url
+                runtimeContext.config = parsedConfig
+                runtimeContext.configUrl = url
                 syncHotKeys()
                 syncStartAtLogin()
                 MessageModel.shared.message = nil

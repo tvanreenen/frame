@@ -30,8 +30,8 @@ private let debounceDelay: Duration = .milliseconds(200)
 
 @MainActor func syncConfigFileWatcher() {
     currentWatcher = nil
-    if !config.autoReloadConfig { return }
-    currentWatcher = ConfigFileWatcher(url: configUrl) {
+    if !runtimeContext.config.autoReloadConfig { return }
+    currentWatcher = ConfigFileWatcher(url: runtimeContext.configUrl) {
         debounceTask?.cancel()
         debounceTask = Task {
             try await Task.sleep(for: debounceDelay)

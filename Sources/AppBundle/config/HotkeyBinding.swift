@@ -42,7 +42,7 @@ extension HotKey {
 
 @MainActor func syncHotKeys() {
     resetHotKeys()
-    for binding in config.bindings.values {
+    for binding in runtimeContext.config.bindings.values {
         let hotkeyId = HotkeyId(modifiers: binding.modifiers, keyCode: binding.keyCode)
         hotkeys[hotkeyId] = HotKey(key: binding.keyCode, modifiers: binding.modifiers, keyDownHandler: {
             Task {

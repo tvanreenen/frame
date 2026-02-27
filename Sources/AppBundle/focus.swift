@@ -157,30 +157,30 @@ extension Workspace {
 }
 
 @MainActor private func onFocusedMonitorChanged(_ focus: LiveFocus) {
-    if config.onFocusedMonitorChanged.isEmpty { return }
+    if runtimeContext.config.onFocusedMonitorChanged.isEmpty { return }
     // todo potential optimization: don't run runSession if we are already in runSession
     Task {
         try await runLightSession(.onFocusedMonitorChanged) {
-            _ = try await config.onFocusedMonitorChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
+            _ = try await runtimeContext.config.onFocusedMonitorChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }
 }
 @MainActor private func onFocusChanged(_ focus: LiveFocus) {
-    if config.onFocusChanged.isEmpty { return }
+    if runtimeContext.config.onFocusChanged.isEmpty { return }
     // todo potential optimization: don't run runSession if we are already in runSession
     Task {
         try await runLightSession(.onFocusChanged) {
-            _ = try await config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
+            _ = try await runtimeContext.config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }
 }
 
 @MainActor private func onWorkspaceChanged(_ oldWorkspace: String, _ newWorkspace: String) {
-    guard let executable = config.execOnWorkspaceChange.first else { return }
+    guard let executable = runtimeContext.config.execOnWorkspaceChange.first else { return }
     let process = Process()
     process.executableURL = URL(filePath: executable)
-    process.arguments = Array(config.execOnWorkspaceChange.dropFirst())
-    process.environment = config.execConfig.envVariables + [
+    process.arguments = Array(runtimeContext.config.execOnWorkspaceChange.dropFirst())
+    process.environment = runtimeContext.config.execConfig.envVariables + [
         SIMPLEWM_FOCUSED_WORKSPACE: newWorkspace,
         SIMPLEWM_PREV_WORKSPACE: oldWorkspace,
     ]
