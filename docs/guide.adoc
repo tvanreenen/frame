@@ -92,7 +92,7 @@ If no custom config is found, AeroSpace will load the default config.
 
 If the key is omitted in the custom config, it falls back to the value in the default config, unless it's stated otherwise for the specific keys. Namely:
 
-* `mode.*.binding`. It falls back to the empty TOML table. Your config is the source of truth for keyboard bindings. You must explicitly mention all the keyboard bindings and <<binding-modes,binding modes>> in your config.
+* `binding`. It falls back to the empty TOML table. Your config is the source of truth for keyboard bindings.
 * `on-focused-monitor-changed`. It falls back to the empty TOML array.
 * `exec` TOML table. See: <<exec-env-vars>> (It's so boring and verbose, I don't even want to mention it in the `default-config.toml`)
 
@@ -113,27 +113,18 @@ link:config-examples/default-config.toml[Download default-config.toml]
 include::config-examples/default-config.toml[]
 ----
 
-[#binding-modes]
-=== Binding modes
+[#bindings]
+=== Key bindings
 
-You can create multiple sets of bindings by creating different binding modes.
-When you switch to a different binding mode, all the bindings from the current mode are deactivated, and only the bindings specified in the new mode become active.
-The initial binding mode that AeroSpace starts out with is "main".
-
-This feature is absolutely identical to the one
-https://i3wm.org/docs/userguide.html#binding_modes[in i3]
-
-Working with binding modes consists of two parts:
-1. defining a binding to switch to the binding mode and 2. declaring the binding mode itself.
+Define key bindings in a single `[binding]` table.
 
 [source,toml]
 ----
-[mode.main.binding]            # Declare 'main' binding mode
-    alt-r = 'mode resize'      # 1. Define a binding to switch to 'resize' mode
-
-[mode.resize.binding]          # 2. Declare 'resize' binding mode
-    minus = 'resize smart -50'
-    equal = 'resize smart +50'
+[binding]
+    alt-h = 'focus left'
+    alt-j = 'focus down'
+    alt-k = 'focus up'
+    alt-l = 'focus right'
 ----
 
 [#commands]
@@ -147,7 +138,7 @@ There are two ways on how you can use commands:
 +
 [source,toml]
 ----
-[mode.main.binding]
+[binding]
     # Bind alt-1 key to switch to workspace 1
     alt-1 = 'workspace 1'
     # Or bind a sequence of commands
@@ -175,7 +166,7 @@ If you use different layout, different alphabet, or you just want to have a fanc
 [key-mapping.key-notation-to-key-code]
     unicorn = 'u'
 
-[mode.main.binding]
+[binding]
     alt-unicorn = 'workspace wonderland' # (⁀ᗢ⁀)
 ----
 

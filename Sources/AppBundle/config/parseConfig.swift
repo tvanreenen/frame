@@ -85,7 +85,7 @@ struct Parser<S: ConvenienceCopyable, T>: ParserProtocol {
 }
 
 private let keyMappingConfigRootKey = "key-mapping"
-private let modeConfigRootKey = "mode"
+private let bindingConfigRootKey = "binding"
 private let persistentWorkspacesKey = "persistent-workspaces"
 
 // For every new config option you add, think:
@@ -95,7 +95,6 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "after-startup-command": Parser(\.afterStartupCommand) { parseCommandOrCommands($0).toParsedToml($1) },
 
     "on-focus-changed": Parser(\.onFocusChanged) { parseCommandOrCommands($0).toParsedToml($1) },
-    "on-mode-changed": Parser(\.onModeChanged) { parseCommandOrCommands($0).toParsedToml($1) },
     "on-focused-monitor-changed": Parser(\.onFocusedMonitorChanged) { parseCommandOrCommands($0).toParsedToml($1) },
     // "on-focused-workspace-changed": Parser(\.onFocusedWorkspaceChanged, { parseCommandOrCommands($0).toParsedToml($1) }),
 
@@ -107,7 +106,7 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "exec": Parser(\.execConfig, parseExecConfig),
 
     keyMappingConfigRootKey: Parser(\.keyMapping, skipParsing(Config().keyMapping)), // Parsed manually
-    modeConfigRootKey: Parser(\.modes, skipParsing(Config().modes)), // Parsed manually
+    bindingConfigRootKey: Parser(\.bindings, skipParsing(Config().bindings)), // Parsed manually
 
     "gaps": Parser(\.gaps, parseGaps),
     "workspace-to-monitor-force-assignment": Parser(\.workspaceToMonitorForceAssignment, parseWorkspaceToMonitorAssignment),
@@ -160,9 +159,9 @@ func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]
         config.keyMapping = mapping
     }
 
-    // Parse modeConfigRootKey after keyMappingConfigRootKey
-    if let modes = rawTable[modeConfigRootKey].flatMap({ parseModes($0, .rootKey(modeConfigRootKey), &errors, config.keyMapping.resolve()) }) {
-        config.modes = modes
+    // Parse bindingConfigRootKey after keyMappingConfigRootKey
+    if let bindings = rawTable[bindingConfigRootKey].flatMap({ parseBindings($0, .rootKey(bindingConfigRootKey), &errors, config.keyMapping.resolve()) }) {
+        config.bindings = bindings
     }
 
     return (config, errors)

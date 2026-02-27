@@ -4,7 +4,6 @@ import Foundation
 
 public let socketPath = "/tmp/\(simpleWmAppId)-\(unixUserName).sock"
 public let unixUserName = NSUserName()
-public let mainModeId = "main"
 
 @TaskLocal
 public var refreshSessionEvent: RefreshSessionEvent? = nil
@@ -79,7 +78,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
     case ax(String)
     case onFocusedMonitorChanged
     case onFocusChanged
-    case onModeChanged
 
     public var isStartup: Bool {
         if case .startup = self { return true } else { return false }
@@ -98,7 +96,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
             case .startup: "startup"
             case .onFocusedMonitorChanged: "onFocusedMonitorChanged"
             case .onFocusChanged: "onFocusChanged"
-            case .onModeChanged: "onModeChanged"
         }
     }
 }

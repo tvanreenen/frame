@@ -43,9 +43,6 @@ let list_apps_help_generated = """
 let list_exec_env_vars_help_generated = """
     USAGE: list-exec-env-vars [-h|--help]
     """
-let list_modes_help_generated = """
-    USAGE: list-modes [-h|--help] [--current] [--count] [--json]
-    """
 let list_monitors_help_generated = """
     USAGE: list-monitors [-h|--help] [--focused [no]] [--mouse [no]] [--format <output-format>] [--count] [--json]
     """
@@ -61,9 +58,6 @@ let list_workspaces_help_generated = """
     USAGE: list-workspaces [-h|--help] --monitor <monitor>... [--visible [no]] [--empty [no]] [--format <output-format>] [--count] [--json]
        OR: list-workspaces [-h|--help] --all [--format <output-format>] [--count] [--json]
        OR: list-workspaces [-h|--help] --focused [--format <output-format>] [--count] [--json]
-    """
-let mode_help_generated = """
-    USAGE: mode [-h|--help] <binding-mode>
     """
 let move_mouse_help_generated = """
     USAGE: move-mouse [-h|--help] [--fail-if-noop] <mouse-position>

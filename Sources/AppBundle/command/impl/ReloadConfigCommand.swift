@@ -32,7 +32,7 @@ struct ReloadConfigCommand: Command {
                 resetHotKeys()
                 config = parsedConfig
                 configUrl = url
-                try await activateMode(activeMode)
+                syncHotKeys()
                 syncStartAtLogin()
                 MessageModel.shared.message = nil
             }

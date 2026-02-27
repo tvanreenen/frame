@@ -205,7 +205,7 @@ If `automatically-unhide-macos-hidden-apps` isn't enough, you can disable `cmd-h
 .~/.aerospace.toml
 [source,toml]
 ----
-[mode.main.binding]
+[binding]
     cmd-h = [] # Disable "hide application"
     cmd-alt-h = [] # Disable "hide others"
 ----

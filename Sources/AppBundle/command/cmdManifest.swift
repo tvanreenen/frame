@@ -24,16 +24,12 @@ extension CmdArgs {
                 command = ListAppsCommand(args: self as! ListAppsCmdArgs)
             case .listExecEnvVars:
                 command = ListExecEnvVarsCommand(args: self as! ListExecEnvVarsCmdArgs)
-            case .listModes:
-                command = ListModesCommand(args: self as! ListModesCmdArgs)
             case .listMonitors:
                 command = ListMonitorsCommand(args: self as! ListMonitorsCmdArgs)
             case .listWindows:
                 command = ListWindowsCommand(args: self as! ListWindowsCmdArgs)
             case .listWorkspaces:
                 command = ListWorkspacesCommand(args: self as! ListWorkspacesCmdArgs)
-            case .mode:
-                command = ModeCommand(args: self as! ModeCmdArgs)
             case .move:
                 command = MoveCommand(args: self as! MoveCmdArgs)
             case .moveMouse:

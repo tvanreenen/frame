@@ -19,7 +19,7 @@ func setUpWorkspacesForTests() {
     configUrl = defaultConfigUrl
 
     // Don't create any bindings and workspaces for tests
-    config.modes = [mainModeId: Mode(bindings: [:])]
+    config.bindings = [:]
     config.persistentWorkspaces = []
 
     for workspace in Workspace.all {

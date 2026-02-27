@@ -54,13 +54,6 @@ include::aerospace-layout.adoc[tags=synopsis]
 include::aerospace-layout.adoc[tags=purpose]
 include::aerospace-layout.adoc[tags=body]
 
-== mode
-----
-include::aerospace-mode.adoc[tags=synopsis]
-----
-include::aerospace-mode.adoc[tags=purpose]
-include::aerospace-mode.adoc[tags=body]
-
 [#move]
 == move
 ----
@@ -125,13 +118,6 @@ include::aerospace-list-exec-env-vars.adoc[tags=synopsis]
 ----
 include::aerospace-list-exec-env-vars.adoc[tags=purpose]
 include::aerospace-list-exec-env-vars.adoc[tags=body]
-
-=== list-modes
-----
-include::aerospace-list-modes.adoc[tags=synopsis]
-----
-include::aerospace-list-modes.adoc[tags=purpose]
-include::aerospace-list-modes.adoc[tags=body]
 
 === list-monitors
 ----

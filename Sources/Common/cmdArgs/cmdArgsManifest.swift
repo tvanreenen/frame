@@ -11,11 +11,9 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case layout
     case listApps = "list-apps"
     case listExecEnvVars = "list-exec-env-vars"
-    case listModes = "list-modes"
     case listMonitors = "list-monitors"
     case listWindows = "list-windows"
     case listWorkspaces = "list-workspaces"
-    case mode
     case move = "move"
     case moveMouse = "move-mouse"
     case moveNodeToWorkspace = "move-node-to-workspace"
@@ -49,16 +47,12 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseListAppsCmdArgs)
             case .listExecEnvVars:
                 result[kind.rawValue] = SubCommandParser(ListExecEnvVarsCmdArgs.init)
-            case .listModes:
-                result[kind.rawValue] = SubCommandParser(parseListModesCmdArgs)
             case .listMonitors:
                 result[kind.rawValue] = SubCommandParser(parseListMonitorsCmdArgs)
             case .listWindows:
                 result[kind.rawValue] = SubCommandParser(parseListWindowsCmdArgs)
             case .listWorkspaces:
                 result[kind.rawValue] = SubCommandParser(parseListWorkspacesCmdArgs)
-            case .mode:
-                result[kind.rawValue] = SubCommandParser(ModeCmdArgs.init)
             case .move:
                 result[kind.rawValue] = SubCommandParser(parseMoveCmdArgs)
             case .moveMouse:

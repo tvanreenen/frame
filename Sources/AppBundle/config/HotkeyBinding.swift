@@ -26,35 +26,20 @@ extension HotKey {
     }
 }
 
-@MainActor var activeMode: String? = mainModeId
-@MainActor func activateMode(_ targetMode: String?) async throws {
-    let targetBindings = targetMode.flatMap { config.modes[$0] }?.bindings ?? [:]
+@MainActor func syncHotKeys(enabled: Bool = TrayMenuModel.shared.isEnabled) {
+    let targetBindings = config.bindings
     for binding in targetBindings.values where !hotkeys.keys.contains(binding.descriptionWithKeyCode) {
         hotkeys[binding.descriptionWithKeyCode] = HotKey(key: binding.keyCode, modifiers: binding.modifiers, keyDownHandler: {
             Task {
-                if let activeMode {
-                    try await runLightSession(.hotkeyBinding, .checkServerIsEnabledOrDie()) { () throws in
-                        _ = try await config.modes[activeMode]?.bindings[binding.descriptionWithKeyCode]?.commands
-                            .runCmdSeq(.defaultEnv, .emptyStdin)
-                    }
+                try await runLightSession(.hotkeyBinding, .checkServerIsEnabledOrDie()) {
+                    _ = try await config.bindings[binding.descriptionWithKeyCode]?.commands
+                        .runCmdSeq(.defaultEnv, .emptyStdin)
                 }
             }
         })
     }
     for (binding, key) in hotkeys {
-        if targetBindings.keys.contains(binding) {
-            key.isEnabled = true
-        } else {
-            key.isEnabled = false
-        }
-    }
-    let oldMode = activeMode
-    activeMode = targetMode
-    if oldMode != targetMode && !config.onModeChanged.isEmpty {
-        guard let token: RunSessionGuard = .isServerEnabled else { return }
-        try await runLightSession(.onModeChanged, token) {
-            _ = try await config.onModeChanged.runCmdSeq(.defaultEnv, .emptyStdin)
-        }
+        key.isEnabled = enabled && targetBindings.keys.contains(binding)
     }
 }
 

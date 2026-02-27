@@ -22,7 +22,7 @@ final class ConfigTest: XCTestCase {
     func testQueryCantBeUsedInConfig() {
         let (_, errors) = parseConfig(
             """
-            [mode.main.binding]
+            [binding]
                 alt-a = 'list-apps'
             """,
         )
@@ -32,46 +32,29 @@ final class ConfigTest: XCTestCase {
     func testDropBindings() {
         let (config, errors) = parseConfig(
             """
-            mode.main = {}
+            [binding]
             """,
         )
         assertEquals(errors, [])
-        XCTAssertTrue(config.modes[mainModeId]?.bindings.isEmpty == true)
+        XCTAssertTrue(config.bindings.isEmpty == true)
     }
 
-    func testParseMode() {
+    func testParseBindings() {
         let (config, errors) = parseConfig(
             """
-            [mode.main.binding]
+            [binding]
                 alt-h = 'focus left'
             """,
         )
         assertEquals(errors, [])
         let binding = HotkeyBinding(.option, .h, [FocusCommand.new(direction: .left)])
-        assertEquals(
-            config.modes[mainModeId],
-            Mode(bindings: [binding.descriptionWithKeyCode: binding]),
-        )
-    }
-
-    func testModesMustContainDefaultModeError() {
-        let (config, errors) = parseConfig(
-            """
-            [mode.foo.binding]
-                alt-h = 'focus left'
-            """,
-        )
-        assertEquals(
-            errors.descriptions,
-            ["mode: Please specify \'main\' mode"],
-        )
-        assertEquals(config.modes[mainModeId], nil)
+        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
     }
 
     func testHotkeyParseError() {
         let (config, errors) = parseConfig(
             """
-            [mode.main.binding]
+            [binding]
                 alt-hh = 'focus left'
                 aalt-j = 'focus down'
                 alt-k = 'focus up'
@@ -80,22 +63,19 @@ final class ConfigTest: XCTestCase {
         assertEquals(
             errors.descriptions,
             [
-                "mode.main.binding.aalt-j: Can\'t parse modifiers in \'aalt-j\' binding",
-                "mode.main.binding.alt-hh: Can\'t parse the key in \'alt-hh\' binding",
+                "binding.aalt-j: Can\'t parse modifiers in \'aalt-j\' binding",
+                "binding.alt-hh: Can\'t parse the key in \'alt-hh\' binding",
             ],
         )
         let binding = HotkeyBinding(.option, .k, [FocusCommand.new(direction: .up)])
-        assertEquals(
-            config.modes[mainModeId],
-            Mode(bindings: [binding.descriptionWithKeyCode: binding]),
-        )
+        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
     }
 
     func testPersistentWorkspaces() {
         let (config, errors) = parseConfig(
             """
             persistent-workspaces = ['1', '2', '3', '4']
-            [mode.main.binding]
+            [binding]
                 alt-1 = 'workspace 1'
             """,
         )
@@ -362,7 +342,7 @@ final class ConfigTest: XCTestCase {
                 q = 'q'
                 unicorn = 'u'
 
-            [mode.main.binding]
+            [binding]
                 alt-unicorn = 'workspace wonderland'
             """,
         )
@@ -372,7 +352,7 @@ final class ConfigTest: XCTestCase {
             "unicorn": .u,
         ]))
         let binding = HotkeyBinding(.option, .u, [WorkspaceCommand(args: WorkspaceCmdArgs(target: .direct(.parse("unicorn").getOrDie())))])
-        assertEquals(config.modes[mainModeId]?.bindings, [binding.descriptionWithKeyCode: binding])
+        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
 
         let (_, errors1) = parseConfig(
             """

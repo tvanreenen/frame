@@ -27,10 +27,8 @@ struct EnableCommand: Command {
                     window.lastFloatingSize = try await window.getAxSize() ?? window.lastFloatingSize
                 }
             }
-            try await activateMode(mainModeId)
-        } else {
-            try await activateMode(nil)
         }
+        syncHotKeys(enabled: newState)
         return true
     }
 }
