@@ -6,7 +6,10 @@ import AppKit
 /// becomes nil, etc.) which tricks simple-wm into thinking that all windows were closed.
 /// That's why every time a window dies simple-wm caches the "entire world" (unless window is already presented in the cache)
 /// so that once the screen is unlocked, simple-wm could restore windows to where they were
-@MainActor private var closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
+@MainActor private var closedWindowsCache: FrozenWorld {
+    get { runtimeContext.closedWindowsCache }
+    set { runtimeContext.closedWindowsCache = newValue }
+}
 
 struct FrozenMonitor: Sendable {
     let topLeftCorner: CGPoint

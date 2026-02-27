@@ -30,7 +30,7 @@ Rules:
 
 **Consider including in bug reports**
 
-* `aerospace debug-windows` output, if the problem is about handling some windows
+* `aerospace list-windows --focused --json` output, if the problem is about handling some windows
 * Screenshots of problematic windows
 * Videos of problematic windows
 * What did you try to resolve the issue?

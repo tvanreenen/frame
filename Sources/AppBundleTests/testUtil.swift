@@ -17,6 +17,11 @@ let projectRoot: URL = {
 func setUpWorkspacesForTests() {
     runtimeContext.config = defaultConfig
     runtimeContext.configUrl = defaultConfigUrl
+    runtimeContext.windowsById = [:]
+    runtimeContext.appsByPid = [:]
+    runtimeContext.appsWipByPid = [:]
+    runtimeContext.appFocusJob = nil
+    runtimeContext.closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
 
     // Don't create any bindings and workspaces for tests
     runtimeContext.config.bindings = [:]

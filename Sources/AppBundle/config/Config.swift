@@ -34,10 +34,20 @@ var defaultConfigUrl: URL {
 final class RuntimeContext {
     var config: Config
     var configUrl: URL
+    var windowsById: [UInt32: Window]
+    var appsByPid: [pid_t: MacApp]
+    var appsWipByPid: [pid_t: AwaitableOneTimeBroadcastLatch]
+    var appFocusJob: RunLoopJob?
+    var closedWindowsCache: FrozenWorld
 
     init(config: Config, configUrl: URL) {
         self.config = config
         self.configUrl = configUrl
+        windowsById = [:]
+        appsByPid = [:]
+        appsWipByPid = [:]
+        appFocusJob = nil
+        closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
     }
 }
 

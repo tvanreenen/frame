@@ -36,9 +36,6 @@ EOF
 
 entries() {
     for file in docs/aerospace-*.adoc; do
-        if grep -q 'exec-and-forget' <<< $file; then
-            continue
-        fi
         subcommand=$(basename $file | sed 's/^aerospace-//' | sed 's/\.adoc$//')
         desc="$(grep :manpurpose: "$file" | sed -E 's/:manpurpose: //')"
         echo "    [\"  $subcommand\", \"$desc\"],"

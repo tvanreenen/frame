@@ -10,8 +10,11 @@ final class Window: TreeNode, Hashable {
     var layoutReason: LayoutReason = .standard
     private var prevUnhiddenProportionalPositionInsideWorkspaceRect: CGPoint?
 
-    @MainActor static var allWindowsMap: [UInt32: Window] = [:]
-    @MainActor static var allWindows: [Window] { Array(allWindowsMap.values) }
+    @MainActor static var allWindowsMap: [UInt32: Window] {
+        get { runtimeContext.windowsById }
+        set { runtimeContext.windowsById = newValue }
+    }
+    @MainActor static var allWindows: [Window] { Array(runtimeContext.windowsById.values) }
 
     @MainActor
     init(

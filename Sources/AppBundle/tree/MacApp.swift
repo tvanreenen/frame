@@ -16,7 +16,10 @@ final class MacApp: WindowPlatformApp {
     public var lastNativeFocusedWindowId: UInt32? = nil
     private var thread: Thread?
     private var setFrameJobs: [UInt32: RunLoopJob] = [:]
-    @MainActor private static var focusJob: RunLoopJob? = nil
+    @MainActor private static var focusJob: RunLoopJob? {
+        get { runtimeContext.appFocusJob }
+        set { runtimeContext.appFocusJob = newValue }
+    }
 
     /*conforms*/ var name: String? { nsApp.localizedName }
     /*conforms*/ var execPath: String? { nsApp.executableURL?.path }
@@ -25,8 +28,14 @@ final class MacApp: WindowPlatformApp {
 
     // todo think if it's possible to integrate this global mutable state to https://github.com/nikitabobko/AeroSpace/issues/1215
     //      and make deinitialization automatic in deinit
-    @MainActor static var allAppsMap: [pid_t: MacApp] = [:]
-    @MainActor private static var wipPids: [pid_t: AwaitableOneTimeBroadcastLatch] = [:]
+    @MainActor static var allAppsMap: [pid_t: MacApp] {
+        get { runtimeContext.appsByPid }
+        set { runtimeContext.appsByPid = newValue }
+    }
+    @MainActor private static var wipPids: [pid_t: AwaitableOneTimeBroadcastLatch] {
+        get { runtimeContext.appsWipByPid }
+        set { runtimeContext.appsWipByPid = newValue }
+    }
 
     private init(_ nsApp: NSRunningApplication, _ axApp: AXUIElement, _ axSubscriptions: [AxSubscription], _ thread: Thread) {
         self.nsApp = nsApp
