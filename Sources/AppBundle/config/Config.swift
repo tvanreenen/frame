@@ -33,7 +33,7 @@ var defaultConfigUrl: URL {
 @MainActor var configUrl: URL = defaultConfigUrl
 
 struct Config: ConvenienceCopyable {
-    var configVersion: Int = 1
+    var configVersion: Int = 2
     var afterStartupCommand: [any Command] = []
     var startAtLogin: Bool = false
     var autoReloadConfig: Bool = false

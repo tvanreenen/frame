@@ -135,7 +135,6 @@ public enum FormatVar: Equatable {
         case windowId = "window-id"
         case windowIsFullscreen = "window-is-fullscreen"
         case windowTitle = "window-title"
-        case windowLayout = "window-layout" // An alias for windowParentContainerLayout
         case windowParentContainerLayout = "window-parent-container-layout"
     }
 
@@ -143,7 +142,6 @@ public enum FormatVar: Equatable {
         case workspaceName = "workspace"
         case workspaceFocused = "workspace-is-focused"
         case workspaceVisible = "workspace-is-visible"
-        case workspaceRootContainerLayout = "workspace-root-container-layout"
     }
 
     public enum AppFormatVar: String, Equatable, CaseIterable {

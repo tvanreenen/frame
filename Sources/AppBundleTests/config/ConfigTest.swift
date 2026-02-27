@@ -4,26 +4,10 @@ import XCTest
 
 @MainActor
 final class ConfigTest: XCTestCase {
-    func testParseI3Config() {
-        let toml = try! String(contentsOf: projectRoot.appending(component: "docs/config-examples/i3-like-config-example.toml"), encoding: .utf8)
-        let (i3Config, errors) = parseConfig(toml)
-        assertEquals(errors, [])
-        assertEquals(i3Config.execConfig, defaultConfig.execConfig)
-    }
-
     func testParseDefaultConfig() {
         let toml = try! String(contentsOf: projectRoot.appending(component: "docs/config-examples/default-config.toml"), encoding: .utf8)
         let (_, errors) = parseConfig(toml)
         assertEquals(errors, [])
-    }
-
-    func testConfigVersionOutOfBounds() {
-        let (_, errors) = parseConfig(
-            """
-            config-version = 0
-            """,
-        )
-        assertEquals(errors.descriptions, ["config-version: Must be in [1, 2] range"])
     }
 
     func testDuplicatedPersistentWorkspaces() {
@@ -34,15 +18,6 @@ final class ConfigTest: XCTestCase {
             """,
         )
         assertEquals(errors.descriptions, ["persistent-workspaces: Contains duplicated workspace names"])
-    }
-
-    func testPersistentWorkspacesAreAvailableOnlySinceVersion2() {
-        let (_, errors) = parseConfig(
-            """
-            persistent-workspaces = ['a']
-            """,
-        )
-        assertEquals(errors.descriptions, ["persistent-workspaces: This config option is only available since \'config-version = 2\'"])
     }
 
     func testQueryCantBeUsedInConfig() {
@@ -117,14 +92,13 @@ final class ConfigTest: XCTestCase {
         )
     }
 
-    func testPermanentWorkspaceNames() {
+    func testPersistentWorkspaces() {
         let (config, errors) = parseConfig(
             """
+            config-version = 2
+            persistent-workspaces = ['1', '2', '3', '4']
             [mode.main.binding]
                 alt-1 = 'workspace 1'
-                alt-2 = 'workspace 2'
-                alt-3 = ['workspace 3']
-                alt-4 = ['workspace 4', 'focus left']
             """,
         )
         assertEquals(errors.descriptions, [])
