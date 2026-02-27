@@ -39,6 +39,7 @@ struct Config: ConvenienceCopyable {
     var autoReloadConfig: Bool = false
     var automaticallyUnhideMacosHiddenApps: Bool = false
     var persistentWorkspaces: OrderedSet<String> = []
+    var execOnWorkspaceChange: [String] = []
     var keyMapping = KeyMapping()
     var execConfig: ExecConfig = ExecConfig()
 

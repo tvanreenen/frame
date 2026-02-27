@@ -103,6 +103,16 @@ final class ConfigTest: XCTestCase {
         assertEquals(config.persistentWorkspaces.sorted(), ["1", "2", "3", "4"])
     }
 
+    func testParseExecOnWorkspaceChange() {
+        let (config, errors) = parseConfig(
+            """
+            exec-on-workspace-change = ['/bin/bash', '-c', 'echo changed']
+            """,
+        )
+        assertEquals(errors.descriptions, [])
+        assertEquals(config.execOnWorkspaceChange, ["/bin/bash", "-c", "echo changed"])
+    }
+
     func testUnknownTopLevelKeyParseError() {
         let (config, errors) = parseConfig(
             """

@@ -1,5 +1,6 @@
 import AppKit
 import Common
+import Foundation
 
 enum EffectiveLeaf {
     case window(Window)
@@ -56,8 +57,8 @@ struct FrozenFocus: AeroAny, Equatable, Sendable {
 
 /// Global focus.
 /// Commands must be cautious about accessing this property directly. There are legitimate cases.
-/// But, in general, commands must firstly check --window-id, --workspace, AEROSPACE_WINDOW_ID env and
-/// AEROSPACE_WORKSPACE env before accessing the global focus.
+/// But, in general, commands must firstly check --window-id, --workspace, SIMPLEWM_WINDOW_ID env and
+/// SIMPLEWM_WORKSPACE env before accessing the global focus.
 @MainActor var focus: LiveFocus { _focus.live }
 
 @MainActor func setFocus(to newFocus: LiveFocus) -> Bool {
@@ -126,11 +127,13 @@ extension Workspace {
     let frozenFocus = focus.frozen
     var hasFocusChanged = false
     var hasFocusedMonitorChanged = false
+    var workspaceChangePair: (oldWorkspace: String, newWorkspace: String)? = nil
     if frozenFocus != _lastKnownFocus {
         _prevFocus = _lastKnownFocus
         hasFocusChanged = true
     }
     if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
+        workspaceChangePair = (_lastKnownFocus.workspaceName, frozenFocus.workspaceName)
         _prevFocusedWorkspaceName = _lastKnownFocus.workspaceName
     }
     if frozenFocus.monitorId != _lastKnownFocus.monitorId {
@@ -147,6 +150,9 @@ extension Workspace {
 
     if hasFocusedMonitorChanged {
         onFocusedMonitorChanged(focus)
+    }
+    if let workspaceChangePair {
+        onWorkspaceChanged(workspaceChangePair.oldWorkspace, workspaceChangePair.newWorkspace)
     }
 }
 
@@ -169,4 +175,16 @@ extension Workspace {
             _ = try await config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }
+}
+
+@MainActor private func onWorkspaceChanged(_ oldWorkspace: String, _ newWorkspace: String) {
+    guard let executable = config.execOnWorkspaceChange.first else { return }
+    let process = Process()
+    process.executableURL = URL(filePath: executable)
+    process.arguments = Array(config.execOnWorkspaceChange.dropFirst())
+    process.environment = config.execConfig.envVariables + [
+        SIMPLEWM_FOCUSED_WORKSPACE: newWorkspace,
+        SIMPLEWM_PREV_WORKSPACE: oldWorkspace,
+    ]
+    _ = Result { try process.run() }
 }

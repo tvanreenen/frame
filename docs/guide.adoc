@@ -490,14 +490,14 @@ It may be useful for integrating with bars.
 ----
 # Notify Sketchybar about workspace change
 exec-on-workspace-change = ['/bin/bash', '-c',
-    'sketchybar --trigger aerospace_workspace_change FOCUSED=$AEROSPACE_FOCUSED_WORKSPACE'
+    'sketchybar --trigger aerospace_workspace_change FOCUSED=$SIMPLEWM_FOCUSED_WORKSPACE'
 ]
 ----
 
 Besides the <<exec-env-vars,`exec.env-vars`>>, the process has access to the following environment variables:
 
-* `AEROSPACE_FOCUSED_WORKSPACE` - the workspace user switched to
-* `AEROSPACE_PREV_WORKSPACE` - the workspace user switched from
+* `SIMPLEWM_FOCUSED_WORKSPACE` - the workspace user switched to
+* `SIMPLEWM_PREV_WORKSPACE` - the workspace user switched from
 
 For a more elaborate example on how to integrate with Sketchybar see
 xref:./goodies.adoc#show-aerospace-workspaces-in-sketchybar[]
