@@ -89,14 +89,14 @@ private func refresh() async throws {
     let mapping = try await MacApp.refreshAllAndGetAliveWindowIds(frontmostAppBundleId: NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
     let aliveWindowIds = mapping.values.flatMap { $0 }.toSet()
 
-    for window in MacWindow.allWindows {
+    for window in Window.allWindows {
         if !aliveWindowIds.contains(window.windowId) {
             window.garbageCollect(skipClosedWindowsCache: false)
         }
     }
     for (app, windowIds) in mapping {
         for windowId in windowIds {
-            try await MacWindow.getOrRegister(windowId: windowId, macApp: app)
+            try await Window.getOrRegister(windowId: windowId, app: app)
         }
     }
 
@@ -146,13 +146,13 @@ private func layoutWorkspaces() async throws {
     // to reduce flicker, first unhide visible workspaces, then hide invisible ones
     for monitor in monitors {
         let workspace = monitor.activeWorkspace
-        workspace.allLeafWindowsRecursive.forEach { ($0 as! MacWindow).unhideFromCorner() } // todo as!
+        workspace.allLeafWindowsRecursive.forEach { $0.unhideFromCorner() }
         try await workspace.layoutWorkspace()
     }
     for workspace in Workspace.all where !workspace.isVisible {
         let corner = monitorToOptimalHideCorner[workspace.workspaceMonitor.rect.topLeftCorner] ?? .bottomRightCorner
         for window in workspace.allLeafWindowsRecursive {
-            try await (window as! MacWindow).hideInCorner(corner) // todo as!
+            try await window.hideInCorner(corner)
         }
     }
 }

@@ -37,7 +37,7 @@ private struct AppServerTerminationHandler: TerminationHandler {
 @MainActor
 private func makeAllWindowsVisibleAndRestoreSize() async throws {
     // Make all windows fullscreen before Quit
-    for (_, window) in MacWindow.allWindowsMap {
+    for (_, window) in Window.allWindowsMap {
         // makeAllWindowsVisibleAndRestoreSize may be invoked when something went wrong (e.g. some windows are unbound)
         // that's why it's not allowed to use `.parent` call in here
         let monitor = try await window.getCenter()?.monitorApproximation ?? mainMonitor

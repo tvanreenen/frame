@@ -33,8 +33,9 @@ func setUpWorkspacesForTests() {
     check(focus.workspace === Workspace.all.singleOrNil(), Workspace.all.map(\.description).joined(separator: ", "))
     check(mainMonitor.setActiveWorkspace(focus.workspace))
 
-    TestApp.shared.focusedWindow = nil
-    TestApp.shared.windows = []
+    Window.resetForTests()
+    TestApp.shared.resetState()
+    appForTests = nil
 }
 
 extension ParsedCmd {

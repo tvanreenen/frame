@@ -4,7 +4,7 @@ import Common
 // Potential alternative implementation
 // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0392-custom-actor-executors.md
 // (only available since macOS 14)
-final class MacApp: AbstractApp {
+final class MacApp: WindowPlatformApp {
     /*conforms*/ let pid: Int32
     /*conforms*/ let rawAppBundleId: String?
     let appId: KnownBundleId?
@@ -21,6 +21,7 @@ final class MacApp: AbstractApp {
     /*conforms*/ var name: String? { nsApp.localizedName }
     /*conforms*/ var execPath: String? { nsApp.executableURL?.path }
     /*conforms*/ var bundlePath: String? { nsApp.bundleURL?.path }
+    /*conforms*/ var isHidden: Bool { nsApp.isHidden }
 
     // todo think if it's possible to integrate this global mutable state to https://github.com/nikitabobko/AeroSpace/issues/1215
     //      and make deinitialization automatic in deinit
@@ -83,7 +84,8 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func closeAndUnregisterAxWindow(_ windowId: UInt32) {
+    @MainActor
+    func closeAndUnregisterAxWindow(windowId: UInt32) {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         _ = withWindowAsync(windowId) { [windows] window, job in
             guard let closeButton = window.get(Ax.closeButtonAttr) else { return }
@@ -93,7 +95,7 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func getAxSize(_ windowId: UInt32) async throws -> CGSize? {
+    func getAxSize(windowId: UInt32) async throws -> CGSize? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.sizeAttr)
         }
@@ -107,10 +109,15 @@ final class MacApp: AbstractApp {
                 .windowId
         }
         guard let windowId else { return nil }
-        return try await MacWindow.getOrRegister(windowId: windowId, macApp: self)
+        return try await Window.getOrRegister(windowId: windowId, app: self)
     }
 
-    @MainActor func nativeFocus(_ windowId: UInt32) {
+    @MainActor
+    func setLastNativeFocusedWindowId(_ windowId: UInt32?) {
+        lastNativeFocusedWindowId = windowId
+    }
+
+    @MainActor func nativeFocus(windowId: UInt32) {
         MacApp.focusJob?.cancel()
         // Performance optimization. If possible avoid doing AX requests
         // (important for apps which are slow at responding even such basic AX requests. E.g. Godot)
@@ -129,7 +136,7 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func setAxFrame(_ windowId: UInt32, _ topLeft: CGPoint?, _ size: CGSize?) {
+    func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         setFrameJobs[windowId] = withWindowAsync(windowId) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
@@ -138,7 +145,7 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func setAxFrameBlocking(_ windowId: UInt32, _ topLeft: CGPoint?, _ size: CGSize?) async throws {
+    func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         try await withWindow(windowId) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
@@ -153,13 +160,13 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func getAxTopLeftCorner(_ windowId: UInt32) async throws -> CGPoint? {
+    func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.topLeftCornerAttr)
         }
     }
 
-    func getAxRect(_ windowId: UInt32) async throws -> Rect? {
+    func getAxRect(windowId: UInt32) async throws -> Rect? {
         try await withWindow(windowId) { window, job in
             guard let topLeftCorner = window.get(Ax.topLeftCornerAttr) else { return nil }
             guard let size = window.get(Ax.sizeAttr) else { return nil }
@@ -167,19 +174,19 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func isWindowHeuristic(_ windowId: UInt32, _ windowLevel: MacOsWindowLevel?) async throws -> Bool {
+    func isWindowHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
         return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             window.isWindowHeuristic(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } == true
     }
 
-    func getAxUiElementWindowType(_ windowId: UInt32, _ windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
+    func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
         return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } ?? .window
     }
 
-    func isDialogHeuristic(_ windowId: UInt32, _ windowLevel: MacOsWindowLevel?) async throws -> Bool {
+    func isDialogHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
         try await withWindow(windowId) { [appId] window, job in
             window.isDialogHeuristic(appId, windowLevel)
         } == true
@@ -211,19 +218,19 @@ final class MacApp: AbstractApp {
         } ?? [:]
     }
 
-    func getAxTitle(_ windowId: UInt32) async throws -> String? {
+    func getAxTitle(windowId: UInt32) async throws -> String? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.titleAttr)
         }
     }
 
-    func isMacosNativeFullscreen(_ windowId: UInt32) async throws -> Bool? {
+    func isMacosNativeFullscreen(windowId: UInt32) async throws -> Bool? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.isFullscreenAttr)
         }
     }
 
-    func isMacosNativeMinimized(_ windowId: UInt32) async throws -> Bool? {
+    func isMacosNativeMinimized(windowId: UInt32) async throws -> Bool? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.minimizedAttr)
         }
