@@ -157,12 +157,12 @@ final class ConfigTest: XCTestCase {
         XCTAssertTrue(parseCommand("move-workspace-to-display --wrap-around next").cmdOrNil is MoveWorkspaceToMonitorCommand)
     }
 
-    func testParseTiles() {
-        let command = parseCommand("layout tiles h_tiles v_tiles list h_list v_list").cmdOrNil
+    func testParseLayout() {
+        let command = parseCommand("layout tiling floating").cmdOrNil
         XCTAssertTrue(command is LayoutCommand)
-        assertEquals((command as! LayoutCommand).args.toggleBetween.val, [.tiles, .h_tiles, .v_tiles, .tiles, .h_tiles, .v_tiles])
+        assertEquals((command as! LayoutCommand).args.toggleBetween.val, [.tiling, .floating])
 
-        guard case .help = parseCommand("layout tiles -h") else {
+        guard case .help = parseCommand("layout -h") else {
             XCTFail()
             return
         }
@@ -221,7 +221,7 @@ final class ConfigTest: XCTestCase {
             [[on-window-detected]] # 4
                 run = ['move-node-to-workspace S', 'move-node-to-workspace W']
             [[on-window-detected]] # 5
-                run = ['move-node-to-workspace S', 'layout h_tiles']
+                run = ['move-node-to-workspace S', 'layout tiling']
             """,
         )
         assertEquals(parsed.onWindowDetected, [
@@ -260,7 +260,7 @@ final class ConfigTest: XCTestCase {
             WindowDetectedCallback( // 5
                 rawRun: [
                     MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "S")),
-                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.h_tiles])),
+                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.tiling])),
                 ],
             ),
         ])

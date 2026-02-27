@@ -54,15 +54,10 @@ private let moveOutMacosUnconventionalWindow =
     }
 
     let targetIndex = currentIndex + direction.focusOffset
-    let targetColumn: TilingContainer
-    if cols.indices.contains(targetIndex) {
-        targetColumn = cols[targetIndex]
-    } else if direction == .right {
-        targetColumn = workspace.addColumn(after: currentColumn)
-    } else {
-        targetColumn = workspace.addColumn(before: currentColumn)
+    guard cols.indices.contains(targetIndex) else {
+        return true // At edge, stop
     }
-
+    let targetColumn = cols[targetIndex]
     window.bind(to: targetColumn, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
     return true
 }

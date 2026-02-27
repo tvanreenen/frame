@@ -131,16 +131,13 @@ final class FocusCommandTest: XCTestCase {
         var window2: Window!
         var window3: Window!
         var unrelatedWindow: Window!
-        workspace.rootTilingContainer.apply {
-            startWindow = TestWindow.new(id: 1, parent: $0)
-            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
-                TilingContainer.newHTiles(parent: $0, adaptiveWeight: 1).apply {
-                    window2 = TestWindow.new(id: 2, parent: $0)
-                    unrelatedWindow = TestWindow.new(id: 5, parent: $0)
-                }
-                window3 = TestWindow.new(id: 3, parent: $0)
-            }
-        }
+        let root = workspace.rootTilingContainer
+        let col1 = TilingContainer.newVTiles(parent: root, adaptiveWeight: 1)
+        startWindow = TestWindow.new(id: 1, parent: col1)
+        let col2 = TilingContainer.newVTiles(parent: root, adaptiveWeight: 1)
+        window2 = TestWindow.new(id: 2, parent: col2)
+        unrelatedWindow = TestWindow.new(id: 5, parent: col2)
+        window3 = TestWindow.new(id: 3, parent: col2)
 
         assertEquals(workspace.mostRecentWindowRecursive?.windowId, 3) // The latest bound
         _ = startWindow.focusWindow()
@@ -156,7 +153,7 @@ final class FocusCommandTest: XCTestCase {
         unrelatedWindow.markAsMostRecentChild()
         _ = startWindow.focusWindow()
         try await FocusCommand.new(direction: .right).run(.defaultEnv, .emptyStdin)
-        assertEquals(focus.windowOrNil?.windowId, 2)
+        assertEquals(focus.windowOrNil?.windowId, 5)
     }
 
     func testFocusOutsideOfTheContainer() async throws {

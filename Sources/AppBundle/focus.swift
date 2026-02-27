@@ -125,7 +125,6 @@ extension Workspace {
     let focus = focus
     let frozenFocus = focus.frozen
     var hasFocusChanged = false
-    var hasFocusedWorkspaceChanged = false
     var hasFocusedMonitorChanged = false
     if frozenFocus != _lastKnownFocus {
         _prevFocus = _lastKnownFocus
@@ -133,7 +132,6 @@ extension Workspace {
     }
     if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
         _prevFocusedWorkspaceName = _lastKnownFocus.workspaceName
-        hasFocusedWorkspaceChanged = true
     }
     if frozenFocus.monitorId != _lastKnownFocus.monitorId {
         hasFocusedMonitorChanged = true

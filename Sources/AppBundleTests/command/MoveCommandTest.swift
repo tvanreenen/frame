@@ -111,6 +111,21 @@ final class MoveCommandTest: XCTestCase {
         assertEquals(col.children.map { ($0 as! Window).windowId }, [1, 2])
         assertEquals(result.exitCode, 0)
     }
+
+    func testMove_emptyColumnRemovedAfterMove() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        TestWindow.new(id: 2, parent: col2)
+        assertEquals(w1.focusWindow(), true)
+
+        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
+
+        // w1 moved to col2, leaving col1 empty. Normalization removes the empty column.
+        assertEquals(workspace.columns.count, 1)
+        assertEquals(workspace.columns.first?.children.map { ($0 as! Window).windowId }, [2, 1])
+    }
 }
 
 extension TreeNode {
