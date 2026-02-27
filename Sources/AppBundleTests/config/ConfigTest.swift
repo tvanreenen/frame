@@ -13,7 +13,6 @@ final class ConfigTest: XCTestCase {
     func testDuplicatedPersistentWorkspaces() {
         let (_, errors) = parseConfig(
             """
-            config-version = 2
             persistent-workspaces = ['a', 'a']
             """,
         )
@@ -51,7 +50,7 @@ final class ConfigTest: XCTestCase {
         let binding = HotkeyBinding(.option, .h, [FocusCommand.new(direction: .left)])
         assertEquals(
             config.modes[mainModeId],
-            Mode(name: nil, bindings: [binding.descriptionWithKeyCode: binding]),
+            Mode(bindings: [binding.descriptionWithKeyCode: binding]),
         )
     }
 
@@ -88,14 +87,13 @@ final class ConfigTest: XCTestCase {
         let binding = HotkeyBinding(.option, .k, [FocusCommand.new(direction: .up)])
         assertEquals(
             config.modes[mainModeId],
-            Mode(name: nil, bindings: [binding.descriptionWithKeyCode: binding]),
+            Mode(bindings: [binding.descriptionWithKeyCode: binding]),
         )
     }
 
     func testPersistentWorkspaces() {
         let (config, errors) = parseConfig(
             """
-            config-version = 2
             persistent-workspaces = ['1', '2', '3', '4']
             [mode.main.binding]
                 alt-1 = 'workspace 1'
@@ -117,6 +115,18 @@ final class ConfigTest: XCTestCase {
             ["unknownKey: Unknown top-level key"],
         )
         assertEquals(config.startAtLogin, true)
+    }
+
+    func testConfigVersionIsUnknownTopLevelKeyParseError() {
+        let (_, errors) = parseConfig(
+            """
+            config-version = 2
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["config-version: Unknown top-level key"],
+        )
     }
 
     func testUnknownKeyParseError() {

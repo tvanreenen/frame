@@ -38,10 +38,6 @@ enum Layout: String {
 
 extension String {
     func parseLayout() -> Layout? {
-        if self == "tiles" || self == "list" {
-            return .tiles
-        } else {
-            return nil
-        }
+        self == "tiles" ? .tiles : nil
     }
 }

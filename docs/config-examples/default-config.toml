@@ -1,8 +1,5 @@
 # Place a copy of this config to ~/.simple-wm.toml and edit to your liking
 
-# Config version for compatibility and deprecations
-config-version = 2
-
 # You can use it to add commands that run after simple-wm startup.
 after-startup-command = []
 
