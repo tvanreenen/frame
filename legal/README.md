@@ -21,11 +21,6 @@ TOMLKIT is used as a more convenient Swift wrapper around tomlplusplus C++ API.
 [tomlplusplus MIT license](./third-party-license/LICENSE-tomlplusplus.txt).
 tomlplusplus is used as TOML parser. tomlplusplus is used indirectly through TOMLKIT Swift API.
 
-**ANTLR v4**.
-[ANTLR v4 GitHub link](https://github.com/antlr/antlr4).
-[ANTLR BSD-3 license](./third-party-license/LICENSE-antlr.txt).
-ANTLR is used to parse AeroSpace built-in shell like language.
-
 **swift-collections**.
 [swift-collections GitHub link](https://github.com/apple/swift-collections).
 [swift-collections Apache 2.0 license](./third-party-license/LICENSE-swift-collections.txt).

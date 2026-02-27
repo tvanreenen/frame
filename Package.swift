@@ -17,7 +17,6 @@ let package = Package(
         .library(name: "AppBundle", targets: ["AppBundle"]),
     ],
     dependencies: [
-        .package(path: "./ShellParserGenerated"),
         .package(url: "https://github.com/LebJe/TOMLKit.git", exact: "0.5.5"),
         .package(url: "https://github.com/apple/swift-collections.git", exact: "1.3.0"),
         .package(url: "https://github.com/soffes/HotKey.git", exact: "0.2.1"),
@@ -42,7 +41,6 @@ let package = Package(
             dependencies: [
                 .product(name: "Collections", package: "swift-collections"),
                 .product(name: "HotKey", package: "HotKey"),
-                .product(name: "ShellParserGenerated", package: "ShellParserGenerated"),
                 .product(name: "TOMLKit", package: "TOMLKit"),
                 .target(name: "Common"),
                 .target(name: "PrivateApi"),
