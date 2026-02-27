@@ -21,7 +21,7 @@ let focus_monitor_help_generated = """
        OR: focus-monitor [-h|--help] <monitor-pattern>...
     """
 let focus_help_generated = """
-    USAGE: focus [-h|--help] [--ignore-floating] [--wrap-around]
+    USAGE: focus [-h|--help] [--wrap-around]
                  [--boundaries <boundary>] [--boundaries-action <action>]
                  (left|down|up|right)
        OR: focus [-h|--help] --window-id <window-id>

@@ -9,7 +9,7 @@ include::util/man-attributes.adoc[]
 == Synopsis
 [verse]
 // tag::synopsis[]
-aerospace focus [-h|--help] [--ignore-floating] [--wrap-around]
+aerospace focus [-h|--help] [--wrap-around]
                 [--boundaries <boundary>] [--boundaries-action <action>]
                 (left|down|up|right)
 aerospace focus [-h|--help] --window-id <window-id>
@@ -21,12 +21,6 @@ aerospace focus [-h|--help] --window-id <window-id>
 
 // tag::body[]
 {manpurpose}
-
-Contrary to i3, `focus` command doesn't have a separate argument to focus floating windows.
-From `focus` command perspective, floating windows are part of xref:guide.adoc#tree[the tree].
-The floating window parent container is determined as the smallest tiling container that contains the center of the floating window.
-The technique eliminates the need for an additional binding for floating windows.
-This behavior can be disabled with `--ignore-floating` flag.
 
 `focus child|parent` isn't supported because the necessity of this operation is under the question.
 https://github.com/nikitabobko/AeroSpace/issues/5
@@ -52,10 +46,6 @@ The flag is incompatible with either `--boundaries-action` or `--boundaries`.
 
 --window-id <window-id>::
 Focus the window with specified `<window-id>`
-
---ignore-floating::
-Don't perceive floating windows as part of the tree.
-It may be useful for more reliable scripting.
 
 // =========================================================== Arguments
 include::./util/conditional-arguments-header.adoc[]

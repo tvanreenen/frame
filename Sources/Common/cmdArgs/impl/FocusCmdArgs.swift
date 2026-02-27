@@ -5,7 +5,6 @@ public struct FocusCmdArgs: CmdArgs {
         kind: .focus,
         help: focus_help_generated,
         flags: [
-            "--ignore-floating": falseBoolFlag(\.floatingAsTiling),
             "--window-id": SubArgParser(\.windowId, upcastSubArgParserFun(parseUInt32SubArg)),
 
             "--boundaries": SubArgParser(\.rawBoundaries, upcastSubArgParserFun(parseBoundaries)),
@@ -23,7 +22,6 @@ public struct FocusCmdArgs: CmdArgs {
     public var rawBoundariesAction: WhenBoundariesCrossed? = nil
     fileprivate var wrapAroundAlias: Bool = false
     public var direction: CardinalDirection? = nil
-    public var floatingAsTiling: Bool = true
 
     public init(rawArgs: StrArrSlice, direction: CardinalDirection) {
         self.commonState = .init(rawArgs)

@@ -10,7 +10,6 @@ open class TreeNode: Equatable, AeroAny {
     private let _mruChildren: MruStack<TreeNode> = MruStack()
     // Usages:
     // - resize with mouse
-    // - makeFloatingWindowsSeenAsTiling in focus command
     var lastAppliedLayoutVirtualRect: Rect? = nil  // as if inner gaps were always zero
     // Usages:
     // - resize with mouse
