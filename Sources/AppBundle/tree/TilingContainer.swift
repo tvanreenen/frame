@@ -27,34 +27,6 @@ final class TilingContainer: TreeNode, NonLeafTreeNodeObject { // todo consider 
 extension TilingContainer {
     var isRootContainer: Bool { parent is Workspace }
 
-    @MainActor
-    func changeOrientation(_ targetOrientation: Orientation) {
-        if orientation == targetOrientation {
-            return
-        }
-        if config.enableNormalizationOppositeOrientationForNestedContainers {
-            var orientation = targetOrientation
-            parentsWithSelf
-                .filterIsInstance(of: TilingContainer.self)
-                .forEach {
-                    $0._orientation = orientation
-                    orientation = orientation.opposite
-                }
-        } else {
-            _orientation = targetOrientation
-        }
-    }
-
-    func normalizeOppositeOrientationForNestedContainers() {
-        if orientation == (parent as? TilingContainer)?.orientation {
-            _orientation = orientation.opposite
-        }
-        for child in children {
-            (child as? TilingContainer)?.normalizeOppositeOrientationForNestedContainers()
-        }
-    }
-
-    /// Sets orientation directly without config-dependent side effects.
     func setOrientation(_ orientation: Orientation) {
         _orientation = orientation
     }

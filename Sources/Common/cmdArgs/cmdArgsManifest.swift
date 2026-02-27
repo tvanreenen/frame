@@ -9,12 +9,10 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case debugWindows = "debug-windows"
     case enable
     case execAndForget = "exec-and-forget"
-    case flattenWorkspaceTree = "flatten-workspace-tree"
     case focus
     case focusBackAndForth = "focus-back-and-forth"
     case focusMonitor = "focus-monitor"
     case fullscreen
-    case joinWith = "join-with"
     case layout
     case listApps = "list-apps"
     case listExecEnvVars = "list-exec-env-vars"
@@ -33,7 +31,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case reloadConfig = "reload-config"
     case removeColumn = "remove-column"
     case resize
-    case split
     case summonWorkspace = "summon-workspace"
     case swap
     case triggerBinding = "trigger-binding"
@@ -62,8 +59,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseEnableCmdArgs)
             case .execAndForget:
                 break // exec-and-forget is parsed separately
-            case .flattenWorkspaceTree:
-                result[kind.rawValue] = SubCommandParser(FlattenWorkspaceTreeCmdArgs.init)
             case .focus:
                 result[kind.rawValue] = SubCommandParser(parseFocusCmdArgs)
             case .focusBackAndForth:
@@ -72,8 +67,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseFocusMonitorCmdArgs)
             case .fullscreen:
                 result[kind.rawValue] = SubCommandParser(parseFullscreenCmdArgs)
-            case .joinWith:
-                result[kind.rawValue] = SubCommandParser(JoinWithCmdArgs.init)
             case .layout:
                 result[kind.rawValue] = SubCommandParser(parseLayoutCmdArgs)
             case .listApps:
@@ -114,8 +107,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(RemoveColumnCmdArgs.init)
             case .resize:
                 result[kind.rawValue] = SubCommandParser(parseResizeCmdArgs)
-            case .split:
-                result[kind.rawValue] = SubCommandParser(parseSplitCmdArgs)
             case .summonWorkspace:
                 result[kind.rawValue] = SubCommandParser(SummonWorkspaceCmdArgs.init)
             case .swap:

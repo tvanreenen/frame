@@ -9,8 +9,6 @@ final class ConfigTest: XCTestCase {
         let (i3Config, errors) = parseConfig(toml)
         assertEquals(errors, [])
         assertEquals(i3Config.execConfig, defaultConfig.execConfig)
-        assertEquals(i3Config.enableNormalizationFlattenContainers, false)
-        assertEquals(i3Config.enableNormalizationOppositeOrientationForNestedContainers, false)
     }
 
     func testParseDefaultConfig() {
@@ -26,15 +24,6 @@ final class ConfigTest: XCTestCase {
             """,
         )
         assertEquals(errors.descriptions, ["config-version: Must be in [1, 2] range"])
-    }
-
-    func testExecOnWorkspaceChangeDifferentTypesError() {
-        let (_, errors) = parseConfig(
-            """
-            exec-on-workspace-change = ['', 1]
-            """,
-        )
-        assertEquals(errors.descriptions, ["exec-on-workspace-change[1]: Expected type is \'string\'. But actual type is \'integer\'"])
     }
 
     func testDuplicatedPersistentWorkspaces() {
@@ -146,20 +135,19 @@ final class ConfigTest: XCTestCase {
         let (config, errors) = parseConfig(
             """
             unknownKey = true
-            enable-normalization-flatten-containers = false
+            start-at-login = true
             """,
         )
         assertEquals(
             errors.descriptions,
             ["unknownKey: Unknown top-level key"],
         )
-        assertEquals(config.enableNormalizationFlattenContainers, false)
+        assertEquals(config.startAtLogin, true)
     }
 
     func testUnknownKeyParseError() {
-        let (config, errors) = parseConfig(
+        let (_, errors) = parseConfig(
             """
-            enable-normalization-flatten-containers = false
             [gaps]
                 unknownKey = true
             """,
@@ -168,18 +156,17 @@ final class ConfigTest: XCTestCase {
             errors.descriptions,
             ["gaps.unknownKey: Unknown key"],
         )
-        assertEquals(config.enableNormalizationFlattenContainers, false)
     }
 
     func testTypeMismatch() {
         let (_, errors) = parseConfig(
             """
-            enable-normalization-flatten-containers = 'true'
+            start-at-login = 'true'
             """,
         )
         assertEquals(
             errors.descriptions,
-            ["enable-normalization-flatten-containers: Expected type is \'bool\'. But actual type is \'string\'"],
+            ["start-at-login: Expected type is \'bool\'. But actual type is \'string\'"],
         )
     }
 
@@ -205,28 +192,6 @@ final class ConfigTest: XCTestCase {
             XCTFail()
             return
         }
-    }
-
-    func testSplitCommandAndFlattenContainersNormalization() {
-        let (_, errors) = parseConfig(
-            """
-            enable-normalization-flatten-containers = true
-            [mode.main.binding]
-            [mode.foo.binding]
-                alt-s = 'split horizontal'
-            """,
-        )
-        assertEquals(
-            ["""
-                The config contains:
-                1. usage of 'split' command
-                2. enable-normalization-flatten-containers = true
-                These two settings don't play nicely together. 'split' command has no effect when enable-normalization-flatten-containers is disabled.
-
-                My recommendation: keep the normalizations enabled, and prefer 'join-with' over 'split'.
-                """],
-            errors.descriptions,
-        )
     }
 
     func testParseWorkspaceToMonitorAssignment() {

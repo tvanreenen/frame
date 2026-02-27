@@ -5,12 +5,7 @@ extension Workspace {
         let containers = children.filterIsInstance(of: TilingContainer.self)
         switch containers.count {
             case 0:
-                let orientation: Orientation = switch config.defaultRootContainerOrientation {
-                    case .horizontal: .h
-                    case .vertical: .v
-                    case .auto: workspaceMonitor.then { $0.width >= $0.height } ? .h : .v
-                }
-                return TilingContainer(parent: self, adaptiveWeight: 1, orientation, config.defaultRootContainerLayout, index: INDEX_BIND_LAST)
+                return TilingContainer(parent: self, adaptiveWeight: 1, .h, .tiles, index: INDEX_BIND_LAST)
             case 1:
                 return containers.singleOrNil().orDie()
             default:

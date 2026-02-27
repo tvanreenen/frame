@@ -36,22 +36,14 @@ struct Config: ConvenienceCopyable {
     var configVersion: Int = 1
     var afterLoginCommand: [any Command] = []
     var afterStartupCommand: [any Command] = []
-    var _indentForNestedContainersWithTheSameOrientation: Void = ()
-    var enableNormalizationFlattenContainers: Bool = true
-    var _nonEmptyWorkspacesRootContainersLayoutOnStartup: Void = ()
-    var defaultRootContainerLayout: Layout = .tiles
-    var defaultRootContainerOrientation: DefaultContainerOrientation = .auto
     var startAtLogin: Bool = false
     var autoReloadConfig: Bool = false
     var automaticallyUnhideMacosHiddenApps: Bool = false
-    var enableNormalizationOppositeOrientationForNestedContainers: Bool = true
     var persistentWorkspaces: OrderedSet<String> = []
-    var execOnWorkspaceChange: [String] = [] // todo deprecate
     var keyMapping = KeyMapping()
     var execConfig: ExecConfig = ExecConfig()
 
     var onFocusChanged: [any Command] = []
-    // var onFocusedWorkspaceChanged: [any Command] = []
     var onFocusedMonitorChanged: [any Command] = []
 
     var gaps: Gaps = .zero
@@ -59,8 +51,4 @@ struct Config: ConvenienceCopyable {
     var modes: [String: Mode] = [:]
     var onWindowDetected: [WindowDetectedCallback] = []
     var onModeChanged: [any Command] = []
-}
-
-enum DefaultContainerOrientation: String {
-    case horizontal, vertical, auto
 }

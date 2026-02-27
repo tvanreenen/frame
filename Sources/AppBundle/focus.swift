@@ -146,9 +146,7 @@ extension Workspace {
     if hasFocusChanged {
         onFocusChanged(focus)
     }
-    if let _prevFocusedWorkspaceName, hasFocusedWorkspaceChanged {
-        onWorkspaceChanged(_prevFocusedWorkspaceName, frozenFocus.workspaceName)
-    }
+
     if hasFocusedMonitorChanged {
         onFocusedMonitorChanged(focus)
     }
@@ -175,16 +173,3 @@ extension Workspace {
     }
 }
 
-@MainActor private func onWorkspaceChanged(_ oldWorkspace: String, _ newWorkspace: String) {
-    if let exec = config.execOnWorkspaceChange.first {
-        let process = Process()
-        process.executableURL = URL(filePath: exec)
-        process.arguments = Array(config.execOnWorkspaceChange.dropFirst())
-        var environment = config.execConfig.envVariables
-        environment["AEROSPACE_FOCUSED_WORKSPACE"] = newWorkspace
-        environment["AEROSPACE_PREV_WORKSPACE"] = oldWorkspace
-        environment[AEROSPACE_WORKSPACE] = newWorkspace
-        process.environment = environment
-        _ = Result { try process.run() }
-    }
-}

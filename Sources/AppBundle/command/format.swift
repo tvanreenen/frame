@@ -163,8 +163,8 @@ extension String {
 
 private func toLayoutString(tc: TilingContainer) -> String {
     switch tc.orientation {
-        case .h: return LayoutCmdArgs.LayoutDescription.h_tiles.rawValue
-        case .v: return LayoutCmdArgs.LayoutDescription.v_tiles.rawValue
+        case .h: return "h_tiles"
+        case .v: return "v_tiles"
     }
 }
 

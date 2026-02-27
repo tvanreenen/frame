@@ -20,8 +20,6 @@ extension CmdArgs {
                 command = EnableCommand(args: self as! EnableCmdArgs)
             case .execAndForget:
                 die("exec-and-forget is parsed separately")
-            case .flattenWorkspaceTree:
-                command = FlattenWorkspaceTreeCommand(args: self as! FlattenWorkspaceTreeCmdArgs)
             case .focus:
                 command = FocusCommand(args: self as! FocusCmdArgs)
             case .focusBackAndForth:
@@ -30,8 +28,6 @@ extension CmdArgs {
                 command = FocusMonitorCommand(args: self as! FocusMonitorCmdArgs)
             case .fullscreen:
                 command = FullscreenCommand(args: self as! FullscreenCmdArgs)
-            case .joinWith:
-                command = JoinWithCommand(args: self as! JoinWithCmdArgs)
             case .layout:
                 command = LayoutCommand(args: self as! LayoutCmdArgs)
             case .listApps:
@@ -68,8 +64,6 @@ extension CmdArgs {
                 command = RemoveColumnCommand(args: self as! RemoveColumnCmdArgs)
             case .resize:
                 command = ResizeCommand(args: self as! ResizeCmdArgs)
-            case .split:
-                command = SplitCommand(args: self as! SplitCmdArgs)
             case .summonWorkspace:
                 command = SummonWorkspaceCommand(args: self as! SummonWorkspaceCmdArgs)
             case .swap:

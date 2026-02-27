@@ -33,9 +33,6 @@ let enable_help_generated = """
 let exec_and_forget_help_generated = """
     USAGE: exec-and-forget <bash-script>
     """
-let flatten_workspace_tree_help_generated = """
-    USAGE: flatten-workspace-tree [-h|--help] [--workspace <workspace>]
-    """
 let focus_back_and_forth_help_generated = """
     USAGE: focus-back-and-forth [-h|--help]
     """
@@ -59,12 +56,8 @@ let fullscreen_help_generated = """
        OR: fullscreen [-h|--help] on  [--window-id <window-id>] [--no-outer-gaps] [--fail-if-noop]
        OR: fullscreen [-h|--help] off [--window-id <window-id>] [--fail-if-noop]
     """
-let join_with_help_generated = """
-    USAGE: join-with [-h|--help] [--window-id <window-id>] (left|down|up|right)
-    """
 let layout_help_generated = """
-    USAGE: layout [-h|--help] [--window-id <window-id>]
-                  (h_tiles|v_tiles|tiles|horizontal|vertical|tiling|floating)...
+    USAGE: layout [-h|--help] [--window-id <window-id>] (tiling|floating)...
     """
 let list_apps_help_generated = """
     USAGE: list-apps [-h|--help] [--macos-native-hidden [no]] [--format <output-format>] [--count] [--json]
@@ -131,9 +124,6 @@ let reload_config_help_generated = """
     """
 let resize_help_generated = """
     USAGE: resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|width|height) [+|-]<number>
-    """
-let split_help_generated = """
-    USAGE: split [-h|--help] [--window-id <window-id>] (horizontal|vertical|opposite)
     """
 let summon_workspace_help_generated = """
     USAGE: summon-workspace [-h|--help] [--fail-if-noop] <workspace>

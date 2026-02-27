@@ -103,17 +103,10 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "on-focused-monitor-changed": Parser(\.onFocusedMonitorChanged) { parseCommandOrCommands($0).toParsedToml($1) },
     // "on-focused-workspace-changed": Parser(\.onFocusedWorkspaceChanged, { parseCommandOrCommands($0).toParsedToml($1) }),
 
-    "enable-normalization-flatten-containers": Parser(\.enableNormalizationFlattenContainers, parseBool),
-    "enable-normalization-opposite-orientation-for-nested-containers": Parser(\.enableNormalizationOppositeOrientationForNestedContainers, parseBool),
-
-    "default-root-container-layout": Parser(\.defaultRootContainerLayout, parseLayout),
-    "default-root-container-orientation": Parser(\.defaultRootContainerOrientation, parseDefaultContainerOrientation),
-
     "start-at-login": Parser(\.startAtLogin, parseBool),
     "auto-reload-config": Parser(\.autoReloadConfig, parseBool),
     "automatically-unhide-macos-hidden-apps": Parser(\.automaticallyUnhideMacosHiddenApps, parseBool),
     persistentWorkspacesKey: Parser(\.persistentWorkspaces, parsePersistentWorkspaces),
-    "exec-on-workspace-change": Parser(\.execOnWorkspaceChange, parseArrayOfStrings),
     "exec": Parser(\.execConfig, parseExecConfig),
 
     keyMappingConfigRootKey: Parser(\.keyMapping, skipParsing(Config().keyMapping)), // Parsed manually
@@ -123,9 +116,6 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "workspace-to-monitor-force-assignment": Parser(\.workspaceToMonitorForceAssignment, parseWorkspaceToMonitorAssignment),
     "on-window-detected": Parser(\.onWindowDetected, parseOnWindowDetectedArray),
 
-    // Deprecated
-    "non-empty-workspaces-root-containers-layout-on-startup": Parser(\._nonEmptyWorkspacesRootContainersLayoutOnStartup, parseStartupRootContainerLayout),
-    "indent-for-nested-containers-with-the-same-orientation": Parser(\._indentForNestedContainersWithTheSameOrientation, parseIndentForNestedContainersWithTheSameOrientation),
 ]
 
 extension ParsedCmd where T == any Command {
@@ -208,33 +198,7 @@ func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]
             .toOrderedSet()
     }
 
-    if config.enableNormalizationFlattenContainers {
-        let containsSplitCommand = config.modes.values.lazy.flatMap { $0.bindings.values }
-            .flatMap { $0.commands }
-            .contains { $0 is SplitCommand }
-        if containsSplitCommand {
-            errors += [.semantic(
-                .emptyRoot, // todo Make 'split' + flatten normalization prettier
-                """
-                The config contains:
-                1. usage of 'split' command
-                2. enable-normalization-flatten-containers = true
-                These two settings don't play nicely together. 'split' command has no effect when enable-normalization-flatten-containers is disabled.
-
-                My recommendation: keep the normalizations enabled, and prefer 'join-with' over 'split'.
-                """,
-            )]
-        }
-    }
     return (config, errors)
-}
-
-func parseIndentForNestedContainersWithTheSameOrientation(
-    _ raw: TOMLValueConvertible,
-    _ backtrace: TomlBacktrace,
-) -> ParsedToml<Void> {
-    let msg = "Deprecated. Please drop it from the config. See https://github.com/nikitabobko/AeroSpace/issues/96"
-    return .failure(.semantic(backtrace, msg))
 }
 
 func parseConfigVersion(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Int> {
@@ -296,17 +260,6 @@ func parseTable<T: ConvenienceCopyable>(
     return table.parseTable(initial, fieldsParser, backtrace, &errors)
 }
 
-private func parseStartupRootContainerLayout(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Void> {
-    parseString(raw, backtrace)
-        .filter(.semantic(backtrace, "'non-empty-workspaces-root-containers-layout-on-startup' is deprecated. Please drop it from your config")) { raw in raw == "smart" }
-        .map { _ in () }
-}
-
-private func parseLayout(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Layout> {
-    parseString(raw, backtrace)
-        .flatMap { $0.parseLayout().orFailure(.semantic(backtrace, "Can't parse layout '\($0)'")) }
-}
-
 private func skipParsing<T: Sendable>(_ value: T) -> @Sendable (_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<T> {
     { _, _ in .success(value) }
 }
@@ -326,13 +279,6 @@ private func parseArrayOfStrings(_ raw: TOMLValueConvertible, _ backtrace: TomlB
                 parseString(elem, backtrace + .index(index))
             }
         }
-}
-
-private func parseDefaultContainerOrientation(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<DefaultContainerOrientation> {
-    parseString(raw, backtrace).flatMap {
-        DefaultContainerOrientation(rawValue: $0)
-            .orFailure(.semantic(backtrace, "Can't parse default container orientation '\($0)'"))
-    }
 }
 
 extension Parsed where Failure == String {

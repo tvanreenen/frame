@@ -13,14 +13,6 @@ start-at-login = false
 # Automatically reload the config when the config file is saved
 auto-reload-config = false
 
-# simple-wm enforces its own depth-2 columns structure — disable AeroSpace normalizations
-enable-normalization-flatten-containers = false
-enable-normalization-opposite-orientation-for-nested-containers = false
-
-# Columns layout always uses horizontal tiling at the root
-default-root-container-layout = 'tiles'
-default-root-container-orientation = 'horizontal'
-
 # Mouse follows focus when focused monitor changes
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
