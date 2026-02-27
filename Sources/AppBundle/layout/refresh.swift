@@ -25,11 +25,10 @@ func runRefreshSessionBlocking(
     let state = signposter.beginInterval(#function, "event: \(event) axTaskLocalAppThreadToken: \(axTaskLocalAppThreadToken?.idForDebug)")
     defer { signposter.endInterval(#function, state) }
     if !TrayMenuModel.shared.isEnabled { return }
-    try await $refreshSessionEvent.withValue(event) {
-        try await $_isStartup.withValue(event.isStartup) {
-            let nativeFocused = try await getNativeFocusedWindow()
-            if let nativeFocused { try await debugWindowsIfRecording(nativeFocused) }
-            updateFocusCache(nativeFocused)
+        try await $refreshSessionEvent.withValue(event) {
+            try await $_isStartup.withValue(event.isStartup) {
+                let nativeFocused = try await getNativeFocusedWindow()
+                updateFocusCache(nativeFocused)
 
             if shouldLayoutWorkspaces && optimisticallyPreLayoutWorkspaces { try await layoutWorkspaces() }
 
@@ -55,12 +54,11 @@ func runLightSession<T>(
     defer { signposter.endInterval(#function, state) }
     activeRefreshTask?.cancel() // Give priority to runSession
     activeRefreshTask = nil
-    return try await $refreshSessionEvent.withValue(event) {
-        try await $_isStartup.withValue(event.isStartup) {
-            let nativeFocused = try await getNativeFocusedWindow()
-            if let nativeFocused { try await debugWindowsIfRecording(nativeFocused) }
-            updateFocusCache(nativeFocused)
-            let focusBefore = focus.windowOrNil
+        return try await $refreshSessionEvent.withValue(event) {
+            try await $_isStartup.withValue(event.isStartup) {
+                let nativeFocused = try await getNativeFocusedWindow()
+                updateFocusCache(nativeFocused)
+                let focusBefore = focus.windowOrNil
 
             refreshModel()
             let result = try await body()

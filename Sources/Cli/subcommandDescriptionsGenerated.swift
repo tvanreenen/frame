@@ -3,8 +3,6 @@
 
 let subcommandDescriptions = [
     ["  balance-sizes", "Balance sizes of all windows in the current workspace"],
-    ["  config", "Query AeroSpace config options"],
-    ["  debug-windows", "Interactive command to record Accessibility API debug information to create bug reports"],
     ["  enable", "Temporarily disable window management"],
     ["  focus-monitor", "Focus monitor by relative direction, by order, or by pattern"],
     ["  focus", "Set focus to a window."],
@@ -22,6 +20,5 @@ let subcommandDescriptions = [
     ["  move", "Move the focused window in the given direction"],
     ["  reload-config", "Reload currently active config"],
     ["  resize", "Resize the focused window"],
-    ["  trigger-binding", "Trigger AeroSpace binding as if it was pressed by user"],
     ["  workspace", "Focus the specified workspace"],
 ]

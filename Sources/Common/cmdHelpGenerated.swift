@@ -10,15 +10,6 @@ let remove_column_help_generated = """
 let balance_sizes_help_generated = """
     USAGE: balance-sizes [-h|--help] [--workspace <workspace>]
     """
-let config_help_generated = """
-    USAGE: config [-h|--help] --get <name> [--json] [--keys]
-       OR: config [-h|--help] --major-keys
-       OR: config [-h|--help] --all-keys
-       OR: config [-h|--help] --config-path
-    """
-let debug_windows_help_generated = """
-    USAGE: debug-windows [-h|--help] [--window-id <window-id>]
-    """
 let enable_help_generated = """
     USAGE: enable [-h|--help] toggle
        OR: enable [-h|--help] on [--fail-if-noop]
@@ -92,9 +83,6 @@ let reload_config_help_generated = """
     """
 let resize_help_generated = """
     USAGE: resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|width|height) [+|-]<number>
-    """
-let trigger_binding_help_generated = """
-    USAGE: trigger-binding [-h|--help] <binding> --mode <mode-id>
     """
 let workspace_help_generated = """
     USAGE: workspace [-h|--help] [--fail-if-noop] <workspace-name>

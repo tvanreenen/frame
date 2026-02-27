@@ -3,8 +3,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
 
     case addColumn = "add-column"
     case balanceSizes = "balance-sizes"
-    case config
-    case debugWindows = "debug-windows"
     case enable
     case execAndForget = "exec-and-forget"
     case focus
@@ -24,7 +22,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case reloadConfig = "reload-config"
     case removeColumn = "remove-column"
     case resize
-    case triggerBinding = "trigger-binding"
     case workspace
 }
 
@@ -36,10 +33,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(AddColumnCmdArgs.init)
             case .balanceSizes:
                 result[kind.rawValue] = SubCommandParser(BalanceSizesCmdArgs.init)
-            case .config:
-                result[kind.rawValue] = SubCommandParser(parseConfigCmdArgs)
-            case .debugWindows:
-                result[kind.rawValue] = SubCommandParser(DebugWindowsCmdArgs.init)
             case .enable:
                 result[kind.rawValue] = SubCommandParser(parseEnableCmdArgs)
             case .execAndForget:
@@ -78,8 +71,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(RemoveColumnCmdArgs.init)
             case .resize:
                 result[kind.rawValue] = SubCommandParser(parseResizeCmdArgs)
-            case .triggerBinding:
-                result[kind.rawValue] = SubCommandParser(parseTriggerBindingCmdArgs)
             case .workspace:
                 result[kind.rawValue] = SubCommandParser(parseWorkspaceCmdArgs)
         }

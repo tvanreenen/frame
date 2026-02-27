@@ -55,7 +55,7 @@ private let serverHelp = """
       --config-path <path>    Config path. It will take priority over ~/.simple-wm.toml
                               and ${XDG_CONFIG_HOME}/simple-wm/simple-wm.toml
       --read-only             Disable window management.
-                              Useful if you want to use only debug-windows or other query commands.
+                              Useful if you want to use only query commands.
     """
 
 nonisolated(unsafe) private var _serverArgs = ServerArgs()

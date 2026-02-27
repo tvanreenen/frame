@@ -8,10 +8,6 @@ extension CmdArgs {
                 command = AddColumnCommand(args: self as! AddColumnCmdArgs)
             case .balanceSizes:
                 command = BalanceSizesCommand(args: self as! BalanceSizesCmdArgs)
-            case .config:
-                command = ConfigCommand(args: self as! ConfigCmdArgs)
-            case .debugWindows:
-                command = DebugWindowsCommand(args: self as! DebugWindowsCmdArgs)
             case .enable:
                 command = EnableCommand(args: self as! EnableCmdArgs)
             case .execAndForget:
@@ -50,8 +46,6 @@ extension CmdArgs {
                 command = RemoveColumnCommand(args: self as! RemoveColumnCmdArgs)
             case .resize:
                 command = ResizeCommand(args: self as! ResizeCmdArgs)
-            case .triggerBinding:
-                command = TriggerBindingCommand(args: self as! TriggerBindingCmdArgs)
             case .workspace:
                 command = WorkspaceCommand(args: self as! WorkspaceCmdArgs)
         }

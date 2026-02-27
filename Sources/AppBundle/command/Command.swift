@@ -41,6 +41,10 @@ extension Command {
 // 3. on-window-detected callback
 // 4. Tray icon buttons
 extension [Command] {
+    var prettyDescription: String {
+        map { $0.args.description }.joined(separator: "; ")
+    }
+
     @MainActor
     func runCmdSeq(_ env: CmdEnv, _ io: sending CmdIo) async throws -> Bool {
         var isSucc = true
