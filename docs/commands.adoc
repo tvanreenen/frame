@@ -12,13 +12,6 @@ include::aerospace-balance-sizes.adoc[tags=synopsis]
 include::aerospace-balance-sizes.adoc[tags=purpose]
 include::aerospace-balance-sizes.adoc[tags=body]
 
-== enable
-----
-include::aerospace-enable.adoc[tags=synopsis]
-----
-include::aerospace-enable.adoc[tags=purpose]
-include::aerospace-enable.adoc[tags=body]
-
 == focus
 ----
 include::aerospace-focus.adoc[tags=synopsis]

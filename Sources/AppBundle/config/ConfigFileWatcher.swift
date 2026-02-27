@@ -35,10 +35,8 @@ private let debounceDelay: Duration = .milliseconds(200)
         debounceTask?.cancel()
         debounceTask = Task {
             try await Task.sleep(for: debounceDelay)
-            if let token: RunSessionGuard = .isServerEnabled {
-                try await runLightSession(.configAutoReload, token) {
-                    _ = try await reloadConfig()
-                }
+            try await runLightSession(.configAutoReload) {
+                _ = try await reloadConfig()
             }
         }
     }

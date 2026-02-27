@@ -10,5 +10,8 @@ final class ExecCommandTest: XCTestCase {
 
         let envErr = parseCommand("list-exec-env-vars").errorOrNil ?? ""
         XCTAssertTrue(envErr.contains("list-exec-env-vars"), envErr)
+
+        let enableErr = parseCommand("enable off").errorOrNil ?? ""
+        XCTAssertTrue(enableErr.contains("enable"), enableErr)
     }
 }

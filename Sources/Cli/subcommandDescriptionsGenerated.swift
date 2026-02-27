@@ -3,7 +3,6 @@
 
 let subcommandDescriptions = [
     ["  balance-sizes", "Balance sizes of all windows in the current workspace"],
-    ["  enable", "Temporarily disable window management"],
     ["  focus-monitor", "Focus monitor by relative direction, by order, or by pattern"],
     ["  focus", "Set focus to a window."],
     ["  fullscreen", "Toggle the fullscreen mode for the focused window"],

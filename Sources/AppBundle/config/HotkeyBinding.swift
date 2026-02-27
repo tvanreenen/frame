@@ -40,18 +40,18 @@ extension HotKey {
     }
 }
 
-@MainActor func syncHotKeys(enabled: Bool = TrayMenuModel.shared.isEnabled) {
+@MainActor func syncHotKeys() {
     resetHotKeys()
     for binding in config.bindings.values {
         let hotkeyId = HotkeyId(modifiers: binding.modifiers, keyCode: binding.keyCode)
         hotkeys[hotkeyId] = HotKey(key: binding.keyCode, modifiers: binding.modifiers, keyDownHandler: {
             Task {
-                try await runLightSession(.hotkeyBinding, .checkServerIsEnabledOrDie()) {
+                try await runLightSession(.hotkeyBinding) {
                     _ = try await binding.commands.runCmdSeq(.defaultEnv, .emptyStdin)
                 }
             }
         })
-        hotkeys[hotkeyId]?.isEnabled = enabled
+        hotkeys[hotkeyId]?.isEnabled = true
     }
 }
 

@@ -17,21 +17,6 @@ func startUnixSocketServer() {
     listener.start(queue: .global())
 }
 
-func toggleReleaseServerIfDebug(_ state: EnableCmdArgs.State) async {
-    if serverArgs.isReadOnly { return }
-    if !isDebug { return }
-    let socketFile = "/tmp/\(stableSimpleWmAppId)-\(unixUserName).sock"
-    let connection = NWConnection(to: NWEndpoint.unix(path: socketFile), using: .tcp)
-    defer { connection.cancel() }
-    if await connection.startBlocking() != nil { // Can't connect, simple-wm.app is not running
-        return
-    }
-
-    let req = ClientRequest(args: ["enable", state.rawValue], stdin: "", windowId: nil, workspace: nil)
-    _ = await connection.write(req)
-    _ = await connection.read()
-}
-
 private let serverVersionAndHash = "\(simpleWmAppVersion) \(gitHash)"
 
 private func newConnection(_ connection: NWConnection) async { // todo add exit codes
@@ -61,14 +46,6 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
             continue
         }
         let (command, help, err) = parseCommand(request.args).unwrap()
-        guard let token: RunSessionGuard = await .isServerEnabled(orIsEnableCommand: command) else {
-            await answerToClient(
-                exitCode: 1,
-                stderr: "\(simpleWmAppName) server is disabled and doesn't accept commands. " +
-                    "You can use 'simple-wm enable on' to enable the server",
-            )
-            continue
-        }
         if let help {
             await answerToClient(exitCode: 0, stdout: help)
             continue
@@ -79,7 +56,7 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
         }
         if let command {
             let _answer: Result<ServerAnswer, Error> = await Result {
-                try await runLightSession(.socketServer, token) { () throws in
+                try await runLightSession(.socketServer) { () throws in
                     let env = CmdEnv.init(
                         windowId: request.windowId.flatMap { $0 },
                         workspaceName: request.workspace.flatMap { $0 },

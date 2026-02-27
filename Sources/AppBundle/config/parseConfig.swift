@@ -90,7 +90,6 @@ private let persistentWorkspacesKey = "persistent-workspaces"
 private let configAllowedCmdKinds: Set<CmdKind> = [
     .addColumn,
     .balanceSizes,
-    .enable,
     .focus,
     .focusMonitor,
     .fullscreen,

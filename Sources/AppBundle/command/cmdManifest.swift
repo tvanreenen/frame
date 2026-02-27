@@ -8,8 +8,6 @@ extension CmdArgs {
                 command = AddColumnCommand(args: self as! AddColumnCmdArgs)
             case .balanceSizes:
                 command = BalanceSizesCommand(args: self as! BalanceSizesCmdArgs)
-            case .enable:
-                command = EnableCommand(args: self as! EnableCmdArgs)
             case .focus:
                 command = FocusCommand(args: self as! FocusCmdArgs)
             case .focusMonitor:

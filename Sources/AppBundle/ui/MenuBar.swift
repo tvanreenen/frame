@@ -42,17 +42,15 @@ func openConfigButton(showShortcutGroup: Bool = false) -> some View {
 
 @MainActor @ViewBuilder
 func reloadConfigButton(showShortcutGroup: Bool = false) -> some View {
-    if let token: RunSessionGuard = .isServerEnabled {
-        let button = Button("Reload config") {
-            Task {
-                try await runLightSession(.menuBarButton, token) { _ = try await reloadConfig() }
-            }
-        }.keyboardShortcut("R", modifiers: .command)
-        if showShortcutGroup {
-            shortcutGroup(label: Text("⌘ R"), content: button)
-        } else {
-            button
+    let button = Button("Reload config") {
+        Task {
+            try await runLightSession(.menuBarButton) { _ = try await reloadConfig() }
         }
+    }.keyboardShortcut("R", modifiers: .command)
+    if showShortcutGroup {
+        shortcutGroup(label: Text("⌘ R"), content: button)
+    } else {
+        button
     }
 }
 

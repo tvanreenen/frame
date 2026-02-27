@@ -158,20 +158,18 @@ extension Workspace {
 
 @MainActor private func onFocusedMonitorChanged(_ focus: LiveFocus) {
     if config.onFocusedMonitorChanged.isEmpty { return }
-    guard let token: RunSessionGuard = .isServerEnabled else { return }
     // todo potential optimization: don't run runSession if we are already in runSession
     Task {
-        try await runLightSession(.onFocusedMonitorChanged, token) {
+        try await runLightSession(.onFocusedMonitorChanged) {
             _ = try await config.onFocusedMonitorChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }
 }
 @MainActor private func onFocusChanged(_ focus: LiveFocus) {
     if config.onFocusChanged.isEmpty { return }
-    guard let token: RunSessionGuard = .isServerEnabled else { return }
     // todo potential optimization: don't run runSession if we are already in runSession
     Task {
-        try await runLightSession(.onFocusChanged, token) {
+        try await runLightSession(.onFocusChanged) {
             _ = try await config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }

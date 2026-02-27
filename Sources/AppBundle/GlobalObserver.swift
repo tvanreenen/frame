@@ -10,7 +10,6 @@ enum GlobalObserver {
         }
         let notifName = notification.name.rawValue
         Task { @MainActor in
-            if !TrayMenuModel.shared.isEnabled { return }
             if notifName == NSWorkspace.didActivateApplicationNotification.rawValue {
                 scheduleRefreshSession(.globalObserver(notifName), optimisticallyPreLayoutWorkspaces: true)
             } else {
@@ -22,8 +21,7 @@ enum GlobalObserver {
     private static func onHideApp(_ notification: Notification) {
         let notifName = notification.name.rawValue
         Task { @MainActor in
-            guard let token: RunSessionGuard = .isServerEnabled else { return }
-            try await runLightSession(.globalObserver(notifName), token) {
+            try await runLightSession(.globalObserver(notifName)) {
                 if config.automaticallyUnhideMacosHiddenApps {
                     if let w = prevFocus?.windowOrNil,
                        w.macAppUnsafe.nsApp.isHidden,
@@ -58,14 +56,13 @@ enum GlobalObserver {
             //  resetManipulatedWithMouseIfPossible might call its own refreshSession
             //  The end of the callback calls refreshSession
             Task { @MainActor in
-                guard let token: RunSessionGuard = .isServerEnabled else { return }
                 try await resetManipulatedWithMouseIfPossible()
                 let mouseLocation = mouseLocation
                 let clickedMonitor = mouseLocation.monitorApproximation
                 switch true {
                     // Detect clicks on desktop of different monitors
                     case clickedMonitor.activeWorkspace != focus.workspace:
-                        _ = try await runLightSession(.globalObserverLeftMouseUp, token) {
+                        _ = try await runLightSession(.globalObserverLeftMouseUp) {
                             clickedMonitor.activeWorkspace.focusWorkspace()
                         }
                     // Detect close button clicks for unfocused windows. Yes, kAXUIElementDestroyedNotification is that unreliable

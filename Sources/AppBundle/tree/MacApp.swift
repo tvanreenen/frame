@@ -84,7 +84,6 @@ final class MacApp: AbstractApp {
     }
 
     func closeAndUnregisterAxWindow(_ windowId: UInt32) {
-        if serverArgs.isReadOnly { return }
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         _ = withWindowAsync(windowId) { [windows] window, job in
             guard let closeButton = window.get(Ax.closeButtonAttr) else { return }
@@ -112,7 +111,6 @@ final class MacApp: AbstractApp {
     }
 
     @MainActor func nativeFocus(_ windowId: UInt32) {
-        if serverArgs.isReadOnly { return }
         MacApp.focusJob?.cancel()
         // Performance optimization. If possible avoid doing AX requests
         // (important for apps which are slow at responding even such basic AX requests. E.g. Godot)

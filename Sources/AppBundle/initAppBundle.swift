@@ -8,7 +8,6 @@ import Foundation
         isCli = false
         initServerArgs()
         if isDebug {
-            await toggleReleaseServerIfDebug(.off)
             interceptTermination(SIGINT)
             interceptTermination(SIGKILL)
         }
@@ -31,7 +30,7 @@ import Foundation
         Workspace.garbageCollectUnusedWorkspaces() // init workspaces
         _ = Workspace.all.first?.focusWorkspace()
         try await runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
-        try await runLightSession(.startup, .forceRun) {
+        try await runLightSession(.startup) {
             _ = try await config.afterStartupCommand.runCmdSeq(.defaultEnv, .emptyStdin)
         }
     }
@@ -43,7 +42,6 @@ var isStartup: Bool { _isStartup ?? dieT("isStartup is not initialized") }
 
 struct ServerArgs: Sendable {
     var configLocation: String? = nil
-    var isReadOnly: Bool = false
 }
 
 private let serverHelp = """
@@ -54,8 +52,6 @@ private let serverHelp = """
       -v, --version           Print simple-wm version
       --config-path <path>    Config path. It will take priority over ~/.simple-wm.toml
                               and ${XDG_CONFIG_HOME}/simple-wm/simple-wm.toml
-      --read-only             Disable window management.
-                              Useful if you want to use only query commands.
     """
 
 nonisolated(unsafe) private var _serverArgs = ServerArgs()
@@ -81,8 +77,6 @@ private func initServerArgs() {
                     exit(stderrMsg: "Missing <path> in --config-path flag")
                 }
                 index += 1
-            case "--read-only": // todo rename to '--disabled' and unite with disabled feature
-                _serverArgs.isReadOnly = true
             case "-NSDocumentRevisionsDebugMode" where isDebug:
                 // Skip Xcode CLI args.
                 // Usually it's '-NSDocumentRevisionsDebugMode NO'/'-NSDocumentRevisionsDebugMode YES'

@@ -8,7 +8,6 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
     let windowId = ax.containingWindowId()
     let notif = notif as String
     Task { @MainActor in
-        guard let token: RunSessionGuard = .isServerEnabled else { return }
         guard let windowId, let window = Window.get(byId: windowId), try await isManipulatedWithMouse(window) else {
             scheduleRefreshSession(.ax(notif))
             return
@@ -16,7 +15,7 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
         moveWithMouseTask?.cancel()
         moveWithMouseTask = Task {
             try checkCancellation()
-            try await runLightSession(.ax(notif), token) {
+            try await runLightSession(.ax(notif)) {
                 try await moveWithMouse(window)
             }
         }
