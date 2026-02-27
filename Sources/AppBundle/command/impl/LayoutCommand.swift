@@ -40,7 +40,7 @@ struct LayoutCommand: Command {
 extension Window {
     fileprivate func matchesDescription(_ layout: LayoutCmdArgs.LayoutDescription) -> Bool {
         return switch layout {
-            case .tiling:   parent is TilingContainer
+            case .tiling:   parent is Column
             case .floating: parent is Workspace
         }
     }

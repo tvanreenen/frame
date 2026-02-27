@@ -1,6 +1,6 @@
 extension Workspace {
     /// Enforce the depth-2 columns invariant:
-    ///   Workspace → TilingContainer(h,tiles) → [TilingContainer(v,tiles) → [Window, ...]]
+    ///   Workspace → Column(h,tiles) → [Column(v,tiles) → [Window, ...]]
     @MainActor func normalizeContainers() {
         normalizeColumnsStructure()
     }
@@ -14,17 +14,17 @@ extension Workspace {
         if root.orientation != .h { root.setOrientation(.h) }
         if root.layout != .tiles { root.layout = .tiles }
 
-        // Pass A: fix TilingContainer children (make them proper v-tiles columns)
+        // Pass A: fix Column children (make them proper v-tiles columns)
         //         and flatten any nested containers within each column
         for child in Array(root.children) {
-            guard let column = child as? TilingContainer else { continue }
+            guard let column = child as? Column else { continue }
             if column.orientation != .v { column.setOrientation(.v) }
             flattenColumn(column)
         }
 
         // Pass B: remove empty columns
         for child in Array(root.children) {
-            guard let column = child as? TilingContainer else { continue }
+            guard let column = child as? Column else { continue }
             if column.children.isEmpty {
                 column.unbindFromParent()
             }
@@ -33,7 +33,7 @@ extension Workspace {
         // Pass C: adopt orphan windows (Window children of root) into a column
         for child in Array(root.children) {
             guard let window = child as? Window else { continue }
-            let targetColumn: TilingContainer
+            let targetColumn: Column
             if let last = columns.last {
                 targetColumn = last
             } else {
@@ -44,9 +44,9 @@ extension Workspace {
     }
 
     /// Recursively lift all leaf windows inside `column` up to be direct children of `column`.
-    @MainActor fileprivate func flattenColumn(_ column: TilingContainer) {
+    @MainActor fileprivate func flattenColumn(_ column: Column) {
         for child in Array(column.children) {
-            guard let container = child as? TilingContainer else { continue }
+            guard let container = child as? Column else { continue }
             // Collect all windows from this nested container
             let windows = container.allLeafWindowsRecursive
             for window in windows {

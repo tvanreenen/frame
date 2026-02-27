@@ -87,7 +87,7 @@ struct FrozenWorkspace: Sendable {
 @discardableResult
 @MainActor
 private func restoreTreeRecursive(frozenContainer: FrozenContainer, parent: NonLeafTreeNodeObject, index: Int) -> Bool {
-    let container = TilingContainer(
+    let container = Column(
         parent: parent,
         adaptiveWeight: frozenContainer.weight,
         frozenContainer.orientation,

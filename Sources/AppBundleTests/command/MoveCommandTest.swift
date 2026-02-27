@@ -10,8 +10,8 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_rightToAdjacentColumn() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         let w2 = TestWindow.new(id: 2, parent: col2)
         assertEquals(w1.focusWindow(), true)
@@ -24,8 +24,8 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_leftToAdjacentColumn() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: col1)
         let w2 = TestWindow.new(id: 2, parent: col2)
         assertEquals(w2.focusWindow(), true)
@@ -38,7 +38,7 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_rightAtEdge_stops() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         assertEquals(w1.focusWindow(), true)
 
@@ -50,7 +50,7 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_leftAtEdge_stops() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         assertEquals(w1.focusWindow(), true)
 
@@ -64,7 +64,7 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_downWithinColumn() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
         let w2 = TestWindow.new(id: 2, parent: col)
         assertEquals(w1.focusWindow(), true)
@@ -76,7 +76,7 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_upWithinColumn() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
         let w2 = TestWindow.new(id: 2, parent: col)
         assertEquals(w2.focusWindow(), true)
@@ -88,7 +88,7 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_downAtBottomOfColumn_stops() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
         let w2 = TestWindow.new(id: 2, parent: col)
         assertEquals(w2.focusWindow(), true)
@@ -101,7 +101,7 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_upAtTopOfColumn_stops() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
         let w2 = TestWindow.new(id: 2, parent: col)
         assertEquals(w1.focusWindow(), true)
@@ -114,8 +114,8 @@ final class MoveCommandTest: XCTestCase {
 
     func testMove_emptyColumnRemovedAfterMove() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         TestWindow.new(id: 2, parent: col2)
         assertEquals(w1.focusWindow(), true)

@@ -12,11 +12,7 @@ include::util/man-attributes.adoc[]
 aerospace focus [-h|--help] [--ignore-floating] [--wrap-around]
                 [--boundaries <boundary>] [--boundaries-action <action>]
                 (left|down|up|right)
-aerospace focus [-h|--help] [--ignore-floating] [--wrap-around]
-                [--boundaries <boundary>] [--boundaries-action <action>]
-                (dfs-next|dfs-prev)
 aerospace focus [-h|--help] --window-id <window-id>
-aerospace focus [-h|--help] --dfs-index <dfs-index>
 
 // end::synopsis[]
 
@@ -57,10 +53,6 @@ The flag is incompatible with either `--boundaries-action` or `--boundaries`.
 --window-id <window-id>::
 Focus the window with specified `<window-id>`
 
---dfs-index <dfs-index>::
-Focus window by its index, based on a depth-first search (DFS) of the window within the workspace tree.
-Index is 0-based.
-
 --ignore-floating::
 Don't perceive floating windows as part of the tree.
 It may be useful for more reliable scripting.
@@ -70,10 +62,6 @@ include::./util/conditional-arguments-header.adoc[]
 
 (left|down|up|right)::
 Set focus to the nearest window in the given direction.
-
-(dfs-next|dfs-prev)::
-Set focus to the window before or after the current window in the depth-first order (top-to-bottom and left-to-right) of windows in the current workspace tree.
-In this mode, `--boundaries` must be `workspace` (the default) and `--boundaries-action` can be set to one of `(stop|fail|wrap-around-the-workspace)`.
 
 // end::body[]
 

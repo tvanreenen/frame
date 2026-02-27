@@ -9,29 +9,29 @@ struct ResizeCommand: Command { // todo cover with tests
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }
 
         let candidates = target.windowOrNil?.parentsWithSelf
-            .filter { ($0.parent as? TilingContainer)?.layout == .tiles }
+            .filter { ($0.parent as? Column)?.layout == .tiles }
             ?? []
 
         let orientation: Orientation?
-        let parent: TilingContainer?
+        let parent: Column?
         let node: TreeNode?
         switch args.dimension.val {
             case .width:
                 orientation = .h
-                node = candidates.first(where: { ($0.parent as? TilingContainer)?.orientation == orientation })
-                parent = node?.parent as? TilingContainer
+                node = candidates.first(where: { ($0.parent as? Column)?.orientation == orientation })
+                parent = node?.parent as? Column
             case .height:
                 orientation = .v
-                node = candidates.first(where: { ($0.parent as? TilingContainer)?.orientation == orientation })
-                parent = node?.parent as? TilingContainer
+                node = candidates.first(where: { ($0.parent as? Column)?.orientation == orientation })
+                parent = node?.parent as? Column
             case .smart:
                 node = candidates.first
-                parent = node?.parent as? TilingContainer
+                parent = node?.parent as? Column
                 orientation = parent?.orientation
             case .smartOpposite:
-                orientation = (candidates.first?.parent as? TilingContainer)?.orientation.opposite
-                node = candidates.first(where: { ($0.parent as? TilingContainer)?.orientation == orientation })
-                parent = node?.parent as? TilingContainer
+                orientation = (candidates.first?.parent as? Column)?.orientation.opposite
+                node = candidates.first(where: { ($0.parent as? Column)?.orientation == orientation })
+                parent = node?.parent as? Column
         }
         guard let parent else { return io.err("resize command doesn't support floating windows yet https://github.com/nikitabobko/AeroSpace/issues/9") }
         guard let orientation else { return false }

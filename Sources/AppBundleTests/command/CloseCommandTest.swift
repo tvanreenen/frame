@@ -8,7 +8,7 @@ final class CloseCommandTest: XCTestCase {
 
     func testSimple() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         _ = TestWindow.new(id: 1, parent: col).focusWindow()
         TestWindow.new(id: 2, parent: col)
 
@@ -23,7 +23,7 @@ final class CloseCommandTest: XCTestCase {
 
     func testCloseViaWindowIdFlag() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         _ = TestWindow.new(id: 1, parent: col).focusWindow()
         TestWindow.new(id: 2, parent: col)
 

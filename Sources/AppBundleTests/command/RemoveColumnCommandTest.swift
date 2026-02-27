@@ -8,8 +8,8 @@ final class RemoveColumnCommandTest: XCTestCase {
 
     func testRemoveColumn_removesLastColumn_movesWindowsToLeftNeighbor() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         TestWindow.new(id: 2, parent: col2)
         assertEquals(w1.focusWindow(), true)
@@ -24,8 +24,8 @@ final class RemoveColumnCommandTest: XCTestCase {
 
     func testRemoveColumn_multipleWindowsInLastColumn_allMovedToNeighbor() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
         TestWindow.new(id: 2, parent: col2)
         TestWindow.new(id: 3, parent: col2)
@@ -39,7 +39,7 @@ final class RemoveColumnCommandTest: XCTestCase {
 
     func testRemoveColumn_singleColumn_windowBecomesFloating() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
         assertEquals(w1.focusWindow(), true)
 

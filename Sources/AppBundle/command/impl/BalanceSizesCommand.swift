@@ -14,10 +14,10 @@ struct BalanceSizesCommand: Command {
 }
 
 @MainActor
-private func balance(_ parent: TilingContainer) {
+private func balance(_ parent: Column) {
     for child in parent.children {
         child.setWeight(parent.orientation, 1)
-        if let child = child as? TilingContainer {
+        if let child = child as? Column {
             balance(child)
         }
     }

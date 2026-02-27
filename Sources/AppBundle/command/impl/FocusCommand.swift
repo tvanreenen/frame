@@ -31,30 +31,6 @@ struct FocusCommand: Command {
                 } else {
                     return io.err("Can't find window with ID \(windowId)")
                 }
-            case .dfsIndex(let dfsIndex):
-                if let windowToFocus = target.workspace.rootTilingContainer.allLeafWindowsRecursive.getOrNil(atIndex: Int(dfsIndex)) {
-                    return windowToFocus.focusWindow()
-                } else {
-                    return io.err("Can't find window with DFS index \(dfsIndex)")
-                }
-            case .dfsRelative(let nextPrev):
-                let windows = target.workspace.rootTilingContainer.allLeafWindowsRecursive
-                guard let currentIndex = windows.firstIndex(where: { $0 == target.windowOrNil }) else {
-                    return false
-                }
-                var targetIndex = switch nextPrev {
-                    case .dfsNext: currentIndex + 1
-                    case .dfsPrev: currentIndex - 1
-                }
-                if !(0 ..< windows.count).contains(targetIndex) {
-                    switch args.boundariesAction {
-                        case .stop: return true
-                        case .fail: return false
-                        case .wrapAroundTheWorkspace: targetIndex = (targetIndex + windows.count) % windows.count
-                        case .wrapAroundAllMonitors: return dieT("Must be discarded by args parser")
-                    }
-                }
-                return windows[targetIndex].focusWindow()
         }
     }
 }
@@ -125,13 +101,13 @@ struct FocusCommand: Command {
         let center = try await window.getCenter() // todo bug: we shouldn't access ax api here. What if the window was moved but it wasn't committed to ax yet?
         guard let center else { continue }
 
-        let tilingParent: TilingContainer
+        let tilingParent: Column
         let index: Int
         if let target = center.coerceIn(rect: workspace.workspaceMonitor.visibleRectPaddedByOuterGaps)?
             .findIn(tree: workspace.rootTilingContainer, virtual: true)
         {
             guard let targetCenter = try await target.getCenter() else { continue }
-            guard let _tilingParent = target.parent as? TilingContainer else { continue }
+            guard let _tilingParent = target.parent as? Column else { continue }
             tilingParent = _tilingParent
             index = center.getProjection(tilingParent.orientation) >= targetCenter.getProjection(tilingParent.orientation)
                 ? target.ownIndex.orDie() + 1
@@ -173,7 +149,7 @@ private struct FloatingWindowData {
     let window: Window
     let center: CGPoint
 
-    let parent: TilingContainer
+    let parent: Column
     let adaptiveWeight: CGFloat
     let index: Int
 }

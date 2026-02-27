@@ -8,8 +8,8 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_width_growsNonLastColumn() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
         let w1 = TestWindow.new(id: 1, parent: col1)
         TestWindow.new(id: 2, parent: col2)
         assertEquals(w1.focusWindow(), true)
@@ -23,8 +23,8 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_width_lastColumnDirectionFlip() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
         TestWindow.new(id: 1, parent: col1)
         let w2 = TestWindow.new(id: 2, parent: col2)
         assertEquals(w2.focusWindow(), true)
@@ -38,7 +38,7 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_height_growsNonLastWindow() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col, adaptiveWeight: 10)
         TestWindow.new(id: 2, parent: col, adaptiveWeight: 10)
         assertEquals(w1.focusWindow(), true)
@@ -51,7 +51,7 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_height_lastWindowDirectionFlip() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: col, adaptiveWeight: 10)
         let w2 = TestWindow.new(id: 2, parent: col, adaptiveWeight: 10)
         assertEquals(w2.focusWindow(), true)
@@ -64,7 +64,7 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_width_singleColumn_isNoOp() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
         assertEquals(w1.focusWindow(), true)
 
@@ -77,7 +77,7 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_smart_resizesWindowHeight() async throws {
         let workspace = Workspace.get(byName: name)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col, adaptiveWeight: 10)
         TestWindow.new(id: 2, parent: col, adaptiveWeight: 10)
         assertEquals(w1.focusWindow(), true)
@@ -91,8 +91,8 @@ final class ResizeBehaviorTest: XCTestCase {
 
     func testResize_smartOpposite_resizesColumnWidth() async throws {
         let workspace = Workspace.get(byName: name)
-        let col1 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
-        let col2 = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 10)
         let w1 = TestWindow.new(id: 1, parent: col1, adaptiveWeight: 10)
         TestWindow.new(id: 2, parent: col1, adaptiveWeight: 10)
         TestWindow.new(id: 3, parent: col2)

@@ -51,7 +51,7 @@ private func resizeWithMouse(_ window: Window) async throws { // todo cover with
             let (dParent, dOwnIndex) = window.closestParent(hasChildrenInDirection: .down, withLayout: .tiles) ?? (nil, nil)
             let (uParent, uOwnIndex) = window.closestParent(hasChildrenInDirection: .up, withLayout: .tiles) ?? (nil, nil)
             let (rParent, rOwnIndex) = window.closestParent(hasChildrenInDirection: .right, withLayout: .tiles) ?? (nil, nil)
-            let table: [(CGFloat, TilingContainer?, Int?, Int?)] = [
+            let table: [(CGFloat, Column?, Int?, Int?)] = [
                 (lastAppliedLayoutRect.minX - rect.minX, lParent, 0,                        lOwnIndex),               // Horizontal, to the left of the window
                 (rect.maxY - lastAppliedLayoutRect.maxY, dParent, dOwnIndex.map { $0 + 1 }, dParent?.children.count), // Vertical, to the down of the window
                 (lastAppliedLayoutRect.minY - rect.minY, uParent, 0,                        uOwnIndex),               // Vertical, to the up of the window
@@ -65,7 +65,7 @@ private func resizeWithMouse(_ window: Window) async throws { // todo cover with
                     window.parentsWithSelf.lazy
                         .prefix(while: { $0 != parent })
                         .filter {
-                            let parent = $0.parent as? TilingContainer
+                            let parent = $0.parent as? Column
                             return parent?.orientation == orientation && parent?.layout == .tiles
                         }
                         .forEach { $0.setWeight(orientation, $0.getWeightBeforeResize(orientation) + diff) }

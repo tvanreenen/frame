@@ -90,7 +90,7 @@ extension Window {
     }
 }
 
-extension TilingContainer {
+extension Column {
     @MainActor
     fileprivate func layoutTiles(_ point: CGPoint, width: CGFloat, height: CGFloat, virtual: Rect, _ context: LayoutContext) async throws {
         var point = point

@@ -12,7 +12,7 @@ struct FrozenContainer: Sendable {
     let orientation: Orientation
     let weight: CGFloat
 
-    @MainActor init(_ container: TilingContainer) {
+    @MainActor init(_ container: Column) {
         children = container.children.map {
             switch $0.nodeCases {
                 case .window(let w): .window(FrozenWindow(w))
@@ -42,5 +42,5 @@ struct FrozenWindow: Sendable {
 }
 
 @MainActor private func getWeightOrNil(_ node: TreeNode) -> CGFloat? {
-    ((node.parent as? TilingContainer)?.orientation).map { node.getWeight($0) }
+    ((node.parent as? Column)?.orientation).map { node.getWeight($0) }
 }

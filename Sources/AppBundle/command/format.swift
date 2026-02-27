@@ -160,7 +160,7 @@ extension String {
     }
 }
 
-private func toLayoutString(tc: TilingContainer) -> String {
+private func toLayoutString(tc: Column) -> String {
     switch tc.orientation {
         case .h: return "h_tiles"
         case .v: return "v_tiles"

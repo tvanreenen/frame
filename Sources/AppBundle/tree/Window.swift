@@ -2,7 +2,7 @@ import AppKit
 import Common
 
 open class Window: TreeNode, Hashable {
-    nonisolated let windowId: UInt32 // todo nonisolated keyword is no longer necessary?
+    let windowId: UInt32
     let app: any AbstractApp
     var lastFloatingSize: CGSize?
     var isFullscreen: Bool = false

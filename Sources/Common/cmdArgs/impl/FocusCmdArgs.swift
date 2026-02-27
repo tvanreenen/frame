@@ -8,13 +8,12 @@ public struct FocusCmdArgs: CmdArgs {
         flags: [
             "--ignore-floating": falseBoolFlag(\.floatingAsTiling),
             "--window-id": SubArgParser(\.windowId, upcastSubArgParserFun(parseUInt32SubArg)),
-            "--dfs-index": SubArgParser(\.dfsIndex, upcastSubArgParserFun(parseUInt32SubArg)),
 
             "--boundaries": SubArgParser(\.rawBoundaries, upcastSubArgParserFun(parseBoundaries)),
             "--boundaries-action": SubArgParser(\.rawBoundariesAction, upcastSubArgParserFun(parseBoundariesAction)),
             "--wrap-around": trueBoolFlag(\.wrapAroundAlias),
         ],
-        posArgs: [ArgParser(\.cardinalOrDfsDirection, upcastArgParserFun(parseCardinalOrDfsDirection))],
+        posArgs: [ArgParser(\.direction, upcastArgParserFun(parseCardinalDirectionArg))],
         conflictingOptions: [
             ["--wrap-around", "--boundaries-action"],
             ["--wrap-around", "--boundaries"],
@@ -24,23 +23,17 @@ public struct FocusCmdArgs: CmdArgs {
     public var rawBoundaries: Boundaries? = nil // todo cover boundaries wrapping with tests
     public var rawBoundariesAction: WhenBoundariesCrossed? = nil
     fileprivate var wrapAroundAlias: Bool = false
-    public var dfsIndex: UInt32? = nil
-    public var cardinalOrDfsDirection: CardinalOrDfsDirection? = nil
+    public var direction: CardinalDirection? = nil
     public var floatingAsTiling: Bool = true
 
-    public init(rawArgs: StrArrSlice, cardinalOrDfsDirection: CardinalOrDfsDirection) {
+    public init(rawArgs: StrArrSlice, direction: CardinalDirection) {
         self.commonState = .init(rawArgs)
-        self.cardinalOrDfsDirection = cardinalOrDfsDirection
+        self.direction = direction
     }
 
     public init(rawArgs: StrArrSlice, windowId: UInt32) {
         self.commonState = .init(rawArgs)
         self.windowId = windowId
-    }
-
-    public init(rawArgs: StrArrSlice, dfsIndex: UInt32) {
-        self.commonState = .init(rawArgs)
-        self.dfsIndex = dfsIndex
     }
 
     public enum Boundaries: String, CaseIterable, Equatable, Sendable {
@@ -58,31 +51,15 @@ public struct FocusCmdArgs: CmdArgs {
 public enum FocusCmdTarget {
     case direction(CardinalDirection)
     case windowId(UInt32)
-    case dfsIndex(UInt32)
-    case dfsRelative(DfsNextPrev)
-
-    var isDfsRelative: Bool {
-        if case .dfsRelative = self {
-            return true
-        } else {
-            return false
-        }
-    }
 }
 
 extension FocusCmdArgs {
     public var target: FocusCmdTarget {
-        if let cardinalOrDfsDirection {
-            return switch cardinalOrDfsDirection {
-                case .direction(let dir): .direction(dir)
-                case .dfsRelative(let nextPrev): .dfsRelative(nextPrev)
-            }
+        if let direction {
+            return .direction(direction)
         }
         if let windowId {
             return .windowId(windowId)
-        }
-        if let dfsIndex {
-            return .dfsIndex(dfsIndex)
         }
         die("Parser invariants are broken")
     }
@@ -100,17 +77,11 @@ public func parseFocusCmdArgs(_ args: StrArrSlice) -> ParsedCmd<FocusCmdArgs> {
                 ? .failure("\(raw.boundaries.rawValue) and \(raw.boundariesAction.rawValue) is an invalid combination of values")
                 : .cmd(raw)
         }
-        .filter("Mandatory argument is missing. \(CardinalOrDfsDirection.unionLiteral), --window-id or --dfs-index is required") {
-            $0.cardinalOrDfsDirection != nil || $0.windowId != nil || $0.dfsIndex != nil
+        .filter("Mandatory argument is missing. \(CardinalDirection.unionLiteral), --window-id is required") {
+            $0.direction != nil || $0.windowId != nil
         }
         .filter("--window-id is incompatible with other options") {
             $0.windowId == nil || $0 == FocusCmdArgs(rawArgs: args, windowId: $0.windowId.orDie())
-        }
-        .filter("--dfs-index is incompatible with other options") {
-            $0.dfsIndex == nil || $0 == FocusCmdArgs(rawArgs: args, dfsIndex: $0.dfsIndex.orDie())
-        }
-        .filter("(dfs-next|dfs-prev) only supports --boundaries workspace") {
-            $0.target.isDfsRelative.implies($0.boundaries == .workspace)
         }
 }
 

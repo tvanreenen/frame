@@ -2,7 +2,7 @@ import Common
 
 enum TreeNodeCases {
     case window(Window)
-    case tilingContainer(TilingContainer)
+    case tilingContainer(Column)
     case workspace(Workspace)
     case macosMinimizedWindowsContainer(MacosMinimizedWindowsContainer)
     case macosHiddenAppsWindowsContainer(MacosHiddenAppsWindowsContainer)
@@ -11,7 +11,7 @@ enum TreeNodeCases {
 }
 
 enum NonLeafTreeNodeCases {
-    case tilingContainer(TilingContainer)
+    case tilingContainer(Column)
     case workspace(Workspace)
     case macosMinimizedWindowsContainer(MacosMinimizedWindowsContainer)
     case macosHiddenAppsWindowsContainer(MacosHiddenAppsWindowsContainer)
@@ -21,7 +21,7 @@ enum NonLeafTreeNodeCases {
 
 enum TilingTreeNodeCases {
     case window(Window)
-    case tilingContainer(TilingContainer)
+    case tilingContainer(Column)
 }
 
 enum NonLeafTreeNodeKind: Equatable {
@@ -41,7 +41,7 @@ extension TreeNode {
             return .window(window)
         } else if let workspace = self as? Workspace {
             return .workspace(workspace)
-        } else if let tilingContainer = self as? TilingContainer {
+        } else if let tilingContainer = self as? Column {
             return .tilingContainer(tilingContainer)
         } else if let container = self as? MacosHiddenAppsWindowsContainer {
             return .macosHiddenAppsWindowsContainer(container)
@@ -59,7 +59,7 @@ extension TreeNode {
     func tilingTreeNodeCasesOrDie() -> TilingTreeNodeCases {
         if let window = self as? Window {
             return .window(window)
-        } else if let tilingContainer = self as? TilingContainer {
+        } else if let tilingContainer = self as? Column {
             return .tilingContainer(tilingContainer)
         } else {
             illegalChildParentRelation(child: self, parent: parent)
@@ -73,7 +73,7 @@ extension NonLeafTreeNodeObject {
             die("Windows are leaf nodes. They can't have children")
         } else if let workspace = self as? Workspace {
             return .workspace(workspace)
-        } else if let tilingContainer = self as? TilingContainer {
+        } else if let tilingContainer = self as? Column {
             return .tilingContainer(tilingContainer)
         } else if let container = self as? MacosMinimizedWindowsContainer {
             return .macosMinimizedWindowsContainer(container)
@@ -106,7 +106,7 @@ enum ChildParentRelation: Equatable {
     case macosNativeHiddenAppWindow
     case macosNativeMinimizedWindow
     case macosPopupWindow
-    case tiling(parent: TilingContainer)
+    case tiling(parent: Column)
     case rootTilingContainer
 
     case shimContainerRelation

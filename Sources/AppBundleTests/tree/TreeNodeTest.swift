@@ -54,12 +54,12 @@ final class TreeNodeTest: XCTestCase {
     func testNormalizeContainers_columnBecomesVTiles() {
         let workspace = Workspace.get(byName: name)
         // Create an h-tiles column (wrong orientation)
-        let badColumn = TilingContainer.newHTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let badColumn = Column.newHTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: badColumn)
         workspace.normalizeContainers()
         // After normalization, the column must be v-tiles
         assertEquals(workspace.columnsRoot.children.count, 1)
-        let col = workspace.columnsRoot.children.first as? TilingContainer
+        let col = workspace.columnsRoot.children.first as? Column
         XCTAssertNotNil(col)
         assertEquals(col?.orientation, .v)
     }
@@ -67,7 +67,7 @@ final class TreeNodeTest: XCTestCase {
     func testNormalizeContainers_removeEmptyColumn() {
         let workspace = Workspace.get(byName: name)
         // Create an empty column (no windows)
-        _ = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        _ = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         assertEquals(workspace.columnsRoot.children.count, 1)
         workspace.normalizeContainers()
         // Empty column should be removed
@@ -77,8 +77,8 @@ final class TreeNodeTest: XCTestCase {
     func testNormalizeContainers_flattenNestedContainersIntoColumn() {
         let workspace = Workspace.get(byName: name)
         // Set up: root → col(v) → nested(h) → window(1)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let nested = TilingContainer.newHTiles(parent: col, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let nested = Column.newHTiles(parent: col, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: nested)
         workspace.normalizeContainers()
         // The window should be lifted to be a direct child of the column
@@ -89,7 +89,7 @@ final class TreeNodeTest: XCTestCase {
     func testNormalizeContainers_orphanWindowMovedToLastColumn() {
         let workspace = Workspace.get(byName: name)
         // Set up: root → col(v) → window(1), root → orphan window(2)
-        let col = TilingContainer.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: col)
         // Directly bind window to root (orphan — shouldn't happen normally)
         TestWindow.new(id: 2, parent: workspace.columnsRoot)
