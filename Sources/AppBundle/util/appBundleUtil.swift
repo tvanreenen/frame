@@ -62,14 +62,6 @@ func terminateApp() -> Never {
     die("Unreachable code")
 }
 
-extension String {
-    func copyToClipboard() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.declareTypes([.string], owner: nil)
-        pasteboard.setString(self, forType: .string)
-    }
-}
-
 func - (a: CGPoint, b: CGPoint) -> CGPoint {
     CGPoint(x: a.x - b.x, y: a.y - b.y)
 }

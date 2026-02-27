@@ -65,6 +65,9 @@ on-mode-changed = []
     alt-rightSquareBracket = 'add-column'
     alt-leftSquareBracket  = 'remove-column'
 
+    # Toggle accordion / tiles layout
+    alt-slash = 'layout accordion tiles'
+
     # Resize column width
     alt-comma  = 'resize width -50'
     alt-period = 'resize width +50'
