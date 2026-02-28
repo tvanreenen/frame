@@ -47,6 +47,27 @@ just reset-accessibility
 
 Then relaunch the app with `just dev`.
 
+## AX dump fixtures (window classification regression tests)
+
+AX fixtures live in:
+
+- `Sources/AppBundleTests/fixtures/axDumps`
+
+Useful commands:
+
+- List fixtures: `./script/dev/axdump-fixtures.sh list`
+- Capture focused window fixture: `./script/dev/axdump-fixtures.sh capture <name> <window|dialog|popup> <true|false>`
+- Rename fixture: `./script/dev/axdump-fixtures.sh rename <old-name> <new-name>`
+- Remove fixture: `./script/dev/axdump-fixtures.sh remove <name>`
+- Run only classification fixture tests: `./script/dev/axdump-fixtures.sh check`
+
+Example:
+
+```bash
+./script/dev/axdump-fixtures.sh capture firefox_google_meet_share_popup popup true
+./script/dev/axdump-fixtures.sh check
+```
+
 ## Notes
 
 - Legacy wrapper scripts are intentionally removed.

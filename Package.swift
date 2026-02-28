@@ -62,6 +62,9 @@ let package = Package(
             dependencies: [
                 .target(name: "AppBundle"),
             ],
+            exclude: [
+                "fixtures",
+            ],
         ),
     ],
 )
