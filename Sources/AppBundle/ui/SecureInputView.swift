@@ -58,7 +58,7 @@ struct SecureInputView: View {
                     .aspectRatio(contentMode: .fit)
                     .padding(6)
             } else {
-                Text("simple-wm cannot respond to keyboard shortcuts while **Secure Input** is active. **Secure Input** is a macOS security feature that prevents applications from reading keyboard events.")
+                Text("frame cannot respond to keyboard shortcuts while **Secure Input** is active. **Secure Input** is a macOS security feature that prevents applications from reading keyboard events.")
                     .font(.title3)
                     .padding(10)
             }

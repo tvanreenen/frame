@@ -17,7 +17,7 @@ func startUnixSocketServer() {
     listener.start(queue: .global())
 }
 
-private let serverVersionAndHash = "\(simpleWmAppVersion) \(gitHash)"
+private let serverVersionAndHash = "\(appVersion) \(gitHash)"
 
 private func newConnection(_ connection: NWConnection) async { // todo add exit codes
     func answerToClient(exitCode: Int32, stdout: String = "", stderr: String = "") async {

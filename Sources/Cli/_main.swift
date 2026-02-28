@@ -5,7 +5,7 @@ import Network
 
 let usage =
     """
-    USAGE: \(CommandLine.arguments.first ?? "simple-wm") [-h|--help] [-v|--version] <subcommand> [<args>...]
+    USAGE: \(CommandLine.arguments.first ?? cliName) [-h|--help] [-v|--version] <subcommand> [<args>...]
 
     SUBCOMMANDS:
     \(subcommandDescriptions.sortedBy { $0[0] }.toPaddingTable(columnSeparator: "   ").joined(separator: "\n"))
@@ -36,16 +36,16 @@ struct Main {
             }
             print(
                 """
-                simple-wm CLI client version: \(cliClientVersionAndHash)
-                simple-wm server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
+                \(cliName) CLI client version: \(cliClientVersionAndHash)
+                \(cliName) server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
                 """,
             )
             if serverVersionAndHash != nil && cliClientVersionAndHash != serverVersionAndHash {
                 eprint(
                     """
-                    Warning: simple-wm client/server versions don't match. Possible fixes:
-                      - Restart simple-wm (server restart is required after each update)
-                      - Reinstall and restart simple-wm (corrupted installation)
+                    Warning: \(cliName) client/server versions don't match. Possible fixes:
+                      - Restart \(cliName) (server restart is required after each update)
+                      - Reinstall and restart \(cliName) (corrupted installation)
                     """,
                 )
             }
@@ -66,7 +66,7 @@ struct Main {
         let connection = NWConnection(to: NWEndpoint.unix(path: socketPath), using: .tcp)
 
         if let e = await connection.startBlocking() {
-            exit(stderrMsg: "Can't connect to simple-wm server. Is simple-wm running?\n\(e.localizedDescription)")
+            exit(stderrMsg: "Can't connect to \(cliName) server. Is \(cliName) running?\n\(e.localizedDescription)")
         }
 
         var stdin = ""
@@ -95,8 +95,8 @@ struct Main {
             }
         }
 
-        let windowId = ProcessInfo.processInfo.environment[AEROSPACE_WINDOW_ID].flatMap(UInt32.init)
-        let workspace = ProcessInfo.processInfo.environment[AEROSPACE_WORKSPACE]
+        let windowId = ProcessInfo.processInfo.environment[FRAME_WINDOW_ID].flatMap(UInt32.init)
+        let workspace = ProcessInfo.processInfo.environment[FRAME_WORKSPACE]
         let ans = await run(connection, args, stdin: stdin, windowId: windowId, workspace: workspace)
 
         if !ans.stdout.isEmpty { print(ans.stdout) }
@@ -104,12 +104,12 @@ struct Main {
         if ans.exitCode != 0 && ans.serverVersionAndHash != cliClientVersionAndHash {
             eprint(
                 """
-                Warning: simple-wm client/server versions don't match
-                  - simple-wm CLI client version: \(cliClientVersionAndHash)
-                  - simple-wm server version: \(ans.serverVersionAndHash)
+                Warning: \(cliName) client/server versions don't match
+                  - \(cliName) CLI client version: \(cliClientVersionAndHash)
+                  - \(cliName) server version: \(ans.serverVersionAndHash)
                   Possible fixes:
-                  - Restart simple-wm (server restart is required after each update)
-                  - Reinstall and restart simple-wm (corrupted installation)
+                  - Restart \(cliName) (server restart is required after each update)
+                  - Reinstall and restart \(cliName) (corrupted installation)
                 """,
             )
         }

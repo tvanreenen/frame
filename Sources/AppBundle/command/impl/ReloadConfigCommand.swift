@@ -40,7 +40,7 @@ struct ReloadConfigCommand: Command {
             stdout.append(msg)
             if !args.noGui {
                 Task { @MainActor in
-                    MessageModel.shared.message = Message(description: "simple-wm Config Error", body: msg)
+                    MessageModel.shared.message = Message(description: "frame Config Error", body: msg)
                 }
             }
             result = false

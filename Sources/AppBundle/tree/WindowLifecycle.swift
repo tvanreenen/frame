@@ -72,7 +72,7 @@ private func onWindowDetected(_ window: Window) async throws {
 extension WindowDetectedCallback {
     @MainActor
     func matches(_ window: Window) async throws -> Bool {
-        if let startupMatcher = matcher.duringSimpleWmStartup, startupMatcher != isStartup {
+        if let startupMatcher = matcher.duringAppStartup, startupMatcher != isStartup {
             return false
         }
         if let regex = matcher.windowTitleRegexSubstring, !(try await window.title).contains(regex) {

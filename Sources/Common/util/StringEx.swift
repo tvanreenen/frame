@@ -73,7 +73,7 @@ extension String {
                         case .literal(let literal): .success(literal)
                         case .interVar(let value):
                             variables[value].flatMap(Result.success)
-                                ?? .failure("Env variable '\(value)' isn't presented in simple-wm env vars, " +
+                                ?? .failure("Env variable '\(value)' isn't presented in frame env vars, " +
                                     "or not available for interpolation (because it's mutated)")
                     }
                 }

@@ -7,7 +7,7 @@ public func menuBar(viewModel: TrayMenuModel) -> some Scene {
     MenuBarExtra {
         openConfigButton()
         reloadConfigButton()
-        Button("Quit \(simpleWmAppName)") {
+        Button("Quit \(appDisplayName)") {
             Task {
                 defer { terminateApp() }
                 try await terminationHandler.beforeTermination()

@@ -25,8 +25,6 @@ if /bin/test -z "${NUKE_PATH:-}"; then
     add-optional-dep-to-bin rustc # build-shell-completion.sh
     add-optional-dep-to-bin cargo # build-shell-completion.sh
     add-optional-dep-to-bin brew # install-from-sources.sh
-    add-optional-dep-to-bin bundle # build-docs.sh
-    add-optional-dep-to-bin bundler # build-docs.sh
     add-optional-dep-to-bin xcbeautify # build-release.sh
     add-optional-dep-to-bin git
     add-optional-dep-to-bin swift
@@ -41,7 +39,7 @@ swift() {
     if /usr/bin/which swiftly &> /dev/null; then
         swiftly run swift "$@"
     else
-        echo "warning: swiftly is not installed. Fallback to plain swift. Swift compilation might not be reproducible" > /dev/stderr
+        echo "warning: swiftly is not installed. Fallback to plain swift. Swift compilation might not be reproducible" >&2
         /usr/bin/env swift --version
         /usr/bin/env swift "$@"
     fi

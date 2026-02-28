@@ -2,7 +2,7 @@ import Foundation
 
 // TO EVERYONE REVERSE-ENGINEERING THE PROTOCOL
 // client-server socket API is not public yet.
-// Tracking issue for making it public: https://github.com/nikitabobko/AeroSpace/issues/1513
+// Tracking issue for making it public: https://github.com/tvanreenen/frame/issues/1513
 public struct ServerAnswer: Codable, Sendable {
     public let exitCode: Int32
     public let stdout: String
@@ -24,12 +24,12 @@ public struct ServerAnswer: Codable, Sendable {
 
 // TO EVERYONE REVERSE-ENGINEERING THE PROTOCOL
 // client-server socket API is not public yet.
-// Tracking issue for making it public: https://github.com/nikitabobko/AeroSpace/issues/1513
+// Tracking issue for making it public: https://github.com/tvanreenen/frame/issues/1513
 public struct ClientRequest: Codable, Sendable, ConvenienceCopyable, Equatable {
     public let args: [String]
     public let stdin: String
 
-    // Please forward AEROSPACE_WINDOW_ID and AEROSPACE_WORKSPACE to these fields.
+    // Please forward FRAME_WINDOW_ID and FRAME_WORKSPACE to these fields.
     // The fields are required to be present in the JSON payload and can be null.
     public var windowId: UInt32?
     public var workspace: String?

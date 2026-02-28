@@ -4,15 +4,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "SimpleWMPackage",
+    name: "FramePackage",
     // Runtime support for parameterized protocol types is only available in macOS 13.0.0 or newer
     // And it specifies deploymentTarget for CLI
     platforms: [.macOS(.v13)],
     // Products define the executables and libraries a package produces, making them visible to other packages.
     products: [
-        .executable(name: "simple-wm", targets: ["Cli"]),
+        .executable(name: "frame", targets: ["Cli"]),
         // Don't use this build for release, use xcode instead
-        .executable(name: "SimpleWMApp", targets: ["SimpleWMApp"]),
+        .executable(name: "FrameApp", targets: ["FrameApp"]),
         // We only need to expose this as a product for xcode
         .library(name: "AppBundle", targets: ["AppBundle"]),
     ],
@@ -50,7 +50,7 @@ let package = Package(
             ],
         ),
         .executableTarget(
-            name: "SimpleWMApp",
+            name: "FrameApp",
             dependencies: [
                 .target(name: "AppBundle"),
             ],

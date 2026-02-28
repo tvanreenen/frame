@@ -1,7 +1,8 @@
-// FILE IS GENERATED FROM docs/aerospace-*.adoc files
-// TO REGENERATE THE FILE RUN generate.sh
+// Subcommand descriptions are intentionally checked in as source.
+// They are maintained manually while docs generation is disabled.
 
 let subcommandDescriptions = [
+    ["  add-column", "Insert a new column after the focused window's column"],
     ["  balance-sizes", "Balance sizes of all windows in the current workspace"],
     ["  focus-monitor", "Focus monitor by relative direction, by order, or by pattern"],
     ["  focus", "Set focus to a window."],
@@ -15,6 +16,7 @@ let subcommandDescriptions = [
     ["  move-node-to-workspace", "Move the focused window to the specified workspace"],
     ["  move", "Move the focused window in the given direction"],
     ["  reload-config", "Reload currently active config"],
+    ["  remove-column", "Remove the last column in the target workspace"],
     ["  resize", "Resize the focused window"],
     ["  workspace", "Focus the specified workspace"],
 ]

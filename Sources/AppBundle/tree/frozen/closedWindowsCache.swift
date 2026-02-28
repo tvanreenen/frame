@@ -3,9 +3,9 @@ import AppKit
 /// First line of defence against lock screen
 ///
 /// When you lock the screen, all accessibility API becomes unobservable (all attributes become empty, window id
-/// becomes nil, etc.) which tricks simple-wm into thinking that all windows were closed.
-/// That's why every time a window dies simple-wm caches the "entire world" (unless window is already presented in the cache)
-/// so that once the screen is unlocked, simple-wm could restore windows to where they were
+/// becomes nil, etc.) which tricks frame into thinking that all windows were closed.
+/// That's why every time a window dies frame caches the "entire world" (unless window is already presented in the cache)
+/// so that once the screen is unlocked, frame could restore windows to where they were
 @MainActor private var closedWindowsCache: FrozenWorld {
     get { runtimeContext.closedWindowsCache }
     set { runtimeContext.closedWindowsCache = newValue }

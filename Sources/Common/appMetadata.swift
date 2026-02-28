@@ -1,8 +1,13 @@
-public let stableSimpleWmAppId: String = "com.simplewm.app"
+public let productName: String = "Frame"
+public let cliName: String = "frame"
+public let stableAppBundleId: String = "com.frame.app"
+public let configDotfileName: String = ".frame.toml"
+public let configDirName: String = "frame"
+
 #if DEBUG
-    public let simpleWmAppId: String = "com.simplewm.app.debug"
-    public let simpleWmAppName: String = "simple-wm-Debug"
+    public let appBundleId: String = "com.frame.app.debug"
+    public let appDisplayName: String = "Frame-Debug"
 #else
-    public let simpleWmAppId: String = stableSimpleWmAppId
-    public let simpleWmAppName: String = "simple-wm"
+    public let appBundleId: String = stableAppBundleId
+    public let appDisplayName: String = productName
 #endif

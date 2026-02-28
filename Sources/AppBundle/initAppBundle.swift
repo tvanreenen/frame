@@ -45,13 +45,13 @@ struct ServerArgs: Sendable {
 }
 
 private let serverHelp = """
-    USAGE: \(CommandLine.arguments.first ?? "simple-wm.app/Contents/MacOS/SimpleWMApp") [<options>]
+    USAGE: \(CommandLine.arguments.first ?? "\(cliName).app/Contents/MacOS/FrameApp") [<options>]
 
     OPTIONS:
       -h, --help              Print help
-      -v, --version           Print simple-wm version
-      --config-path <path>    Config path. It will take priority over ~/.simple-wm.toml
-                              and ${XDG_CONFIG_HOME}/simple-wm/simple-wm.toml
+      -v, --version           Print \(cliName) version
+      --config-path <path>    Config path. It will take priority over ~/\(configDotfileName)
+                              and ${XDG_CONFIG_HOME}/\(configDirName)/\(configDotfileName.removePrefix("."))
     """
 
 nonisolated(unsafe) private var _serverArgs = ServerArgs()
@@ -68,7 +68,7 @@ private func initServerArgs() {
         index += 1
         switch current {
             case "--version", "-v":
-                print("\(simpleWmAppVersion) \(gitHash)")
+                print("\(appVersion) \(gitHash)")
                 exit(0)
             case "--config-path":
                 if let arg = args.getOrNil(atIndex: index) {

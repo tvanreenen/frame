@@ -3,7 +3,7 @@ import Common
 import Foundation
 import os
 
-let signposter = OSSignposter(subsystem: simpleWmAppId, category: .pointsOfInterest)
+let signposter = OSSignposter(subsystem: appBundleId, category: .pointsOfInterest)
 
 let myPid = NSRunningApplication.current.processIdentifier
 let lockScreenAppBundleId = "com.apple.loginwindow"

@@ -1,9 +1,9 @@
-# Place a copy of this config to ~/.simple-wm.toml and edit to your liking
+# Place a copy of this config to ~/.frame.toml and edit to your liking
 
-# You can use it to add commands that run after simple-wm startup.
+# You can use it to add commands that run after frame startup.
 after-startup-command = []
 
-# Start simple-wm at login
+# Start frame at login
 start-at-login = false
 
 # Automatically reload the config when the config file is saved
@@ -29,7 +29,7 @@ persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
     outer.top =        8
     outer.right =      8
 
-# simple-wm keybindings — alt (option) based
+# frame keybindings — alt (option) based
 # Focus:  alt + hjkl
 # Move:   alt-shift + hjkl
 [binding]

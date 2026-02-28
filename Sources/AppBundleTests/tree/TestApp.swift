@@ -15,7 +15,7 @@ final class TestApp: WindowPlatformApp {
 
     private init() {
         self.pid = 0
-        self.rawAppBundleId = "com.simplewm.test-app"
+        self.rawAppBundleId = "com.frame.test-app"
         self.name = rawAppBundleId
     }
 

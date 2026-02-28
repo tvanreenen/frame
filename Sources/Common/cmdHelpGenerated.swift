@@ -1,11 +1,8 @@
-// FILE IS GENERATED FROM docs/aerospace-*.adoc files
-// TO REGENERATE THE FILE RUN generate.sh
+// Command help text is intentionally checked in as source.
+// It is maintained manually while docs generation is disabled.
 
 let add_column_help_generated = """
     USAGE: add-column [-h|--help]
-    """
-let remove_column_help_generated = """
-    USAGE: remove-column [-h|--help]
     """
 let balance_sizes_help_generated = """
     USAGE: balance-sizes [-h|--help] [--workspace <workspace>]
@@ -60,6 +57,9 @@ let move_help_generated = """
     """
 let reload_config_help_generated = """
     USAGE: reload-config [-h|--help] [--no-gui] [--dry-run]
+    """
+let remove_column_help_generated = """
+    USAGE: remove-column [-h|--help]
     """
 let resize_help_generated = """
     USAGE: resize [-h|--help] [--window-id <window-id>] (smart|smart-opposite|width|height) [+|-]<number>

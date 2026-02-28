@@ -57,8 +57,8 @@ struct FrozenFocus: AeroAny, Equatable, Sendable {
 
 /// Global focus.
 /// Commands must be cautious about accessing this property directly. There are legitimate cases.
-/// But, in general, commands must firstly check --window-id, --workspace, SIMPLEWM_WINDOW_ID env and
-/// SIMPLEWM_WORKSPACE env before accessing the global focus.
+/// But, in general, commands must firstly check --window-id, --workspace, FRAME_WINDOW_ID env and
+/// FRAME_WORKSPACE env before accessing the global focus.
 @MainActor var focus: LiveFocus { _focus.live }
 
 @MainActor func setFocus(to newFocus: LiveFocus) -> Bool {
@@ -181,8 +181,8 @@ extension Workspace {
     process.executableURL = URL(filePath: executable)
     process.arguments = Array(runtimeContext.config.execOnWorkspaceChange.dropFirst())
     process.environment = runtimeContext.config.execConfig.envVariables + [
-        SIMPLEWM_FOCUSED_WORKSPACE: newWorkspace,
-        SIMPLEWM_PREV_WORKSPACE: oldWorkspace,
+        FRAME_FOCUSED_WORKSPACE: newWorkspace,
+        FRAME_PREV_WORKSPACE: oldWorkspace,
     ]
     _ = Result { try process.run() }
 }

@@ -26,7 +26,7 @@ final class MacApp: WindowPlatformApp {
     /*conforms*/ var bundlePath: String? { nsApp.bundleURL?.path }
     /*conforms*/ var isHidden: Bool { nsApp.isHidden }
 
-    // todo think if it's possible to integrate this global mutable state to https://github.com/nikitabobko/AeroSpace/issues/1215
+    // todo think if it's possible to integrate this global mutable state to https://github.com/tvanreenen/frame/issues/1215
     //      and make deinitialization automatic in deinit
     @MainActor static var allAppsMap: [pid_t: MacApp] {
         get { runtimeContext.appsByPid }
@@ -130,7 +130,7 @@ final class MacApp: WindowPlatformApp {
         MacApp.focusJob?.cancel()
         // Performance optimization. If possible avoid doing AX requests
         // (important for apps which are slow at responding even such basic AX requests. E.g. Godot)
-        // Beware of the macOS bug: https://github.com/nikitabobko/AeroSpace/issues/101
+        // Beware of the macOS bug: https://github.com/tvanreenen/frame/issues/101
         if (!NSScreen.screensHaveSeparateSpaces || monitors.count == 1) &&
             (lastNativeFocusedWindowId == windowId || windowsCount == 1)
         {
@@ -378,7 +378,7 @@ extension [UInt32: AxWindow] {
         if let existing = self[id] { return existing }
         // Delay new window detection if mouse is down
         // It helps with apps that allow dragging their tabs out to create new windows
-        // https://github.com/nikitabobko/AeroSpace/issues/1001
+        // https://github.com/tvanreenen/frame/issues/1001
         if isLeftMouseButtonDown { return nil }
 
         if let window = try AxWindow.new(windowId: id, axWindow, nsApp, job) {
@@ -391,8 +391,8 @@ extension [UInt32: AxWindow] {
 }
 
 private func setFrame(_ window: AXUIElement, _ topLeft: CGPoint?, _ size: CGSize?, _ job: RunLoopJob) throws {
-    // Set size and then the position. The order is important https://github.com/nikitabobko/AeroSpace/issues/143
-    //                                                        https://github.com/nikitabobko/AeroSpace/issues/335
+    // Set size and then the position. The order is important https://github.com/tvanreenen/frame/issues/143
+    //                                                        https://github.com/tvanreenen/frame/issues/335
     if let size { window.set(Ax.sizeAttr, size) }
     try job.checkCancellation()
     if let topLeft { window.set(Ax.topLeftCornerAttr, topLeft) } else { return }

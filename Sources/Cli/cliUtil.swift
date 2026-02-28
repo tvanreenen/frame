@@ -2,7 +2,7 @@ import Common
 import Darwin
 import Foundation
 
-let cliClientVersionAndHash: String = "\(simpleWmAppVersion) \(gitHash)"
+let cliClientVersionAndHash: String = "\(appVersion) \(gitHash)"
 
 func hasStdin() -> Bool {
     isatty(STDIN_FILENO) != 1

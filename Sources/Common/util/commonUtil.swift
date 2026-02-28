@@ -2,7 +2,7 @@ import AppKit
 import Darwin
 import Foundation
 
-public let socketPath = "/tmp/\(simpleWmAppId)-\(unixUserName).sock"
+public let socketPath = "/tmp/\(appBundleId)-\(unixUserName).sock"
 public let unixUserName = NSUserName()
 
 @TaskLocal
@@ -23,11 +23,11 @@ public func dieT<T>(
     let message =
         """
         Please report to:
-            https://github.com/tim-vanreenen/colwm/issues
+            https://github.com/tvanreenen/frame/issues
             Please describe what you did to trigger this error
 
         Message: \(_message)
-        Version: \(simpleWmAppVersion)
+        Version: \(appVersion)
         Git hash: \(gitHash)
         refreshSessionEvent: \(refreshSessionEvent.prettyDescription)
         Date: \(Date.now)
@@ -47,9 +47,9 @@ public func dieT<T>(
     if !isUnitTest && isServer {
         showMessageInGui(
             filenameIfConsoleApp: recursionDetectorDuringTermination
-                ? "simple-wm-runtime-error-recursion.txt"
-                : "simple-wm-runtime-error.txt",
-            title: "simple-wm Runtime Error",
+                ? "frame-runtime-error-recursion.txt"
+                : "frame-runtime-error.txt",
+            title: "\(productName) Runtime Error",
             message: message,
         )
     }

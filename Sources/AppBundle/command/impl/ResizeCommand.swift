@@ -33,7 +33,7 @@ struct ResizeCommand: Command { // todo cover with tests
                 node = candidates.first(where: { ($0.parent as? Column)?.orientation == orientation })
                 parent = node?.parent as? Column
         }
-        guard let parent else { return io.err("resize command doesn't support floating windows yet https://github.com/nikitabobko/AeroSpace/issues/9") }
+        guard let parent else { return io.err("resize command doesn't support floating windows yet https://github.com/tvanreenen/frame/issues/9") }
         guard let orientation else { return false }
         guard let node else { return false }
         // When the node is the last child its active boundary is the leading edge

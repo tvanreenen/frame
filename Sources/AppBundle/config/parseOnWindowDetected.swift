@@ -30,7 +30,7 @@ struct WindowDetectedCallbackMatcher: ConvenienceCopyable, Equatable {
     var appNameRegexSubstring: Regex<AnyRegexOutput>?
     var windowTitleRegexSubstring: Regex<AnyRegexOutput>?
     var workspace: String?
-    var duringSimpleWmStartup: Bool?
+    var duringAppStartup: Bool?
 
     var debugJson: Json {
         var resultParts: [String] = []
@@ -46,8 +46,8 @@ struct WindowDetectedCallbackMatcher: ConvenienceCopyable, Equatable {
         if let workspace {
             resultParts.append("workspace=\"\(workspace)\"")
         }
-        if let duringSimpleWmStartup {
-            resultParts.append("duringSimpleWmStartup=\(duringSimpleWmStartup)")
+        if let duringAppStartup {
+            resultParts.append("duringAppStartup=\(duringAppStartup)")
         }
         return .string(resultParts.joined(separator: ", "))
     }
@@ -74,7 +74,7 @@ private let matcherParsers: [String: any ParserProtocol<WindowDetectedCallbackMa
     "workspace": Parser(\.workspace, upcast(parseString)),
     "app-name-regex-substring": Parser(\.appNameRegexSubstring, upcast(parseCaseInsensitiveRegexToml)),
     "window-title-regex-substring": Parser(\.windowTitleRegexSubstring, upcast(parseCaseInsensitiveRegexToml)),
-    "during-simple-wm-startup": Parser(\.duringSimpleWmStartup, upcast(parseBool)),
+    "during-frame-startup": Parser(\.duringAppStartup, upcast(parseBool)),
 ]
 
 private func upcast<T>(_ fun: @escaping @Sendable (TOMLValueConvertible, TomlBacktrace) -> ParsedToml<T>) -> @Sendable (TOMLValueConvertible, TomlBacktrace) -> ParsedToml<T?> {
