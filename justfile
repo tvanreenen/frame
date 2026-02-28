@@ -6,6 +6,9 @@ default:
 help:
     @just --list
 
+setup:
+    brew bundle --file Brewfile
+
 build-debug:
     ./script/dev/build-debug.sh
 

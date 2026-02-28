@@ -8,6 +8,7 @@ Frame is a tiling window manager for macOS. This fork focuses on simplifying bot
 
 Frame now uses `just` as the primary developer interface.
 
+- `just setup` installs/updates local tooling from `Brewfile`
 - `just dev` builds and runs the debug app
 - `just test` runs unit tests
 - `just fmt` formats and lints

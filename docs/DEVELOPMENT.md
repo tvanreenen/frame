@@ -6,8 +6,15 @@
 
 - macOS 13+ (project target)
 - Xcode (for SDK/toolchain and release builds)
-- `swift` (or `swiftly`, optional but recommended)
+- `swift`
 - `just`
+- Homebrew tools from `Brewfile`
+
+Run once:
+
+```bash
+just setup
+```
 
 Optional tools:
 

@@ -1,0 +1,5 @@
+brew "just"
+brew "swiftformat"
+brew "swiftlint"
+brew "xcodegen"
+brew "xcbeautify"

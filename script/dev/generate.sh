@@ -30,6 +30,6 @@ EOF
 
 if test $generate_xcodeproj = 1; then
     export XCODEGEN_FRAME_VERSION=$build_version
-    ./script/install-dep.sh --xcodegen
-    ./.deps/xcodegen/xcodegen # https://github.com/yonaskolb/XcodeGen
+    require_command xcodegen
+    xcodegen # https://github.com/yonaskolb/XcodeGen
 fi

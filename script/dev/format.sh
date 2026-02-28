@@ -10,12 +10,12 @@ while test $# -gt 0; do
     esac
 done
 
-./script/install-dep.sh --swiftformat
-./script/install-dep.sh --swiftlint
+require_command swiftformat
+require_command swiftlint
 if test $verify_only -eq 1; then
-    ./.deps/swiftformat/swiftformat --lint .
-    ./.deps/swiftlint/swiftlint lint --quiet
+    swiftformat --lint .
+    swiftlint lint --quiet
 else
-    ./.deps/swiftformat/swiftformat .
-    ./.deps/swiftlint/swiftlint lint --quiet --fix
+    swiftformat .
+    swiftlint lint --quiet --fix
 fi
