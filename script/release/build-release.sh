@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 source ./script/setup.sh
 source ./script/identity.sh
 
@@ -9,7 +9,7 @@ while test $# -gt 0; do
     case $1 in
         --build-version) build_version="$2"; shift 2;;
         --codesign-identity) codesign_identity="$2"; shift 2;;
-        *) echo "Unknown option $1" > /dev/stderr; exit 1 ;;
+        *) echo "Unknown option $1" >&2; exit 1 ;;
     esac
 done
 
@@ -17,13 +17,15 @@ done
 ### BUILD ###
 #############
 
-./build-shell-completion.sh
+rm -rf .release && mkdir .release
 
-./generate.sh
-./script/check-uncommitted-files.sh
-./generate.sh --build-version "$build_version" --codesign-identity "$codesign_identity" --generate-git-hash
-
-swift build -c release --arch arm64 --arch x86_64 --product "$FRAME_CLI_NAME" -Xswiftc -warnings-as-errors # CLI
+swift build \
+    -c release \
+    --build-path .release/.build \
+    --arch arm64 \
+    --arch x86_64 \
+    --product "$FRAME_CLI_NAME" \
+    -Xswiftc -warnings-as-errors # CLI
 
 # todo: make xcodebuild use the same toolchain as swift
 # toolchain="$(plutil -extract CFBundleIdentifier raw ~/Library/Developer/Toolchains/swift-6.1-RELEASE.xctoolchain/Info.plist)"
@@ -34,20 +36,16 @@ swift build -c release --arch arm64 --arch x86_64 --product "$FRAME_CLI_NAME" -X
 #       <unknown>:0: warning: legacy driver is now deprecated; consider avoiding specifying '-disallow-use-new-driver'
 #     <unknown>:0: error: unable to execute command: <unknown>
 
-rm -rf .release && mkdir .release
-
 xcode_configuration="Release"
 xcodebuild -version
 xcodebuild-pretty .release/xcodebuild.log clean build \
     -scheme "$FRAME_XCODE_SCHEME" \
     -destination "generic/platform=macOS" \
     -configuration "$xcode_configuration" \
-    -derivedDataPath .xcode-build
+    -derivedDataPath .release/.xcode-build
 
-git checkout .
-
-cp -r ".xcode-build/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" .release
-cp -r ".build/apple/Products/Release/$FRAME_CLI_NAME" .release
+cp -r ".release/.xcode-build/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" .release
+cp -r ".release/.build/apple/Products/Release/$FRAME_CLI_NAME" .release
 
 ################
 ### SIGN CLI ###
@@ -88,19 +86,8 @@ check-universal-binary() {
     fi
 }
 
-check-contains-hash() {
-    hash=$(git rev-parse HEAD)
-    if ! strings "$1" | grep --fixed-string "$hash" > /dev/null; then
-        echo "$1 doesn't contain $hash"
-        exit 1
-    fi
-}
-
 check-universal-binary ".release/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_PRODUCT_NAME}"
 check-universal-binary ".release/${FRAME_CLI_NAME}"
-
-check-contains-hash ".release/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_PRODUCT_NAME}"
-check-contains-hash ".release/${FRAME_CLI_NAME}"
 
 codesign -v ".release/${FRAME_PRODUCT_NAME}.app"
 codesign -v ".release/${FRAME_CLI_NAME}"
@@ -110,7 +97,6 @@ codesign -v ".release/${FRAME_CLI_NAME}"
 ############
 
 cp -r ./legal ".release/${FRAME_RELEASE_PREFIX}$build_version/legal"
-cp -r .shell-completion ".release/${FRAME_RELEASE_PREFIX}$build_version/shell-completion"
 cd .release
     mkdir -p "${FRAME_RELEASE_PREFIX}$build_version/bin" && cp -r "$FRAME_CLI_NAME" "${FRAME_RELEASE_PREFIX}$build_version/bin"
     cp -r "${FRAME_PRODUCT_NAME}.app" "${FRAME_RELEASE_PREFIX}$build_version"

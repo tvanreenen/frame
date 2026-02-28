@@ -2,7 +2,6 @@ import AppKit
 import Common
 import HotKey
 import TOMLKit
-import OrderedCollections
 
 @MainActor
 func readConfig(forceConfigUrl: URL? = nil) -> Result<(Config, URL), String> {
@@ -238,11 +237,12 @@ private func skipParsing<T: Sendable>(_ value: T) -> @Sendable (_ raw: TOMLValue
     { _, _ in .success(value) }
 }
 
-private func parsePersistentWorkspaces(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<OrderedSet<String>> {
+private func parsePersistentWorkspaces(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<OrderedUniqueValues<String>> {
     parseArrayOfStrings(raw, backtrace)
         .flatMap { arr in
-            let set = arr.toOrderedSet()
-            return set.count == arr.count ? .success(set) : .failure(.semantic(backtrace, "Contains duplicated workspace names"))
+            OrderedUniqueValues(validatingUnique: arr)
+                .map(Result.success)
+                ?? .failure(.semantic(backtrace, "Contains duplicated workspace names"))
         }
 }
 

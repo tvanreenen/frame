@@ -18,7 +18,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/LebJe/TOMLKit.git", exact: "0.5.5"),
-        .package(url: "https://github.com/apple/swift-collections.git", exact: "1.3.0"),
         .package(url: "https://github.com/soffes/HotKey.git", exact: "0.2.1"),
     ],
     // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -32,14 +31,11 @@ let package = Package(
         ),
         .target(
             name: "Common",
-            dependencies: [
-                .product(name: "Collections", package: "swift-collections"),
-            ],
+            dependencies: [],
         ),
         .target(
             name: "AppBundle",
             dependencies: [
-                .product(name: "Collections", package: "swift-collections"),
                 .product(name: "HotKey", package: "HotKey"),
                 .product(name: "TOMLKit", package: "TOMLKit"),
                 .target(name: "Common"),

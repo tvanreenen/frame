@@ -4,9 +4,6 @@ set -u # Treat unset variables and parameters other than the special parameters 
 set -o pipefail # Any command failed in the pipe fails the whole pipe
 # set -x # Print shell commands as they are executed (or you can try -v which is less verbose)
 
-# Don't forget to also update ./ShellParserGenerated/Package.swift
-export antlr_version="4.13.1"
-
 add-optional-dep-to-bin() {
     if /usr/bin/which "$1" &> /dev/null; then
         /bin/cat > ".deps/bin/${2:-$1}" <<EOF
@@ -20,12 +17,8 @@ if /bin/test -z "${NUKE_PATH:-}"; then
     /bin/rm -rf .deps/bin
     /bin/mkdir -p .deps/bin
 
-    add-optional-dep-to-bin bash not-outdated-bash # build-shell-completion.sh
-    add-optional-dep-to-bin fish # build-shell-completion.sh
-    add-optional-dep-to-bin rustc # build-shell-completion.sh
-    add-optional-dep-to-bin cargo # build-shell-completion.sh
-    add-optional-dep-to-bin brew # install-from-sources.sh
-    add-optional-dep-to-bin xcbeautify # build-release.sh
+    add-optional-dep-to-bin brew # script/release/install-from-sources.sh
+    add-optional-dep-to-bin xcbeautify # script/release/build-release.sh
     add-optional-dep-to-bin git
     add-optional-dep-to-bin swift
     add-optional-dep-to-bin swiftly

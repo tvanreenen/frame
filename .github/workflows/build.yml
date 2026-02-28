@@ -31,10 +31,9 @@ jobs:
       - run: env # Debug
       - uses: actions/checkout@v6
       - run: ./.github/gh-actions-runner-xcode-select.sh
-      - run: brew install swiftly
+      - run: brew install swiftly just
       - run: swiftly init --skip-install --assume-yes --verbose && swiftly install
-      - run: ./build-debug.sh
-      - run: ./run-tests.sh
+      - run: just check
 
   # We build release artifacts only on the latest macOS versions because:
   # 1. It cuts the build time twice on GH Actions
@@ -50,13 +49,12 @@ jobs:
       - run: env # Debug
       - uses: actions/checkout@v6
       - run: ./.github/gh-actions-runner-xcode-select.sh
-      - run: brew install bash fish xcbeautify swiftly
+      - run: brew install xcbeautify swiftly just
       - run: swiftly init --skip-install --assume-yes --verbose && swiftly install
-      - name: './build-release.sh'
-        run: |
-          # "-" means "sign to run locally". There is no frame-codesign-certificate on GH Actions.
-          ./build-release.sh --codesign-identity -
-          ./install-from-sources.sh --dont-rebuild
+      - name: 'just release-build'
+        env:
+          FRAME_CODESIGN_IDENTITY: "-"
+        run: just release-build 0.0.0-SNAPSHOT
       - name: cat ./.release/xcodebuild.log
         if: ${{ always() }}
         run: 'if test -f ./.release/xcodebuild.log; then cat ./.release/xcodebuild.log; fi'

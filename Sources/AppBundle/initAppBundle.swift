@@ -49,7 +49,7 @@ private let serverHelp = """
 
     OPTIONS:
       -h, --help              Print help
-      -v, --version           Print \(cliName) version
+      -v, --version           Print \(productName) version
       --config-path <path>    Config path. It will take priority over ~/\(configDotfileName)
                               and ${XDG_CONFIG_HOME}/\(configDirName)/\(configDotfileName.removePrefix("."))
     """
@@ -68,7 +68,7 @@ private func initServerArgs() {
         index += 1
         switch current {
             case "--version", "-v":
-                print("\(appVersion) \(gitHash)")
+                print(appVersionForDisplay)
                 exit(0)
             case "--config-path":
                 if let arg = args.getOrNil(atIndex: index) {

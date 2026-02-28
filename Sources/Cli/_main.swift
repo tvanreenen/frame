@@ -36,16 +36,16 @@ struct Main {
             }
             print(
                 """
-                \(cliName) CLI client version: \(cliClientVersionAndHash)
-                \(cliName) server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
+                \(productName) CLI client version: \(cliClientVersionAndHash)
+                \(productName) server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
                 """,
             )
             if serverVersionAndHash != nil && cliClientVersionAndHash != serverVersionAndHash {
                 eprint(
                     """
-                    Warning: \(cliName) client/server versions don't match. Possible fixes:
-                      - Restart \(cliName) (server restart is required after each update)
-                      - Reinstall and restart \(cliName) (corrupted installation)
+                    Warning: \(productName) client/server versions don't match. Possible fixes:
+                      - Restart \(productName) (server restart is required after each update)
+                      - Reinstall and restart \(productName) (corrupted installation)
                     """,
                 )
             }
@@ -66,7 +66,7 @@ struct Main {
         let connection = NWConnection(to: NWEndpoint.unix(path: socketPath), using: .tcp)
 
         if let e = await connection.startBlocking() {
-            exit(stderrMsg: "Can't connect to \(cliName) server. Is \(cliName) running?\n\(e.localizedDescription)")
+            exit(stderrMsg: "Can't connect to \(productName) server. Is \(productName) running?\n\(e.localizedDescription)")
         }
 
         var stdin = ""
@@ -104,12 +104,12 @@ struct Main {
         if ans.exitCode != 0 && ans.serverVersionAndHash != cliClientVersionAndHash {
             eprint(
                 """
-                Warning: \(cliName) client/server versions don't match
-                  - \(cliName) CLI client version: \(cliClientVersionAndHash)
-                  - \(cliName) server version: \(ans.serverVersionAndHash)
+                Warning: \(productName) client/server versions don't match
+                  - \(productName) CLI client version: \(cliClientVersionAndHash)
+                  - \(productName) server version: \(ans.serverVersionAndHash)
                   Possible fixes:
-                  - Restart \(cliName) (server restart is required after each update)
-                  - Reinstall and restart \(cliName) (corrupted installation)
+                  - Restart \(productName) (server restart is required after each update)
+                  - Reinstall and restart \(productName) (corrupted installation)
                 """,
             )
         }

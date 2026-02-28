@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 source ./script/setup.sh
 source ./script/identity.sh
 
@@ -12,7 +12,7 @@ while test $# -gt 0; do
 done
 
 if test $rebuild == 1; then
-    ./build-release.sh
+    ./script/release/build-release.sh
 fi
 
 PATH="$PATH:$(brew --prefix)/bin"

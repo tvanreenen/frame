@@ -4,6 +4,19 @@ Frame is a tiling window manager for macOS. This fork focuses on simplifying bot
 
 ---
 
+## Development Workflow
+
+Frame now uses `just` as the primary developer interface.
+
+- `just dev` builds and runs the debug app
+- `just test` runs unit tests
+- `just fmt` formats and lints
+- `just check` runs the normal pre-commit checks
+- `just clean` resets local Xcode/derived build artifacts
+
+See [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) for full details.
+See [docs/RELEASE.md](./docs/RELEASE.md) for release and Homebrew flow.
+
 > [!NOTE]
 > A new README is still in progress. Below are some assorted things I left until I can incorporate them appropriately.
 

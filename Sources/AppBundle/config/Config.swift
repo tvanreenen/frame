@@ -1,7 +1,6 @@
 import AppKit
 import Common
 import HotKey
-import OrderedCollections
 
 func getDefaultConfigUrlFromProject() -> URL {
     var url = URL(filePath: #filePath)
@@ -59,7 +58,7 @@ struct Config: ConvenienceCopyable {
     var startAtLogin: Bool = false
     var autoReloadConfig: Bool = false
     var automaticallyUnhideMacosHiddenApps: Bool = false
-    var persistentWorkspaces: OrderedSet<String> = []
+    var persistentWorkspaces: OrderedUniqueValues<String> = []
     var execOnWorkspaceChange: [String] = []
     var keyMapping = KeyMapping()
     var execConfig: ExecConfig = ExecConfig()

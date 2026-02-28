@@ -1,5 +1,3 @@
-import OrderedCollections
-
 private let monitorPlaceholder = "<monitor>"
 private let monitorListPlaceholder = "\(monitorPlaceholder)..."
 

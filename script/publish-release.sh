@@ -23,8 +23,8 @@ if ! test -d "$cask_git_repo_path"; then
     exit 1
 fi
 
-./run-tests.sh
-./build-release.sh --build-version "$build_version"
+./script/dev/run-tests.sh
+./script/release/build-release.sh --build-version "$build_version"
 
 git tag -a "v$build_version" -m "v$build_version" && git push "git@github.com:${FRAME_REPO_SLUG}.git" "v$build_version"
 link="${FRAME_REPO_URL}/releases/new?tag=v$build_version"
