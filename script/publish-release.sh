@@ -36,7 +36,6 @@ echo "Please upload .zip to GitHub release and hit Enter"
 read -r
 
 ./script/build-brew-cask.sh \
-    --cask-name "$FRAME_CASK_STABLE" \
     --zip-uri "${FRAME_REPO_URL}/releases/download/v$build_version/${FRAME_RELEASE_PREFIX}$build_version.zip" \
     --build-version "$build_version"
 

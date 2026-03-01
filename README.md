@@ -1,43 +1,103 @@
 # Frame
 
-Frame is a tiling window manager for macOS. This fork focuses on simplifying both the window-management mental model and the codebase.
+Frame is a keyboard-first window manager for macOS built to make window management simple and intuitive.
+
+It focuses on layout and navigation — automatically organizing windows to fill the available screen space with no overlapping or layering. Keyboard shortcuts provide deliberate control over navigating, resizing, and movement within and across workspaces, while native macOS window behavior remains intact.
 
 ---
 
-## Development Workflow
-
-Frame now uses `just` as the primary developer interface.
-
-- `just setup` installs/updates local tooling from `Brewfile`
-- `just dev` builds and runs the debug app
-- `just test` runs unit tests
-- `just fmt` formats and lints
-- `just check` runs the normal pre-commit checks
-- `just clean` resets local Xcode/derived build artifacts
-
-See [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) for full details.
-See [docs/RELEASE.md](./docs/RELEASE.md) for release and Homebrew flow.
-
-> [!NOTE]
-> A new README is still in progress. Below are some assorted things I left until I can incorporate them appropriately.
-
-In multi-monitor setups, make sure monitors are arranged correctly in macOS display settings.
-
-By using Frame, you acknowledge that it's not [notarized](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution). Notarization is a "security" feature by Apple. You send binaries to Apple, and they either approve them or not. We'll see where we go with this.
-
-[Homebrew installation script](https://github.com/tvanreenen/homebrew-tap/blob/main/Casks/frame.rb) is configured to automatically delete `com.apple.quarantine` attribute, that's why the app should work out of the box, without any warnings that "Apple cannot check Frame for malicious software".
-
-|                                                                   | macOS 13 (Ventura) | macOS 14 (Sonoma) | macOS 15 (Sequoia) | macOS 26 (Tahoe) |
-| ----------------------------------------------------------------- | ------------------ | ----------------- | ------------------ | ---------------- |
-| Frame binary runs on ...                                          | +                  | +                 | +                  | +                |
-| Frame debug build from sources is supported on ...                |                    | +                 | +                  | +                |
-| Frame release build from sources is supported on ... (Xcode 26+)  |                    |                   | +                  | +                |
-
+## Install
 
 ```bash
-defaults write -g NSWindowShouldDragOnGesture -bool true
+brew tap tvanreenen/tap
+brew install --cask frame
 ```
 
-With this command, you can move windows by holding `ctrl`+`cmd` and dragging any part of the window (not necessarily the window title)
+## Default Keybindings
 
-Source: [reddit](https://www.reddit.com/r/MacOS/comments/k6hiwk/keyboard_modifier_to_simplify_click_drag_of/)
+The defaults are intentionally layered so the same keys keep the same meaning:
+
+- `alt + h/j/k/l`: focus left/down/up/right
+- `alt + shift + h/j/k/l`: move the focused window left/down/up/right
+- `ctrl + shift + alt + h/j/k/l`: resize the focused window
+- `alt + 1..0`: switch workspace
+- `alt + shift + 1..0`: move focused window to workspace
+- `alt + f`: toggle fullscreen
+
+The pattern is consistent: keep the direction or number key, then add modifiers for a stronger variant of the same intent (focus -> move/resize, workspace switch -> move window to workspace).
+
+## Single vs Dual Monitor Setup
+
+The default config is monitor-agnostic and works out of the box for both single and multi-monitor setups.
+
+- `on-focused-monitor-changed = ['move-mouse monitor-lazy-center']` keeps pointer/focus behavior natural when changing monitors.
+- Workspaces are not pinned by default, so they can be used on whichever monitor is active.
+
+`workspace-to-monitor-force-assignment` supports monitor selectors:
+
+- `main`: the macOS primary display (not necessarily left)
+- `secondary`: the non-primary display in a 2-monitor setup
+- `1`, `2`, ...: monitor sequence numbers ordered left-to-right
+
+Single-monitor example (`~/.frame.toml`):
+
+```toml
+[workspace-to-monitor-force-assignment]
+1 = "main"
+2 = "main"
+3 = "main"
+4 = "main"
+5 = "main"
+6 = "main"
+7 = "main"
+8 = "main"
+9 = "main"
+0 = "main"
+```
+
+Dual-monitor example (`~/.frame.toml`) with `1-5` on left and `6-0` on right:
+
+```toml
+[workspace-to-monitor-force-assignment]
+1 = 1
+2 = 1
+3 = 1
+4 = 1
+5 = 1
+6 = 2
+7 = 2
+8 = 2
+9 = 2
+0 = 2
+```
+
+Here, monitor `1` is the left display and monitor `2` is the right display (sequence numbers are ordered left-to-right).
+
+If your primary monitor is on the right, the same split can also be written with semantic names:
+
+```toml
+[workspace-to-monitor-force-assignment]
+1 = "secondary"
+2 = "secondary"
+3 = "secondary"
+4 = "secondary"
+5 = "secondary"
+6 = "main"
+7 = "main"
+8 = "main"
+9 = "main"
+0 = "main"
+```
+
+## Workspace Change Hook (SketchyBar, etc.)
+
+`exec-on-workspace-change` is supported and runs a process whenever focused workspace changes. The callback environment includes:
+
+- `FRAME_FOCUSED_WORKSPACE`
+- `FRAME_PREV_WORKSPACE`
+
+Example:
+
+```toml
+exec-on-workspace-change = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
+```

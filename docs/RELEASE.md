@@ -7,7 +7,7 @@ This project keeps Homebrew release support. Use `just` commands as the primary 
 - Version format: semantic-style string (example: `0.12.3`)
 - Tag format: `v<version>` (example: `v0.12.3`)
 - Release zip: `Frame-v<version>.zip`
-- Casks: `frame` and `frame-dev`
+- Cask: `frame`
 
 ## Build release artifacts
 
@@ -21,25 +21,34 @@ Example:
 just release-build 0.12.3
 ```
 
+Signing identity behavior:
+
+- If `FRAME_CODESIGN_IDENTITY` (or `--codesign-identity`) is provided, that value is used.
+- Otherwise, the build auto-selects from Keychain only when there is exactly one valid `Developer ID Application` identity.
+- If none or multiple are found, the build fails with a clear message so you can pick explicitly.
+- For unsigned local smoke builds, use:
+
+```bash
+FRAME_CODESIGN_IDENTITY=- just release-build 0.12.3
+```
+
 This builds:
 
 - `.release/Frame.app`
 - `.release/frame`
 - `.release/Frame-v<version>.zip`
 - `.release/frame.rb`
-- `.release/frame-dev.rb`
 
 ## Generate cask manually
 
 ```bash
-just release-cask <version> <zip_or_url> <cask_name>
+just release-cask <version> <zip_or_url>
 ```
 
 Examples:
 
 ```bash
-just release-cask 0.12.3 ./.release/Frame-v0.12.3.zip frame
-just release-cask 0.12.3 ./.release/Frame-v0.12.3.zip frame-dev
+just release-cask 0.12.3 ./.release/Frame-v0.12.3.zip
 ```
 
 ## Publish flow helper (interactive)

@@ -41,16 +41,16 @@ persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
     alt-l = 'focus right'
 
     # Move: push window to adjacent column (h/l), reorder within column (j/k)
-    ctrl-shift-alt-h = 'move left'
-    ctrl-shift-alt-j = 'move down'
-    ctrl-shift-alt-k = 'move up'
-    ctrl-shift-alt-l = 'move right'
+    alt-shift-h = 'move left'
+    alt-shift-j = 'move down'
+    alt-shift-k = 'move up'
+    alt-shift-l = 'move right'
 
-    # Resize: alt-shift + hjkl
-    alt-shift-h = 'resize width -50'
-    alt-shift-l = 'resize width +50'
-    alt-shift-j = 'resize height +50'
-    alt-shift-k = 'resize height -50'
+    # Resize: ctrl-shift-alt + hjkl
+    ctrl-shift-alt-h = 'resize width -50'
+    ctrl-shift-alt-l = 'resize width +50'
+    ctrl-shift-alt-j = 'resize height +50'
+    ctrl-shift-alt-k = 'resize height -50'
 
     # Workspaces (alt-1 through alt-0)
     alt-1 = 'workspace 1'

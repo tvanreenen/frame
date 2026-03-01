@@ -46,7 +46,8 @@ jobs:
           elif [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
             version="${GITHUB_REF_NAME#v}"
           else
-            version="0.0.0-SNAPSHOT"
+            echo "Unable to determine release version. Provide workflow_dispatch input or push a v* tag." >&2
+            exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: just release-build
@@ -61,7 +62,6 @@ jobs:
           path: |
             .release/Frame-v${{ steps.vars.outputs.version }}.zip
             .release/frame.rb
-            .release/frame-dev.rb
       - name: cat ./.release/xcodebuild.log
         if: ${{ always() }}
         run: |

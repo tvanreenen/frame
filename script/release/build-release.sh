@@ -3,8 +3,8 @@ cd "$(dirname "$0")/../.."
 source ./script/setup.sh
 source ./script/identity.sh
 
-build_version="0.0.0-SNAPSHOT"
-codesign_identity="$FRAME_CODESIGN_IDENTITY_DEFAULT"
+build_version=""
+codesign_identity="${FRAME_CODESIGN_IDENTITY:-}"
 while test $# -gt 0; do
     case $1 in
         --build-version) build_version="$2"; shift 2;;
@@ -12,6 +12,33 @@ while test $# -gt 0; do
         *) echo "Unknown option $1" >&2; exit 1 ;;
     esac
 done
+
+if [[ -z "$build_version" ]]; then
+    echo "--build-version is mandatory (example: 0.12.3)" >&2
+    exit 1
+fi
+
+if ! [[ "$build_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+    echo "Invalid --build-version '$build_version'. Expected semantic-style version (example: 0.12.3 or 0.12.3-rc.1)." >&2
+    exit 1
+fi
+
+if [[ -z "$codesign_identity" ]]; then
+    identities=()
+    mapfile -t identities < <(
+        security find-identity -v -p codesigning 2>/dev/null \
+            | awk -F'"' '/Developer ID Application:/ { print $2 }'
+    )
+    if [[ ${#identities[@]} -ne 1 ]]; then
+        echo "Unable to auto-select 'Developer ID Application' identity (found ${#identities[@]})." >&2
+        echo "Set FRAME_CODESIGN_IDENTITY or pass --codesign-identity explicitly." >&2
+        echo "For unsigned local smoke builds, use --codesign-identity -." >&2
+        exit 1
+    fi
+    codesign_identity="${identities[0]}"
+fi
+
+echo "Using codesign identity: $codesign_identity"
 
 #############
 ### BUILD ###
@@ -106,9 +133,6 @@ cd -
 #################
 ### Brew Cask ###
 #################
-for cask_name in "$FRAME_CASK_STABLE" "$FRAME_CASK_DEV"; do
-    ./script/build-brew-cask.sh \
-        --cask-name "$cask_name" \
-        --zip-uri ".release/${FRAME_RELEASE_PREFIX}$build_version.zip" \
-        --build-version "$build_version"
-done
+./script/build-brew-cask.sh \
+    --zip-uri ".release/${FRAME_RELEASE_PREFIX}$build_version.zip" \
+    --build-version "$build_version"
