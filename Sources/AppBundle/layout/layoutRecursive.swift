@@ -125,5 +125,4 @@ extension Column {
             point = orientation == .h ? point.addingXOffset(child.hWeight) : point.addingYOffset(child.vWeight)
         }
     }
-
 }

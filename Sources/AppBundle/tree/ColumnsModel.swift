@@ -21,11 +21,10 @@ extension Workspace {
     @discardableResult
     func addColumn(after afterColumn: Column?) -> Column {
         let root = columnsRoot
-        let index: Int
-        if let afterColumn, let idx = afterColumn.ownIndex {
-            index = idx + 1
+        let index: Int = if let afterColumn, let idx = afterColumn.ownIndex {
+            idx + 1
         } else {
-            index = INDEX_BIND_LAST
+            INDEX_BIND_LAST
         }
         return Column.newVTiles(parent: root, adaptiveWeight: WEIGHT_AUTO, index: index)
     }
@@ -45,13 +44,12 @@ extension Workspace {
         let cols = columns
         guard let idx = cols.firstIndex(of: column) else { return }
 
-        let targetColumn: Column?
-        if idx > 0 {
-            targetColumn = cols[idx - 1]
+        let targetColumn: Column? = if idx > 0 {
+            cols[idx - 1]
         } else if cols.count > 1 {
-            targetColumn = cols[idx + 1]
+            cols[idx + 1]
         } else {
-            targetColumn = nil
+            nil
         }
 
         for window in Array(column.children).compactMap({ $0 as? Window }) {

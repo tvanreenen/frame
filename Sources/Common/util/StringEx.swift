@@ -29,7 +29,6 @@ extension [String] {
         }
         .joined(separator: "\n")
     }
-
 }
 
 extension [[String]] {

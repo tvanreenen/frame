@@ -170,7 +170,6 @@ final class FocusCommandTest: XCTestCase {
         try await FocusCommand.new(direction: .left).run(.defaultEnv, .emptyStdin)
         assertEquals(focus.windowOrNil?.windowId, 1)
     }
-
 }
 
 extension FocusCommand {

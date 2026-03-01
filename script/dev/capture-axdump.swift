@@ -99,18 +99,18 @@ private func parseArgs() -> Args {
         output: URL(filePath: output),
         expectedType: expectedType,
         expectedDialogHeuristic: expectedDialogHeuristic,
-        overwrite: overwrite
+        overwrite: overwrite,
     )
 }
 
 private func printUsageAndExit() -> Never {
     let script = URL(filePath: CommandLine.arguments.first ?? "capture-axdump.swift").lastPathComponent
     print("""
-    Usage:
-      swift script/dev/\(script) --output <path.json5> --expected-type <window|dialog|popup> --expected-dialog-heuristic <true|false> [--overwrite]
+        Usage:
+          swift script/dev/\(script) --output <path.json5> --expected-type <window|dialog|popup> --expected-dialog-heuristic <true|false> [--overwrite]
 
-    Captures the focused window + app AX snapshot into a fixture file.
-    """)
+        Captures the focused window + app AX snapshot into a fixture file.
+        """)
     Foundation.exit(0)
 }
 

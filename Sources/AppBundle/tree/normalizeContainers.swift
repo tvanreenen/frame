@@ -7,7 +7,7 @@ extension Workspace {
 }
 
 extension Workspace {
-    @MainActor fileprivate func normalizeColumnsStructure() {
+    @MainActor private func normalizeColumnsStructure() {
         let root = rootTilingContainer
 
         // 1. Ensure root is h-tiles with tiles layout
@@ -33,18 +33,17 @@ extension Workspace {
         // Pass C: adopt orphan windows (Window children of root) into a column
         for child in Array(root.children) {
             guard let window = child as? Window else { continue }
-            let targetColumn: Column
-            if let last = columns.last {
-                targetColumn = last
+            let targetColumn: Column = if let last = columns.last {
+                last
             } else {
-                targetColumn = addColumn(after: nil)
+                addColumn(after: nil)
             }
             window.bind(to: targetColumn, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
         }
     }
 
     /// Recursively lift all leaf windows inside `column` up to be direct children of `column`.
-    @MainActor fileprivate func flattenColumn(_ column: Column) {
+    @MainActor private func flattenColumn(_ column: Column) {
         for child in Array(column.children) {
             guard let container = child as? Column else { continue }
             // Collect all windows from this nested container
