@@ -39,12 +39,12 @@ release-build VERSION:
 
 # Generate the Homebrew cask file for a specific artifact URI.
 release-cask VERSION ZIP_URI:
-    ./script/build-brew-cask.sh --build-version "{{VERSION}}" --zip-uri "{{ZIP_URI}}"
+    ./script/release/build-brew-cask.sh --build-version "{{VERSION}}" --zip-uri "{{ZIP_URI}}"
 
 # Run the interactive release publishing helper.
 release-publish VERSION CASK_REPO_PATH:
-    ./script/publish-release.sh --build-version "{{VERSION}}" --cask-git-repo-path "{{CASK_REPO_PATH}}"
+    ./script/release/publish-release.sh --build-version "{{VERSION}}" --cask-git-repo-path "{{CASK_REPO_PATH}}"
 
 # Reset macOS Accessibility permission for local debug app.
 reset-accessibility:
-    ./script/reset-accessibility-permission-for-debug.sh
+    ./script/dev/reset-accessibility-permission-for-debug.sh

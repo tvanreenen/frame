@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 source ./script/setup.sh
 source ./script/identity.sh
 
@@ -35,7 +35,7 @@ open -R "./.release/${FRAME_RELEASE_PREFIX}$build_version.zip"
 echo "Please upload .zip to GitHub release and hit Enter"
 read -r
 
-./script/build-brew-cask.sh \
+./script/release/build-brew-cask.sh \
     --zip-uri "${FRAME_REPO_URL}/releases/download/v$build_version/${FRAME_RELEASE_PREFIX}$build_version.zip" \
     --build-version "$build_version"
 

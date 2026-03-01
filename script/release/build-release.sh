@@ -145,6 +145,6 @@ cp -r ./licenses "$release_root/licenses"
 #################
 ### Brew Cask ###
 #################
-./script/build-brew-cask.sh \
+./script/release/build-brew-cask.sh \
     --zip-uri ".release/${FRAME_RELEASE_PREFIX}$build_version.zip" \
     --build-version "$build_version"
