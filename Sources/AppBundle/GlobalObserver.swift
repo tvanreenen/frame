@@ -18,35 +18,12 @@ enum GlobalObserver {
         }
     }
 
-    private static func onHideApp(_ notification: Notification) {
-        let notifName = notification.name.rawValue
-        Task { @MainActor in
-            try await runLightSession(.globalObserver(notifName)) {
-                if runtimeContext.config.automaticallyUnhideMacosHiddenApps {
-                    if let w = prevFocus?.windowOrNil,
-                       w.app.isHidden,
-                       // "Hide others" (cmd-alt-h) -> don't force focus
-                       // "Hide app" (cmd-h) -> force focus
-                       MacApp.allAppsMap.values.count(where: { $0.nsApp.isHidden }) == 1
-                    {
-                        // Force focus
-                        _ = w.focusWindow()
-                        w.nativeFocus()
-                    }
-                    for app in MacApp.allAppsMap.values {
-                        app.nsApp.unhide()
-                    }
-                }
-            }
-        }
-    }
-
     @MainActor
     static func initObserver() {
         let nc = NSWorkspace.shared.notificationCenter
         nc.addObserver(forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main, using: onNotif)
         nc.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main, using: onNotif)
-        nc.addObserver(forName: NSWorkspace.didHideApplicationNotification, object: nil, queue: .main, using: onHideApp)
+        nc.addObserver(forName: NSWorkspace.didHideApplicationNotification, object: nil, queue: .main, using: onNotif)
         nc.addObserver(forName: NSWorkspace.didUnhideApplicationNotification, object: nil, queue: .main, using: onNotif)
         nc.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main, using: onNotif)
         nc.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main, using: onNotif)

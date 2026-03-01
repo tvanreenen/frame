@@ -45,8 +45,5 @@ struct ReloadConfigCommand: Command {
             }
             result = false
     }
-    if !args.dryRun {
-        syncConfigFileWatcher()
-    }
     return result
 }

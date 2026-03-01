@@ -113,8 +113,6 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     // "on-focused-workspace-changed": Parser(\.onFocusedWorkspaceChanged, { parseCommandOrCommands($0).toParsedToml($1) }),
 
     "start-at-login": Parser(\.startAtLogin, parseBool),
-    "auto-reload-config": Parser(\.autoReloadConfig, parseBool),
-    "automatically-unhide-macos-hidden-apps": Parser(\.automaticallyUnhideMacosHiddenApps, parseBool),
     persistentWorkspacesKey: Parser(\.persistentWorkspaces, parsePersistentWorkspaces),
     "exec-on-workspace-change": Parser(\.execOnWorkspaceChange, parseArrayOfStrings),
     "exec": Parser(\.execConfig, parseExecConfig),

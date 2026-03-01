@@ -6,14 +6,8 @@ after-startup-command = []
 # Start frame at login
 start-at-login = false
 
-# Automatically reload the config when the config file is saved
-auto-reload-config = false
-
 # Mouse follows focus when focused monitor changes
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
-
-# You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
-automatically-unhide-macos-hidden-apps = false
 
 # Persistent workspaces that stay alive even when empty
 persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]

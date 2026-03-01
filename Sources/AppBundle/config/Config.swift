@@ -56,8 +56,6 @@ let runtimeContext = RuntimeContext(config: defaultConfig, configUrl: defaultCon
 struct Config: ConvenienceCopyable {
     var afterStartupCommand: [any Command] = []
     var startAtLogin: Bool = false
-    var autoReloadConfig: Bool = false
-    var automaticallyUnhideMacosHiddenApps: Bool = false
     var persistentWorkspaces: OrderedUniqueValues<String> = []
     var execOnWorkspaceChange: [String] = []
     var keyMapping = KeyMapping()

@@ -113,10 +113,6 @@ extension Workspace {
 @MainActor var prevFocusedWorkspaceDate: Date = .distantPast
 @MainActor var prevFocusedWorkspace: Workspace? { _prevFocusedWorkspaceName.map { Workspace.get(byName: $0) } }
 
-// Used by automatic unhide/focus restoration logic
-@MainActor var _prevFocus: FrozenFocus? = nil
-@MainActor var prevFocus: LiveFocus? { _prevFocus?.live.takeIf { $0 != focus } }
-
 @MainActor private var onFocusChangedRecursionGuard = false
 // Should be called in refreshSession
 @MainActor func checkOnFocusChangedCallbacks() {
@@ -127,13 +123,12 @@ extension Workspace {
     let frozenFocus = focus.frozen
     var hasFocusChanged = false
     var hasFocusedMonitorChanged = false
-    var workspaceChangePair: (oldWorkspace: String, newWorkspace: String)? = nil
+    var newFocusedWorkspace: String? = nil
     if frozenFocus != _lastKnownFocus {
-        _prevFocus = _lastKnownFocus
         hasFocusChanged = true
     }
     if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
-        workspaceChangePair = (_lastKnownFocus.workspaceName, frozenFocus.workspaceName)
+        newFocusedWorkspace = frozenFocus.workspaceName
         _prevFocusedWorkspaceName = _lastKnownFocus.workspaceName
     }
     if frozenFocus.monitorId != _lastKnownFocus.monitorId {
@@ -151,8 +146,8 @@ extension Workspace {
     if hasFocusedMonitorChanged {
         onFocusedMonitorChanged(focus)
     }
-    if let workspaceChangePair {
-        onWorkspaceChanged(workspaceChangePair.oldWorkspace, workspaceChangePair.newWorkspace)
+    if let newFocusedWorkspace {
+        onWorkspaceChanged(newFocusedWorkspace)
     }
 }
 
@@ -175,14 +170,13 @@ extension Workspace {
     }
 }
 
-@MainActor private func onWorkspaceChanged(_ oldWorkspace: String, _ newWorkspace: String) {
+@MainActor private func onWorkspaceChanged(_ newWorkspace: String) {
     guard let executable = runtimeContext.config.execOnWorkspaceChange.first else { return }
     let process = Process()
     process.executableURL = URL(filePath: executable)
     process.arguments = Array(runtimeContext.config.execOnWorkspaceChange.dropFirst())
     process.environment = runtimeContext.config.execConfig.envVariables + [
         FRAME_FOCUSED_WORKSPACE: newWorkspace,
-        FRAME_PREV_WORKSPACE: oldWorkspace,
     ]
     _ = Result { try process.run() }
 }
