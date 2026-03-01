@@ -53,14 +53,12 @@ When added, it should run after signing/validation and before zipping:
 ## Generate cask manually
 
 ```bash
-just release-cask <version> <zip_or_url>
+just release-cask <version>
 ```
 
-Examples:
+`just release-cask` always writes a GitHub release URL into `dist/frame.rb`:
 
-```bash
-just release-cask 0.12.3 ./dist/Frame-v0.12.3.zip
-```
+`https://github.com/tvanreenen/frame/releases/download/v<version>/Frame-v<version>.zip`
 
 ## Publish manually
 
@@ -81,10 +79,10 @@ git push origin v0.12.3
 3. Create GitHub release for tag `v0.12.3` and upload:
    - `dist/Frame-v0.12.3.zip`
 
-4. Regenerate cask for the GitHub release URL:
+4. Regenerate cask for that release version:
 
 ```bash
-just release-cask 0.12.3 https://github.com/tvanreenen/frame/releases/download/v0.12.3/Frame-v0.12.3.zip
+just release-cask 0.12.3
 ```
 
 5. Copy cask into your tap repo and commit/push:

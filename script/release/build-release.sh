@@ -65,6 +65,7 @@ mkdir -p "$dist_dir" "$stage_dir"
 ### BUILD ###
 #############
 
+echo "[1/4] Building CLI ($FRAME_CLI_NAME)..."
 swift build \
     -c release \
     --build-path "$build_dir" \
@@ -74,8 +75,9 @@ swift build \
     -Xswiftc -warnings-as-errors # CLI
 
 xcode_configuration="Release"
+echo "[2/4] Building app bundle (${FRAME_PRODUCT_NAME}.app)..."
 xcodebuild -version
-xcodebuild-pretty "$work_dir/xcodebuild.log" clean build \
+xcodebuild-pretty "$work_dir/xcodebuild.log" build \
     -scheme "$FRAME_XCODE_SCHEME" \
     -destination "generic/platform=macOS" \
     -configuration "$xcode_configuration" \
@@ -127,6 +129,7 @@ check-universal-binary() {
 check-universal-binary "$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
 check-universal-binary "$cli_binary"
 
+echo "[3/4] Validating signatures and binaries..."
 codesign --verify --deep --strict "$app_bundle"
 codesign --verify --strict "$cli_binary"
 
@@ -157,3 +160,7 @@ mv "$work_dir/$zip_filename" "$zip_path"
 
 zip_sha="$(shasum -a 256 "$zip_path" | awk '{print $1}')"
 printf "%s  %s\n" "$zip_sha" "$zip_filename" > "$dist_dir/checksums.txt"
+
+echo "[4/4] Done. Wrote:"
+echo "  $zip_path"
+echo "  $dist_dir/checksums.txt"

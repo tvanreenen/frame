@@ -55,7 +55,7 @@ jobs:
           FRAME_CODESIGN_IDENTITY: "-"
         run: just release-build "${{ steps.vars.outputs.version }}"
       - name: just release-cask
-        run: just release-cask "${{ steps.vars.outputs.version }}" "dist/Frame-v${{ steps.vars.outputs.version }}.zip"
+        run: just release-cask "${{ steps.vars.outputs.version }}"
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
