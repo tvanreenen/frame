@@ -34,10 +34,11 @@ FRAME_CODESIGN_IDENTITY=- just release-build 0.12.3
 
 This builds:
 
-- `.release/Frame.app`
-- `.release/frame`
-- `.release/Frame-v<version>.zip`
-- `.release/frame.rb`
+- `dist/Frame-v<version>.zip`
+- `dist/frame.rb`
+- `dist/checksums.txt`
+
+Build intermediates are created in a temporary work directory and removed automatically.
 
 ## Notarization (planned)
 
@@ -45,10 +46,10 @@ Notarization is not yet automated in `just release-build`.
 
 When added, it should run after signing/validation and before zipping/cask generation:
 
-1. Submit `.release/Frame.app` and `.release/frame` to Apple notarization.
+1. Submit the staged app bundle and CLI binary to Apple notarization.
 2. Wait for notarization success.
-3. Staple the notarization ticket to `.release/Frame.app`.
-4. Then package `.release/Frame-v<version>.zip` and generate `.release/frame.rb`.
+3. Staple the notarization ticket to the staged app bundle.
+4. Then package `dist/Frame-v<version>.zip` and generate `dist/frame.rb`.
 
 ## Generate cask manually
 
@@ -59,7 +60,7 @@ just release-cask <version> <zip_or_url>
 Examples:
 
 ```bash
-just release-cask 0.12.3 ./.release/Frame-v0.12.3.zip
+just release-cask 0.12.3 ./dist/Frame-v0.12.3.zip
 ```
 
 ## Publish flow helper (interactive)

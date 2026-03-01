@@ -42,54 +42,63 @@ fi
 
 echo "Using codesign identity: $codesign_identity"
 
+dist_dir="$FRAME_DIST_DIR"
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/${FRAME_RELEASE_WORK_PREFIX}.XXXXXX")"
+stage_dir="$work_dir/stage"
+build_dir="$work_dir/.build"
+xcode_build_dir="$work_dir/.xcode-build"
+
+cleanup() {
+    rm -rf "$work_dir"
+}
+trap cleanup EXIT
+
+if [[ -z "$dist_dir" || "$dist_dir" == "/" ]]; then
+    echo "Refusing to use invalid dist dir: '$dist_dir'" >&2
+    exit 1
+fi
+
+rm -rf "$dist_dir"
+mkdir -p "$dist_dir" "$stage_dir"
+
 #############
 ### BUILD ###
 #############
 
-rm -rf .release && mkdir .release
-
 swift build \
     -c release \
-    --build-path .release/.build \
+    --build-path "$build_dir" \
     --arch arm64 \
     --arch x86_64 \
     --product "$FRAME_CLI_NAME" \
     -Xswiftc -warnings-as-errors # CLI
 
-# todo: make xcodebuild use the same toolchain as swift
-# toolchain="$(plutil -extract CFBundleIdentifier raw ~/Library/Developer/Toolchains/swift-6.1-RELEASE.xctoolchain/Info.plist)"
-# xcodebuild -toolchain "$toolchain" \
-# Unfortunately, Xcode 16 fails with:
-#     2025-05-05 15:51:15.618 xcodebuild[4633:13690815] Writing error result bundle to /var/folders/s1/17k6s3xd7nb5mv42nx0sd0800000gn/T/ResultBundle_2025-05-05_15-51-0015.xcresult
-#     xcodebuild: error: Could not resolve package dependencies:
-#       <unknown>:0: warning: legacy driver is now deprecated; consider avoiding specifying '-disallow-use-new-driver'
-#     <unknown>:0: error: unable to execute command: <unknown>
-
 xcode_configuration="Release"
 xcodebuild -version
-xcodebuild-pretty .release/xcodebuild.log clean build \
+xcodebuild-pretty "$work_dir/xcodebuild.log" clean build \
     -scheme "$FRAME_XCODE_SCHEME" \
     -destination "generic/platform=macOS" \
     -configuration "$xcode_configuration" \
-    -derivedDataPath .release/.xcode-build \
+    -derivedDataPath "$xcode_build_dir" \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="$codesign_identity"
 
-cp -r ".release/.xcode-build/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" .release
-cp -r ".release/.build/apple/Products/Release/$FRAME_CLI_NAME" .release
+cp -r "$xcode_build_dir/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" "$stage_dir"
+cp -r "$build_dir/apple/Products/Release/$FRAME_CLI_NAME" "$stage_dir"
+
+app_bundle="$stage_dir/${FRAME_PRODUCT_NAME}.app"
+cli_binary="$stage_dir/${FRAME_CLI_NAME}"
 
 ################
 ### SIGN CLI ###
 ################
 
-codesign -s "$codesign_identity" ".release/$FRAME_CLI_NAME"
+codesign -s "$codesign_identity" "$cli_binary"
 
 ################
 ### VALIDATE ###
 ################
 
-app_bundle=".release/${FRAME_PRODUCT_NAME}.app"
-cli_binary=".release/${FRAME_CLI_NAME}"
 required_paths=(
     "$app_bundle/Contents"
     "$app_bundle/Contents/_CodeSignature/CodeResources"
@@ -131,20 +140,27 @@ codesign --verify --strict "$cli_binary"
 ### PACK ###
 ############
 
-release_root=".release/${FRAME_RELEASE_PREFIX}$build_version"
+release_root="$stage_dir/${FRAME_RELEASE_PREFIX}$build_version"
 mkdir -p "$release_root/bin"
 cp -r "$cli_binary" "$release_root/bin"
 cp -r "$app_bundle" "$release_root"
 cp ./LICENSE "$release_root/LICENSE"
 cp -r ./licenses "$release_root/licenses"
+
+zip_filename="${FRAME_RELEASE_PREFIX}$build_version.zip"
+zip_path="$dist_dir/$zip_filename"
 (
-    cd .release
-    zip -r "${FRAME_RELEASE_PREFIX}$build_version.zip" "${FRAME_RELEASE_PREFIX}$build_version"
+    cd "$stage_dir"
+    zip -r "$(pwd)/../$zip_filename" "${FRAME_RELEASE_PREFIX}$build_version"
 )
+mv "$work_dir/$zip_filename" "$zip_path"
+
+zip_sha="$(shasum -a 256 "$zip_path" | awk '{print $1}')"
+printf "%s  %s\n" "$zip_sha" "$zip_filename" > "$dist_dir/checksums.txt"
 
 #################
 ### Brew Cask ###
 #################
 ./script/release/build-brew-cask.sh \
-    --zip-uri ".release/${FRAME_RELEASE_PREFIX}$build_version.zip" \
+    --zip-uri "$zip_path" \
     --build-version "$build_version"

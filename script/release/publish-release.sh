@@ -30,7 +30,7 @@ git tag -a "v$build_version" -m "v$build_version" && git push "git@github.com:${
 link="${FRAME_REPO_URL}/releases/new?tag=v$build_version"
 open "$link" || { echo "$link"; exit 1; }
 sleep 1
-open -R "./.release/${FRAME_RELEASE_PREFIX}$build_version.zip"
+open -R "./${FRAME_DIST_DIR}/${FRAME_RELEASE_PREFIX}$build_version.zip"
 
 echo "Please upload .zip to GitHub release and hit Enter"
 read -r
@@ -40,4 +40,4 @@ read -r
     --build-version "$build_version"
 
 eval "$cask_git_repo_path/pin.sh"
-cp -r ".release/${FRAME_CASK_STABLE}.rb" "$cask_git_repo_path/Casks/${FRAME_CASK_STABLE}.rb"
+cp -r "${FRAME_DIST_DIR}/${FRAME_CASK_STABLE}.rb" "$cask_git_repo_path/Casks/${FRAME_CASK_STABLE}.rb"

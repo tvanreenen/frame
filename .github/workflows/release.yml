@@ -60,11 +60,6 @@ jobs:
           name: Frame-v${{ steps.vars.outputs.version }}
           if-no-files-found: error
           path: |
-            .release/Frame-v${{ steps.vars.outputs.version }}.zip
-            .release/frame.rb
-      - name: cat ./.release/xcodebuild.log
-        if: ${{ always() }}
-        run: |
-          if test -f ./.release/xcodebuild.log; then
-            cat ./.release/xcodebuild.log
-          fi
+            dist/Frame-v${{ steps.vars.outputs.version }}.zip
+            dist/frame.rb
+            dist/checksums.txt
