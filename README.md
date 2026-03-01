@@ -1,5 +1,7 @@
 # Frame
 
+![Frame icon](./resources/Assets.xcassets/AppIcon.appiconset/Frame-macOS-Default-256x256@1x.png)
+
 Frame is a keyboard-first window manager for macOS built to make window management simple and intuitive.
 
 It focuses on layout and navigation — automatically organizing windows to fill the available screen space with no overlapping or layering. Keyboard shortcuts provide deliberate control over navigating, resizing, and movement within and across workspaces, while native macOS window behavior remains intact.
