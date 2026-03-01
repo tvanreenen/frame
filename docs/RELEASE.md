@@ -35,7 +35,6 @@ FRAME_CODESIGN_IDENTITY=- just release-build 0.12.3
 This builds:
 
 - `dist/Frame-v<version>.zip`
-- `dist/frame.rb`
 - `dist/checksums.txt`
 
 Build intermediates are created in a temporary work directory and removed automatically.
@@ -44,12 +43,12 @@ Build intermediates are created in a temporary work directory and removed automa
 
 Notarization is not yet automated in `just release-build`.
 
-When added, it should run after signing/validation and before zipping/cask generation:
+When added, it should run after signing/validation and before zipping:
 
 1. Submit the staged app bundle and CLI binary to Apple notarization.
 2. Wait for notarization success.
 3. Staple the notarization ticket to the staged app bundle.
-4. Then package `dist/Frame-v<version>.zip` and generate `dist/frame.rb`.
+4. Then package `dist/Frame-v<version>.zip`.
 
 ## Generate cask manually
 

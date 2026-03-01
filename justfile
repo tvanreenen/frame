@@ -33,7 +33,7 @@ check:
 clean:
     bash -euo pipefail -c 'source ./script/identity.sh; rm -rf "$HOME/Library/Developer/Xcode/DerivedData/${FRAME_XCODE_SCHEME}-*" ./.xcode-build "${FRAME_XCODE_SCHEME}.xcodeproj"; ./script/dev/generate.sh'
 
-# Build release artifacts and cask for a version.
+# Build release artifacts (zip + checksums) for a version.
 release-build VERSION:
     bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/build-release.sh "${args[@]}"'
 

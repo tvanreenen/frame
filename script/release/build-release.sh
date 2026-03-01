@@ -130,7 +130,7 @@ check-universal-binary "$cli_binary"
 codesign --verify --deep --strict "$app_bundle"
 codesign --verify --strict "$cli_binary"
 
-# TODO: Add notarization + stapling here before packaging/cask generation.
+# TODO: Add notarization + stapling here before packaging.
 # Suggested flow:
 # 1) Submit "$app_bundle" and "$cli_binary" to notary service.
 # 2) Wait for success.
@@ -157,10 +157,3 @@ mv "$work_dir/$zip_filename" "$zip_path"
 
 zip_sha="$(shasum -a 256 "$zip_path" | awk '{print $1}')"
 printf "%s  %s\n" "$zip_sha" "$zip_filename" > "$dist_dir/checksums.txt"
-
-#################
-### Brew Cask ###
-#################
-./script/release/build-brew-cask.sh \
-    --zip-uri "$zip_path" \
-    --build-version "$build_version"
