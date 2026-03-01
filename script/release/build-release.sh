@@ -135,7 +135,8 @@ release_root=".release/${FRAME_RELEASE_PREFIX}$build_version"
 mkdir -p "$release_root/bin"
 cp -r "$cli_binary" "$release_root/bin"
 cp -r "$app_bundle" "$release_root"
-cp -r ./legal "$release_root/legal"
+cp ./LICENSE "$release_root/LICENSE"
+cp -r ./licenses "$release_root/licenses"
 (
     cd .release
     zip -r "${FRAME_RELEASE_PREFIX}$build_version.zip" "${FRAME_RELEASE_PREFIX}$build_version"
