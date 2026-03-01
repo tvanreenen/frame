@@ -13,9 +13,9 @@ brew tap tvanreenen/tap
 brew install --cask frame
 ```
 
-## Default Keybindings
+## Quick Start
 
-The defaults are intentionally layered so the same keys keep the same meaning:
+Learn the core defaults:
 
 - `alt + h/j/k/l`: focus left/down/up/right
 - `alt + shift + h/j/k/l`: move the focused window left/down/up/right
@@ -24,36 +24,70 @@ The defaults are intentionally layered so the same keys keep the same meaning:
 - `alt + shift + 1..0`: move focused window to workspace
 - `alt + f`: toggle fullscreen
 
-The pattern is consistent: keep the direction or number key, then add modifiers for a stronger variant of the same intent (focus -> move/resize, workspace switch -> move window to workspace).
+These are intentionally layered: keep direction/number keys the same, add modifiers for stronger variants (focus -> move/resize, workspace -> move-to-workspace).
 
-## Single vs Dual Monitor Setup
+## Configuration
 
-The default config is monitor-agnostic and works out of the box for both single and multi-monitor setups.
+If you want to customize settings, start by copying the default config:
 
-- `on-focused-monitor-changed = ['move-mouse monitor-lazy-center']` keeps pointer/focus behavior natural when changing monitors.
-- Workspaces are not pinned by default, so they can be used on whichever monitor is active.
+```bash
+cp docs/config-examples/default-config.toml ~/.frame.toml
+```
 
-`workspace-to-monitor-force-assignment` supports monitor selectors:
+### Basic Config Ideas
 
-- `main`: the macOS primary display (not necessarily left)
-- `secondary`: the non-primary display in a 2-monitor setup
-- `1`, `2`, ...: monitor sequence numbers ordered left-to-right
-
-Single-monitor example (`~/.frame.toml`):
+Startup behavior example (`~/.frame.toml`):
 
 ```toml
-[workspace-to-monitor-force-assignment]
-1 = "main"
-2 = "main"
-3 = "main"
-4 = "main"
-5 = "main"
-6 = "main"
-7 = "main"
-8 = "main"
-9 = "main"
-0 = "main"
+start-at-login = false
 ```
+
+Persistent workspaces keep named workspaces alive even when empty, so they remain addressable and stable for keybindings/status bars:
+
+```toml
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+```
+
+Keybinding config example (`~/.frame.toml`):
+
+```toml
+[binding]
+alt-h = "focus left"
+alt-j = "focus down"
+alt-k = "focus up"
+alt-l = "focus right"
+
+alt-shift-h = "move left"
+alt-shift-j = "move down"
+alt-shift-k = "move up"
+alt-shift-l = "move right"
+
+ctrl-shift-alt-h = "resize width -50"
+ctrl-shift-alt-l = "resize width +50"
+ctrl-shift-alt-j = "resize height +50"
+ctrl-shift-alt-k = "resize height -50"
+
+alt-1 = "workspace 1"
+alt-shift-1 = "move-node-to-workspace 1"
+```
+
+Gaps config example (`~/.frame.toml`):
+
+```toml
+[gaps]
+inner.horizontal = 8
+inner.vertical = 8
+outer.left = 8
+outer.bottom = 8
+outer.top = 8
+outer.right = 8
+```
+
+### Single vs Dual Monitor Setup
+
+By default, workspaces are monitor-agnostic. You only need monitor config if you want fixed workspace placement.
+
+`workspace-to-monitor-force-assignment` supports `main`, `secondary`, numeric monitor order (`1`, `2`, ...), and regex on monitor names.
 
 Dual-monitor example (`~/.frame.toml`) with `1-5` on left and `6-0` on right:
 
@@ -71,30 +105,11 @@ Dual-monitor example (`~/.frame.toml`) with `1-5` on left and `6-0` on right:
 0 = 2
 ```
 
-Here, monitor `1` is the left display and monitor `2` is the right display (sequence numbers are ordered left-to-right).
+Note: `main` means the macOS primary display (not necessarily left), and `secondary` means the other display in a 2-monitor setup. Regex matching is case-insensitive.
 
-If your primary monitor is on the right, the same split can also be written with semantic names:
+### Workspace Change Hook (SketchyBar, etc.)
 
-```toml
-[workspace-to-monitor-force-assignment]
-1 = "secondary"
-2 = "secondary"
-3 = "secondary"
-4 = "secondary"
-5 = "secondary"
-6 = "main"
-7 = "main"
-8 = "main"
-9 = "main"
-0 = "main"
-```
-
-## Workspace Change Hook (SketchyBar, etc.)
-
-`exec-on-workspace-change` is supported and runs a process whenever focused workspace changes. The callback environment includes:
-
-- `FRAME_FOCUSED_WORKSPACE`
-- `FRAME_PREV_WORKSPACE`
+`exec-on-workspace-change` is supported and runs a process whenever focused workspace changes. The callback environment includes `FRAME_FOCUSED_WORKSPACE`.
 
 Example:
 
