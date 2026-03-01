@@ -39,6 +39,17 @@ This builds:
 - `.release/Frame-v<version>.zip`
 - `.release/frame.rb`
 
+## Notarization (planned)
+
+Notarization is not yet automated in `just release-build`.
+
+When added, it should run after signing/validation and before zipping/cask generation:
+
+1. Submit `.release/Frame.app` and `.release/frame` to Apple notarization.
+2. Wait for notarization success.
+3. Staple the notarization ticket to `.release/Frame.app`.
+4. Then package `.release/Frame-v<version>.zip` and generate `.release/frame.rb`.
+
 ## Generate cask manually
 
 ```bash

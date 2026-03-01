@@ -21,13 +21,15 @@ if ! [[ "$build_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; the
 fi
 
 zip_file=''
+temp_zip_file=''
 if test -f "$zip_uri"; then
     zip_file=$zip_uri
     zip_uri="file://$(realpath "$zip_file")"
-elif grep -q '^http' <<< "$zip_uri"; then
-    zip_file="/tmp/${FRAME_PRODUCT_NAME}-tmp.zip"
-    rm -rf $zip_file
-    curl -L "$zip_uri" -o $zip_file
+elif grep -Eq '^https?://' <<< "$zip_uri"; then
+    temp_zip_file="$(mktemp -t frame-cask-zip.XXXXXX)"
+    trap '[[ -n "$temp_zip_file" ]] && rm -f "$temp_zip_file"' EXIT
+    zip_file="$temp_zip_file"
+    curl --fail --silent --show-error --location "$zip_uri" -o "$zip_file"
 else
     echo "$zip_uri doesn't exist" > /dev/stderr; exit 1
 fi

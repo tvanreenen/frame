@@ -84,27 +84,25 @@ codesign -s "$codesign_identity" ".release/$FRAME_CLI_NAME"
 ### VALIDATE ###
 ################
 
-expected_layout=$(cat <<EOF
-.release/${FRAME_PRODUCT_NAME}.app
-.release/${FRAME_PRODUCT_NAME}.app/Contents
-.release/${FRAME_PRODUCT_NAME}.app/Contents/_CodeSignature
-.release/${FRAME_PRODUCT_NAME}.app/Contents/_CodeSignature/CodeResources
-.release/${FRAME_PRODUCT_NAME}.app/Contents/MacOS
-.release/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_PRODUCT_NAME}
-.release/${FRAME_PRODUCT_NAME}.app/Contents/Resources
-.release/${FRAME_PRODUCT_NAME}.app/Contents/Resources/default-config.toml
-.release/${FRAME_PRODUCT_NAME}.app/Contents/Resources/AppIcon.icns
-.release/${FRAME_PRODUCT_NAME}.app/Contents/Resources/Assets.car
-.release/${FRAME_PRODUCT_NAME}.app/Contents/Info.plist
-.release/${FRAME_PRODUCT_NAME}.app/Contents/PkgInfo
-EOF
+app_bundle=".release/${FRAME_PRODUCT_NAME}.app"
+cli_binary=".release/${FRAME_CLI_NAME}"
+required_paths=(
+    "$app_bundle/Contents"
+    "$app_bundle/Contents/_CodeSignature/CodeResources"
+    "$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
+    "$app_bundle/Contents/Resources/default-config.toml"
+    "$app_bundle/Contents/Resources/AppIcon.icns"
+    "$app_bundle/Contents/Resources/Assets.car"
+    "$app_bundle/Contents/Info.plist"
+    "$app_bundle/Contents/PkgInfo"
+    "$cli_binary"
 )
-
-if test "$expected_layout" != "$(find ".release/${FRAME_PRODUCT_NAME}.app")"; then
-    echo "!!! Expect/Actual layout don't match !!!"
-    find ".release/${FRAME_PRODUCT_NAME}.app"
-    exit 1
-fi
+for path in "${required_paths[@]}"; do
+    if [[ ! -e "$path" ]]; then
+        echo "Missing required release artifact path: $path" >&2
+        exit 1
+    fi
+done
 
 check-universal-binary() {
     if ! file "$1" | grep --fixed-string -q "Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit executable x86_64] [arm64"; then
@@ -113,22 +111,31 @@ check-universal-binary() {
     fi
 }
 
-check-universal-binary ".release/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_PRODUCT_NAME}"
-check-universal-binary ".release/${FRAME_CLI_NAME}"
+check-universal-binary "$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
+check-universal-binary "$cli_binary"
 
-codesign -v ".release/${FRAME_PRODUCT_NAME}.app"
-codesign -v ".release/${FRAME_CLI_NAME}"
+codesign --verify --deep --strict "$app_bundle"
+codesign --verify --strict "$cli_binary"
+
+# TODO: Add notarization + stapling here before packaging/cask generation.
+# Suggested flow:
+# 1) Submit "$app_bundle" and "$cli_binary" to notary service.
+# 2) Wait for success.
+# 3) Staple ticket to "$app_bundle".
 
 ############
 ### PACK ###
 ############
 
-cp -r ./legal ".release/${FRAME_RELEASE_PREFIX}$build_version/legal"
-cd .release
-    mkdir -p "${FRAME_RELEASE_PREFIX}$build_version/bin" && cp -r "$FRAME_CLI_NAME" "${FRAME_RELEASE_PREFIX}$build_version/bin"
-    cp -r "${FRAME_PRODUCT_NAME}.app" "${FRAME_RELEASE_PREFIX}$build_version"
+release_root=".release/${FRAME_RELEASE_PREFIX}$build_version"
+mkdir -p "$release_root/bin"
+cp -r "$cli_binary" "$release_root/bin"
+cp -r "$app_bundle" "$release_root"
+cp -r ./legal "$release_root/legal"
+(
+    cd .release
     zip -r "${FRAME_RELEASE_PREFIX}$build_version.zip" "${FRAME_RELEASE_PREFIX}$build_version"
-cd -
+)
 
 #################
 ### Brew Cask ###
