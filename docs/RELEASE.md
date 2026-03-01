@@ -63,25 +63,40 @@ Examples:
 just release-cask 0.12.3 ./dist/Frame-v0.12.3.zip
 ```
 
-## Publish flow helper (interactive)
+## Publish manually
+
+1. Run checks and build release artifacts:
 
 ```bash
-just release-publish <version> <cask_repo_path>
+./script/dev/run-tests.sh
+just release-build 0.12.3
 ```
 
-Example:
+2. Create and push release tag:
 
 ```bash
-just release-publish 0.12.3 ~/Code/homebrew-tap
+git tag -a v0.12.3 -m v0.12.3
+git push origin v0.12.3
 ```
 
-The helper:
+3. Create GitHub release for tag `v0.12.3` and upload:
+   - `dist/Frame-v0.12.3.zip`
 
-1. Runs checks
-2. Builds release artifacts
-3. Creates/pushes git tag
-4. Opens release page and zip in Finder
-5. Regenerates and copies cask to the tap repo
+4. Regenerate cask for the GitHub release URL:
+
+```bash
+just release-cask 0.12.3 https://github.com/tvanreenen/frame/releases/download/v0.12.3/Frame-v0.12.3.zip
+```
+
+5. Copy cask into your tap repo and commit/push:
+
+```bash
+cp dist/frame.rb ~/Code/homebrew-tap/Casks/frame.rb
+cd ~/Code/homebrew-tap
+git add Casks/frame.rb
+git commit -m "frame 0.12.3"
+git push
+```
 
 ## Rollback/retry notes
 
