@@ -14,8 +14,7 @@ build-debug:
 
 # Build and launch the debug app.
 dev:
-    ./script/dev/build-debug.sh
-    ./.debug/FrameApp
+    ./script/dev/run-debug-app.sh
 
 # Run the Swift unit test suite.
 test:

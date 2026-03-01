@@ -25,7 +25,9 @@ fi
 
 if [[ -z "$codesign_identity" ]]; then
     identities=()
-    mapfile -t identities < <(
+    while IFS= read -r identity; do
+        identities+=("$identity")
+    done < <(
         security find-identity -v -p codesigning 2>/dev/null \
             | awk -F'"' '/Developer ID Application:/ { print $2 }'
     )
@@ -69,7 +71,9 @@ xcodebuild-pretty .release/xcodebuild.log clean build \
     -scheme "$FRAME_XCODE_SCHEME" \
     -destination "generic/platform=macOS" \
     -configuration "$xcode_configuration" \
-    -derivedDataPath .release/.xcode-build
+    -derivedDataPath .release/.xcode-build \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="$codesign_identity"
 
 cp -r ".release/.xcode-build/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" .release
 cp -r ".release/.build/apple/Products/Release/$FRAME_CLI_NAME" .release

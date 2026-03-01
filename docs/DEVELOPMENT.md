@@ -39,7 +39,7 @@ Optional tools:
 
 ## Accessibility reset helper
 
-When debug permission state gets out of sync:
+When permission state gets out of sync:
 
 ```bash
 just reset-accessibility

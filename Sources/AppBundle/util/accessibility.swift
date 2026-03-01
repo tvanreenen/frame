@@ -3,16 +3,14 @@ import Common
 import PrivateApi
 
 @MainActor
-func checkAccessibilityPermissions() {
+func checkAccessibilityPermissions() async {
     let options = [axTrustedCheckOptionPrompt: true]
-    if !AXIsProcessTrustedWithOptions(options as CFDictionary) {
-        resetAccessibility() // Because macOS doesn't reset it for us when the app signature changes...
-        terminateApp()
+    if AXIsProcessTrustedWithOptions(options as CFDictionary) {
+        return
     }
-}
-
-private func resetAccessibility() {
-    _ = try? Process.run(URL(filePath: "/usr/bin/tccutil"), arguments: ["reset", "Accessibility", appBundleId])
+    while !AXIsProcessTrusted() {
+        try? await Task.sleep(for: .seconds(1))
+    }
 }
 
 protocol ReadableAttr: Sendable {
