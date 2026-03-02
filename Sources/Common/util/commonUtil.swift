@@ -22,10 +22,6 @@ public func dieT<T>(
     let thread = Thread.current
     let message =
         """
-        Please report to:
-            https://github.com/tvanreenen/frame/issues
-            Please describe what you did to trigger this error
-
         Message: \(_message)
         Version: \(appVersion)
         Git hash: \(gitHash)

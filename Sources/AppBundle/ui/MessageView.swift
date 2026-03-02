@@ -70,13 +70,6 @@ public struct MessageView: View {
             .padding(.horizontal)
             HStack {
                 Spacer()
-                if let type = model.message?.type {
-                    switch type {
-                        case .config:
-                            reloadConfigButton(showShortcutGroup: true)
-                            openConfigButton(showShortcutGroup: true)
-                    }
-                }
                 let closeButton = Button("Close") { model.message = nil }.keyboardShortcut(.defaultAction)
                 shortcutGroup(label: Image(systemName: "return.left"), content: closeButton)
             }
@@ -106,18 +99,12 @@ public final class MessageModel: ObservableObject {
     private init() {}
 }
 
-public enum MessageType {
-    case config
-}
-
 public struct Message: Hashable, Equatable {
-    public let type: MessageType
     public let title: String
     public let description: String
     public let body: String
 
-    init(type: MessageType = .config, title: String = appDisplayName, description: String, body: String) {
-        self.type = type
+    init(title: String = appDisplayName, description: String, body: String) {
         self.title = title
         self.description = description
         self.body = body

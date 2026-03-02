@@ -40,7 +40,11 @@ struct ReloadConfigCommand: Command {
             stdout.append(msg)
             if !args.noGui {
                 Task { @MainActor in
-                    MessageModel.shared.message = Message(description: "frame Config Error", body: msg)
+                    MessageModel.shared.message = Message(
+                        title: "Frame.app Configuration Error",
+                        description: "Frame could not load your configuration file.",
+                        body: msg,
+                    )
                 }
             }
             result = false
