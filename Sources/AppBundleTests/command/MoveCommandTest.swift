@@ -6,277 +6,146 @@ import XCTest
 final class MoveCommandTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
-    func testMove_swapWindows() async throws {
-        let root = Workspace.get(byName: name).rootTilingContainer.apply {
-            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
-            TestWindow.new(id: 2, parent: $0)
-        }
+    // MARK: - left/right: move between columns
+
+    func testMove_rightToAdjacentColumn() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        let w2 = TestWindow.new(id: 2, parent: col2)
+        assertEquals(w1.focusWindow(), true)
 
         try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
-        assertEquals(root.layoutDescription, .h_tiles([.window(2), .window(1)]))
+
+        assertEquals(col1.children.count, 0)
+        assertEquals(col2.children.map { ($0 as! Window).windowId }, [2, 1])
     }
 
-    func testMoveInto_findTopMostContainerWithRightOrientation() async throws {
-        let root = Workspace.get(byName: name).rootTilingContainer.apply {
-            TestWindow.new(id: 0, parent: $0)
-            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
-            TilingContainer.newHTiles(parent: $0, adaptiveWeight: 1).apply {
-                TilingContainer.newHTiles(parent: $0, adaptiveWeight: 1).apply {
-                    TestWindow.new(id: 2, parent: $0)
-                }
-            }
-        }
-
-        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            root.layoutDescription,
-            .h_tiles([
-                .window(0),
-                .h_tiles([
-                    .window(1),
-                    .h_tiles([
-                        .window(2),
-                    ]),
-                ]),
-            ]),
-        )
-    }
-
-    func testMove_mru() async throws {
-        var window3: Window!
-        let root = Workspace.get(byName: name).rootTilingContainer.apply {
-            TestWindow.new(id: 0, parent: $0)
-            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
-            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
-                TilingContainer.newHTiles(parent: $0, adaptiveWeight: 1).apply {
-                    TestWindow.new(id: 2, parent: $0)
-                    window3 = TestWindow.new(id: 3, parent: $0)
-                }
-                TestWindow.new(id: 4, parent: $0)
-            }
-        }
-        window3.markAsMostRecentChild()
-
-        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            root.layoutDescription,
-            .h_tiles([
-                .window(0),
-                .v_tiles([
-                    .h_tiles([
-                        .window(1),
-                        .window(2),
-                        .window(3),
-                    ]),
-                    .window(4),
-                ]),
-            ]),
-        )
-    }
-
-    func testSwap_preserveWeight() async throws {
-        let root = Workspace.get(byName: name).rootTilingContainer
-        let window1 = TestWindow.new(id: 1, parent: root, adaptiveWeight: 1)
-        let window2 = TestWindow.new(id: 2, parent: root, adaptiveWeight: 2)
-        _ = window2.focusWindow()
+    func testMove_leftToAdjacentColumn() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        TestWindow.new(id: 1, parent: col1)
+        let w2 = TestWindow.new(id: 2, parent: col2)
+        assertEquals(w2.focusWindow(), true)
 
         try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .left)).run(.defaultEnv, .emptyStdin)
-        assertEquals(window2.hWeight, 2)
-        assertEquals(window1.hWeight, 1)
+
+        assertEquals(col2.children.count, 0)
+        assertEquals(col1.children.map { ($0 as! Window).windowId }, [1, 2])
     }
 
-    func testMoveIn_newWeight() async throws {
-        var window1: Window!
-        var window2: Window!
-        Workspace.get(byName: name).rootTilingContainer.apply {
-            TestWindow.new(id: 0, parent: $0, adaptiveWeight: 1)
-            window1 = TestWindow.new(id: 1, parent: $0, adaptiveWeight: 2)
-            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
-                window2 = TestWindow.new(id: 2, parent: $0, adaptiveWeight: 1)
-            }
-        }
-        _ = window1.focusWindow()
-
-        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
-        assertEquals(window2.hWeight, 1)
-        assertEquals(window2.vWeight, 1)
-        assertEquals(window1.vWeight, 1)
-        assertEquals(window1.hWeight, 1)
-    }
-
-    func testCreateImplicitContainer() async throws {
+    func testMove_rightAtEdge_createsImplicitColumn() async throws {
         let workspace = Workspace.get(byName: name)
-        workspace.rootTilingContainer.apply {
-            TestWindow.new(id: 1, parent: $0)
-            assertEquals(TestWindow.new(id: 2, parent: $0).focusWindow(), true)
-            TestWindow.new(id: 3, parent: $0)
-        }
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        TestWindow.new(id: 2, parent: col1)
+        assertEquals(w1.focusWindow(), true)
+
+        let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(workspace.columns.count, 2)
+        assertEquals(workspace.columns[0].children.map { ($0 as! Window).windowId }, [2])
+        assertEquals(workspace.columns[1].children.map { ($0 as! Window).windowId }, [1])
+        assertEquals(result.exitCode, 0)
+    }
+
+    func testMove_leftAtEdge_createsImplicitColumn() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        TestWindow.new(id: 2, parent: col1)
+        assertEquals(w1.focusWindow(), true)
+
+        let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .left)).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(workspace.columns.count, 2)
+        assertEquals(workspace.columns[0].children.map { ($0 as! Window).windowId }, [1])
+        assertEquals(workspace.columns[1].children.map { ($0 as! Window).windowId }, [2])
+        assertEquals(result.exitCode, 0)
+    }
+
+    func testMove_leftAtEdge_stopActionStops() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        assertEquals(w1.focusWindow(), true)
+
+        var args = MoveCmdArgs(rawArgs: [], .left)
+        args.rawBoundariesAction = .stop
+        let result = try await MoveCommand(args: args).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(workspace.columns.count, 1)
+        assertEquals(col1.children.count, 1)
+        assertEquals(result.exitCode, 0)
+    }
+
+    // MARK: - up/down: reorder within column
+
+    func testMove_downWithinColumn() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col)
+        let w2 = TestWindow.new(id: 2, parent: col)
+        assertEquals(w1.focusWindow(), true)
+
+        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .down)).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(col.children.map { ($0 as! Window).windowId }, [2, 1])
+    }
+
+    func testMove_upWithinColumn() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col)
+        let w2 = TestWindow.new(id: 2, parent: col)
+        assertEquals(w2.focusWindow(), true)
+
+        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .up)).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(col.children.map { ($0 as! Window).windowId }, [2, 1])
+    }
+
+    func testMove_downAtBottomOfColumn_stops() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col)
+        let w2 = TestWindow.new(id: 2, parent: col)
+        assertEquals(w2.focusWindow(), true)
+
+        let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .down)).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(col.children.map { ($0 as! Window).windowId }, [1, 2])
+        assertEquals(result.exitCode, 0)
+    }
+
+    func testMove_upAtTopOfColumn_stops() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col)
+        let w2 = TestWindow.new(id: 2, parent: col)
+        assertEquals(w1.focusWindow(), true)
 
         let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .up)).run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.layoutDescription,
-            .workspace([
-                .v_tiles([
-                    .window(2),
-                    .h_tiles([.window(1), .window(3)]),
-                ]),
-            ]),
-        )
+
+        assertEquals(col.children.map { ($0 as! Window).windowId }, [1, 2])
         assertEquals(result.exitCode, 0)
     }
 
-    func testStop_onRootNode() async throws {
+    func testMove_emptyColumnRemovedAfterMove() async throws {
         let workspace = Workspace.get(byName: name)
-        workspace.rootTilingContainer.apply {
-            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
-            TestWindow.new(id: 2, parent: $0)
-            TestWindow.new(id: 3, parent: $0)
-        }
-
-        let result = try await parseCommand("move --boundaries-action stop left").cmdOrDie.run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.layoutDescription,
-            .workspace([
-                .h_tiles([.window(1), .window(2), .window(3)]),
-            ]),
-        )
-        assertEquals(result.exitCode, 0)
-    }
-
-    func testStop_onRootNode_withOppositeOrientation() async throws {
-        let workspace = Workspace.get(byName: name)
-        workspace.rootTilingContainer.apply {
-            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
-            TestWindow.new(id: 2, parent: $0)
-            TestWindow.new(id: 3, parent: $0)
-        }
-
-        let result = try await parseCommand("move --boundaries-action stop up").cmdOrDie.run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.layoutDescription,
-            .workspace([
-                .h_tiles([.window(1), .window(2), .window(3)]),
-            ]),
-        )
-        assertEquals(result.exitCode, 0)
-    }
-
-    func testStop_onRootNode_whenNoBoundary() async throws {
-        let workspace = Workspace.get(byName: name)
-        workspace.rootTilingContainer.apply {
-            TestWindow.new(id: 1, parent: $0)
-            assertEquals(TestWindow.new(id: 2, parent: $0).focusWindow(), true)
-            TestWindow.new(id: 3, parent: $0)
-        }
-
-        let result = try await parseCommand("move --boundaries-action stop left").cmdOrDie.run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.layoutDescription,
-            .workspace([
-                .h_tiles([.window(2), .window(1), .window(3)]),
-            ]),
-        )
-        assertEquals(result.exitCode, 0)
-    }
-
-    func testStop_onInnerNode() async throws {
-        let workspace = Workspace.get(byName: name)
-        workspace.rootTilingContainer.apply {
-            TestWindow.new(id: 1, parent: $0)
-            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
-                assertEquals(TestWindow.new(id: 2, parent: $0).focusWindow(), true)
-                TestWindow.new(id: 3, parent: $0)
-            }
-        }
-
-        let result = try await parseCommand("move --boundaries-action stop right").cmdOrDie.run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.layoutDescription,
-            .workspace([
-                .h_tiles([.window(1), .v_tiles([.window(3)]), .window(2)]),
-            ]),
-        )
-        assertEquals(result.exitCode, 0)
-    }
-
-    func testFail() async throws {
-        let workspace = Workspace.get(byName: name)
-        workspace.rootTilingContainer.apply {
-            assertEquals(TestWindow.new(id: 1, parent: $0).focusWindow(), true)
-            TestWindow.new(id: 2, parent: $0)
-            TestWindow.new(id: 3, parent: $0)
-        }
-
-        let result = try await parseCommand("move --boundaries-action fail left").cmdOrDie.run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.layoutDescription,
-            .workspace([
-                .h_tiles([.window(1), .window(2), .window(3)]),
-            ]),
-        )
-        assertEquals(result.exitCode, 1)
-    }
-
-    func testMoveOut() async throws {
-        let root = Workspace.get(byName: name).rootTilingContainer.apply {
-            TestWindow.new(id: 1, parent: $0)
-            TilingContainer.newVTiles(parent: $0, adaptiveWeight: 1).apply {
-                assertEquals(TestWindow.new(id: 2, parent: $0).focusWindow(), true)
-                TestWindow.new(id: 3, parent: $0)
-                TestWindow.new(id: 4, parent: $0)
-            }
-        }
-
-        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .left)).run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            root.layoutDescription,
-            .h_tiles([
-                .window(1),
-                .window(2),
-                .v_tiles([
-                    .window(3),
-                    .window(4),
-                ]),
-            ]),
-        )
-    }
-
-    func testMoveOutWithNormalization_right() async throws {
-        config.enableNormalizationFlattenContainers = true
-
-        let workspace = Workspace.get(byName: name).apply {
-            TestWindow.new(id: 1, parent: $0.rootTilingContainer)
-            assertEquals(TestWindow.new(id: 2, parent: $0.rootTilingContainer).focusWindow(), true)
-        }
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let w1 = TestWindow.new(id: 1, parent: col1)
+        TestWindow.new(id: 2, parent: col2)
+        assertEquals(w1.focusWindow(), true)
 
         try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.rootTilingContainer.layoutDescription,
-            .h_tiles([
-                .window(1),
-                .window(2),
-            ]),
-        )
-        assertEquals(focus.windowOrNil?.windowId, 2)
-    }
 
-    func testMoveOutWithNormalization_left() async throws {
-        config.enableNormalizationFlattenContainers = true
-
-        let workspace = Workspace.get(byName: name).apply {
-            assertEquals(TestWindow.new(id: 1, parent: $0.rootTilingContainer).focusWindow(), true)
-            TestWindow.new(id: 2, parent: $0.rootTilingContainer)
-        }
-
-        try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .left)).run(.defaultEnv, .emptyStdin)
-        assertEquals(
-            workspace.rootTilingContainer.layoutDescription,
-            .h_tiles([
-                .window(1),
-                .window(2),
-            ]),
-        )
-        assertEquals(focus.windowOrNil?.windowId, 1)
+        // w1 moved to col2, leaving col1 empty. Normalization removes the empty column.
+        assertEquals(workspace.columns.count, 1)
+        assertEquals(workspace.columns.first?.children.map { ($0 as! Window).windowId }, [2, 1])
     }
 }
 
@@ -290,16 +159,9 @@ extension TreeNode {
             case .macosHiddenAppsWindowsContainer: .macosHiddeAppWindow
             case .macosPopupWindowsContainer: .macosPopupWindowsContainer
             case .tilingContainer(let container):
-                switch container.layout {
-                    case .tiles:
-                        container.orientation == .h
-                            ? .h_tiles(container.children.map(\.layoutDescription))
-                            : .v_tiles(container.children.map(\.layoutDescription))
-                    case .accordion:
-                        container.orientation == .h
-                            ? .h_accordion(container.children.map(\.layoutDescription))
-                            : .v_accordion(container.children.map(\.layoutDescription))
-                }
+                container.orientation == .h
+                    ? .h_tiles(container.children.map(\.layoutDescription))
+                    : .v_tiles(container.children.map(\.layoutDescription))
         }
     }
 }
@@ -308,8 +170,6 @@ enum LayoutDescription: Equatable {
     case workspace([LayoutDescription])
     case h_tiles([LayoutDescription])
     case v_tiles([LayoutDescription])
-    case h_accordion([LayoutDescription])
-    case v_accordion([LayoutDescription])
     case window(UInt32)
     case macosPopupWindowsContainer
     case macosMinimized

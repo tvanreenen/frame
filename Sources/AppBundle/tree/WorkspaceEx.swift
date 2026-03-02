@@ -1,16 +1,11 @@
 import Common
 
 extension Workspace {
-    @MainActor var rootTilingContainer: TilingContainer {
-        let containers = children.filterIsInstance(of: TilingContainer.self)
+    @MainActor var rootTilingContainer: Column {
+        let containers = children.filterIsInstance(of: Column.self)
         switch containers.count {
             case 0:
-                let orientation: Orientation = switch config.defaultRootContainerOrientation {
-                    case .horizontal: .h
-                    case .vertical: .v
-                    case .auto: workspaceMonitor.then { $0.width >= $0.height } ? .h : .v
-                }
-                return TilingContainer(parent: self, adaptiveWeight: 1, orientation, config.defaultRootContainerLayout, index: INDEX_BIND_LAST)
+                return Column(parent: self, adaptiveWeight: 1, .h, .tiles, index: INDEX_BIND_LAST)
             case 1:
                 return containers.singleOrNil().orDie()
             default:
@@ -41,7 +36,7 @@ extension Workspace {
     }
 
     @MainActor var forceAssignedMonitor: Monitor? {
-        guard let monitorDescriptions = config.workspaceToMonitorForceAssignment[name] else { return nil }
+        guard let monitorDescriptions = runtimeContext.config.workspaceToMonitorForceAssignment[name] else { return nil }
         let sortedMonitors = sortedMonitors
         return monitorDescriptions.lazy
             .compactMap { $0.resolveMonitor(sortedMonitors: sortedMonitors) }

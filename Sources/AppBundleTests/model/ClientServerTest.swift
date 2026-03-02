@@ -3,24 +3,18 @@ import Common
 import XCTest
 
 final class ClientServerTest: XCTestCase {
-    func testClientRequestJsonV1_decoding() {
+    func testClientRequestJsonV1_decodingFailsDueToMissingFields() {
         let data = """
             { "command": "deprecated", "args": ["foo", "bar"], "stdin": "stdin" }
             """.data(using: .utf8)!
-        let expected = ClientRequest(args: ["foo", "bar"], stdin: "stdin", windowId: nil, workspace: nil)
-            .copy(\.windowId, nil)
-            .copy(\.workspace, nil)
-        assertSucc(ClientRequest.decodeJson(data), expected)
+        assertFail(ClientRequest.decodeJson(data))
     }
 
-    func testClientRequestJsonV2_decoding() {
+    func testClientRequestJsonV2_decodingFailsDueToMissingFields() {
         let data = """
             { "args": ["foo", "bar"], "stdin": "stdin" }
             """.data(using: .utf8)!
-        let expected = ClientRequest(args: ["foo", "bar"], stdin: "stdin", windowId: nil, workspace: nil)
-            .copy(\.windowId, nil)
-            .copy(\.workspace, nil)
-        assertSucc(ClientRequest.decodeJson(data), expected)
+        assertFail(ClientRequest.decodeJson(data))
     }
 
     func testClientRequestJsonV3_decoding() {
@@ -41,7 +35,7 @@ final class ClientServerTest: XCTestCase {
 
     func testClientRequestJsonV9999_decoding() {
         let data = """
-            { "args": ["foo", "bar"], "stdin": "stdin", "yet another future field": 1 }
+            { "args": ["foo", "bar"], "stdin": "stdin", "windowId": null, "workspace": null, "yet another future field": 1 }
             """.data(using: .utf8)!
         assertSucc(ClientRequest.decodeJson(data))
     }

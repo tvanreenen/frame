@@ -8,7 +8,6 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
     let windowId = ax.containingWindowId()
     let notif = notif as String
     Task { @MainActor in
-        guard let token: RunSessionGuard = .isServerEnabled else { return }
         guard let windowId, let window = Window.get(byId: windowId), try await isManipulatedWithMouse(window) else {
             scheduleRefreshSession(.ax(notif))
             return
@@ -16,7 +15,7 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
         moveWithMouseTask?.cancel()
         moveWithMouseTask = Task {
             try checkCancellation()
-            try await runLightSession(.ax(notif), token) {
+            try await runLightSession(.ax(notif)) {
                 try await moveWithMouse(window)
             }
         }
@@ -55,7 +54,7 @@ private func moveTilingWindow(_ window: Window) {
     let targetWorkspace = mouseLocation.monitorApproximation.activeWorkspace
     let swapTarget = mouseLocation.findIn(tree: targetWorkspace.rootTilingContainer, virtual: false)?.takeIf { $0 != window }
     if targetWorkspace != window.nodeWorkspace { // Move window to a different monitor
-        let index: Int = if let swapTarget, let parent = swapTarget.parent as? TilingContainer, let targetRect = swapTarget.lastAppliedLayoutPhysicalRect {
+        let index: Int = if let swapTarget, let parent = swapTarget.parent as? Column, let targetRect = swapTarget.lastAppliedLayoutPhysicalRect {
             mouseLocation.getProjection(parent.orientation) >= targetRect.center.getProjection(parent.orientation)
                 ? swapTarget.ownIndex.orDie() + 1
                 : swapTarget.ownIndex.orDie()
@@ -95,16 +94,11 @@ func swapWindows(_ window1: Window, _ window2: Window) {
 
 extension CGPoint {
     @MainActor
-    func findIn(tree: TilingContainer, virtual: Bool) -> Window? {
+    func findIn(tree: Column, virtual: Bool) -> Window? {
         let point = self
-        let target: TreeNode? = switch tree.layout {
-            case .tiles:
-                tree.children.first(where: {
-                    (virtual ? $0.lastAppliedLayoutVirtualRect : $0.lastAppliedLayoutPhysicalRect)?.contains(point) == true
-                })
-            case .accordion:
-                tree.mostRecentChild
-        }
+        let target: TreeNode? = tree.children.first(where: {
+            (virtual ? $0.lastAppliedLayoutVirtualRect : $0.lastAppliedLayoutPhysicalRect)?.contains(point) == true
+        })
         guard let target else { return nil }
         return switch target.tilingTreeNodeCasesOrDie() {
             case .window(let window): window

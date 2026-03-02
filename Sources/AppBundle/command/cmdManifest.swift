@@ -1,85 +1,34 @@
 import Common
 
+private protocol CommandFactoryArgs: CmdArgs {
+    func eraseToCommand() -> any Command
+}
+
 extension CmdArgs {
     func toCommand() -> any Command {
-        let command: any Command
-        switch Self.info.kind {
-            case .balanceSizes:
-                command = BalanceSizesCommand(args: self as! BalanceSizesCmdArgs)
-            case .close:
-                command = CloseCommand(args: self as! CloseCmdArgs)
-            case .closeAllWindowsButCurrent:
-                command = CloseAllWindowsButCurrentCommand(args: self as! CloseAllWindowsButCurrentCmdArgs)
-            case .config:
-                command = ConfigCommand(args: self as! ConfigCmdArgs)
-            case .debugWindows:
-                command = DebugWindowsCommand(args: self as! DebugWindowsCmdArgs)
-            case .enable:
-                command = EnableCommand(args: self as! EnableCmdArgs)
-            case .execAndForget:
-                die("exec-and-forget is parsed separately")
-            case .flattenWorkspaceTree:
-                command = FlattenWorkspaceTreeCommand(args: self as! FlattenWorkspaceTreeCmdArgs)
-            case .focus:
-                command = FocusCommand(args: self as! FocusCmdArgs)
-            case .focusBackAndForth:
-                command = FocusBackAndForthCommand(args: self as! FocusBackAndForthCmdArgs)
-            case .focusMonitor:
-                command = FocusMonitorCommand(args: self as! FocusMonitorCmdArgs)
-            case .fullscreen:
-                command = FullscreenCommand(args: self as! FullscreenCmdArgs)
-            case .joinWith:
-                command = JoinWithCommand(args: self as! JoinWithCmdArgs)
-            case .layout:
-                command = LayoutCommand(args: self as! LayoutCmdArgs)
-            case .listApps:
-                command = ListAppsCommand(args: self as! ListAppsCmdArgs)
-            case .listExecEnvVars:
-                command = ListExecEnvVarsCommand(args: self as! ListExecEnvVarsCmdArgs)
-            case .listModes:
-                command = ListModesCommand(args: self as! ListModesCmdArgs)
-            case .listMonitors:
-                command = ListMonitorsCommand(args: self as! ListMonitorsCmdArgs)
-            case .listWindows:
-                command = ListWindowsCommand(args: self as! ListWindowsCmdArgs)
-            case .listWorkspaces:
-                command = ListWorkspacesCommand(args: self as! ListWorkspacesCmdArgs)
-            case .macosNativeFullscreen:
-                command = MacosNativeFullscreenCommand(args: self as! MacosNativeFullscreenCmdArgs)
-            case .macosNativeMinimize:
-                command = MacosNativeMinimizeCommand(args: self as! MacosNativeMinimizeCmdArgs)
-            case .mode:
-                command = ModeCommand(args: self as! ModeCmdArgs)
-            case .move:
-                command = MoveCommand(args: self as! MoveCmdArgs)
-            case .moveMouse:
-                command = MoveMouseCommand(args: self as! MoveMouseCmdArgs)
-            case .moveNodeToMonitor:
-                command = MoveNodeToMonitorCommand(args: self as! MoveNodeToMonitorCmdArgs)
-            case .moveNodeToWorkspace:
-                command = MoveNodeToWorkspaceCommand(args: self as! MoveNodeToWorkspaceCmdArgs)
-            case .moveWorkspaceToMonitor:
-                command = MoveWorkspaceToMonitorCommand(args: self as! MoveWorkspaceToMonitorCmdArgs)
-            case .reloadConfig:
-                command = ReloadConfigCommand(args: self as! ReloadConfigCmdArgs)
-            case .resize:
-                command = ResizeCommand(args: self as! ResizeCmdArgs)
-            case .split:
-                command = SplitCommand(args: self as! SplitCmdArgs)
-            case .summonWorkspace:
-                command = SummonWorkspaceCommand(args: self as! SummonWorkspaceCmdArgs)
-            case .swap:
-                command = SwapCommand(args: self as! SwapCmdArgs)
-            case .triggerBinding:
-                command = TriggerBindingCommand(args: self as! TriggerBindingCmdArgs)
-            case .volume:
-                command = VolumeCommand(args: self as! VolumeCmdArgs)
-            case .workspace:
-                command = WorkspaceCommand(args: self as! WorkspaceCmdArgs)
-            case .workspaceBackAndForth:
-                command = WorkspaceBackAndForthCommand(args: self as! WorkspaceBackAndForthCmdArgs)
+        guard let factory = self as? any CommandFactoryArgs else {
+            die("No command factory found for '\(Self.info.kind.rawValue)'")
         }
+        let command = factory.eraseToCommand()
         check(command.info == Self.info)
         return command
     }
 }
+
+extension AddColumnCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { AddColumnCommand(args: self) } }
+extension BalanceSizesCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { BalanceSizesCommand(args: self) } }
+extension FocusCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { FocusCommand(args: self) } }
+extension FocusMonitorCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { FocusMonitorCommand(args: self) } }
+extension FullscreenCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { FullscreenCommand(args: self) } }
+extension LayoutCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { LayoutCommand(args: self) } }
+extension ListAppsCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { ListAppsCommand(args: self) } }
+extension ListMonitorsCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { ListMonitorsCommand(args: self) } }
+extension ListWindowsCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { ListWindowsCommand(args: self) } }
+extension ListWorkspacesCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { ListWorkspacesCommand(args: self) } }
+extension MoveCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { MoveCommand(args: self) } }
+extension MoveMouseCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { MoveMouseCommand(args: self) } }
+extension MoveNodeToWorkspaceCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { MoveNodeToWorkspaceCommand(args: self) } }
+extension ReloadConfigCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { ReloadConfigCommand(args: self) } }
+extension RemoveColumnCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { RemoveColumnCommand(args: self) } }
+extension ResizeCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { ResizeCommand(args: self) } }
+extension WorkspaceCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { WorkspaceCommand(args: self) } }

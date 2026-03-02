@@ -52,7 +52,15 @@ public func falseBoolFlag<T: ConvenienceCopyable>(_ keyPath: SendableWritableKey
 }
 
 public func boolFlag<T: ConvenienceCopyable>(_ keyPath: SendableWritableKeyPath<T, Bool?>) -> SubArgParser<T, Bool?> {
-    SubArgParser(keyPath) { input in input.argOrNil == "no" ? .succ(false, advanceBy: 1) : .succ(true, advanceBy: 0) }
+    SubArgParser(keyPath) { input in
+        if let raw = input.nonFlagArgOrNil() {
+            return raw == "no"
+                ? .succ(false, advanceBy: 1)
+                : .fail("'\(input.superArg)' optional value can only be 'no'", advanceBy: 1)
+        } else {
+            return .succ(true, advanceBy: 0)
+        }
+    }
 }
 
 public func singleValueSubArgParser<T: ConvenienceCopyable, V>(
@@ -77,8 +85,8 @@ public func optionalTrueBoolFlag<T: ConvenienceCopyable>(_ keyPath: SendableWrit
     SubArgParser(keyPath) { _ in .succ(true, advanceBy: 0) }
 }
 
-public func optionalFalseBoolFlag<T: ConvenienceCopyable>(_ KeyPath: SendableWritableKeyPath<T, Bool?>) -> SubArgParser<T, Bool?> {
-    SubArgParser(KeyPath) { _ in .succ(false, advanceBy: 0) }
+public func optionalFalseBoolFlag<T: ConvenienceCopyable>(_ keyPath: SendableWritableKeyPath<T, Bool?>) -> SubArgParser<T, Bool?> {
+    SubArgParser(keyPath) { _ in .succ(false, advanceBy: 0) }
 }
 
 public func parseWorkspaceNameSubArg(i: SubArgParserInput) -> ParsedCliArgs<WorkspaceName> {

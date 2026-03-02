@@ -1,5 +1,6 @@
 import AppKit
 import Common
+import Foundation
 
 enum EffectiveLeaf {
     case window(Window)
@@ -56,8 +57,8 @@ struct FrozenFocus: AeroAny, Equatable, Sendable {
 
 /// Global focus.
 /// Commands must be cautious about accessing this property directly. There are legitimate cases.
-/// But, in general, commands must firstly check --window-id, --workspace, AEROSPACE_WINDOW_ID env and
-/// AEROSPACE_WORKSPACE env before accessing the global focus.
+/// But, in general, commands must firstly check --window-id, --workspace, FRAME_WINDOW_ID env and
+/// FRAME_WORKSPACE env before accessing the global focus.
 @MainActor var focus: LiveFocus { _focus.live }
 
 @MainActor func setFocus(to newFocus: LiveFocus) -> Bool {
@@ -103,7 +104,7 @@ extension Workspace {
 
 @MainActor private var _lastKnownFocus: FrozenFocus = _focus
 
-// Used by workspace-back-and-forth
+// Used to track the previously focused workspace
 @MainActor var _prevFocusedWorkspaceName: String? = nil {
     didSet {
         prevFocusedWorkspaceDate = .now
@@ -111,10 +112,6 @@ extension Workspace {
 }
 @MainActor var prevFocusedWorkspaceDate: Date = .distantPast
 @MainActor var prevFocusedWorkspace: Workspace? { _prevFocusedWorkspaceName.map { Workspace.get(byName: $0) } }
-
-// Used by focus-back-and-forth
-@MainActor var _prevFocus: FrozenFocus? = nil
-@MainActor var prevFocus: LiveFocus? { _prevFocus?.live.takeIf { $0 != focus } }
 
 @MainActor private var onFocusChangedRecursionGuard = false
 // Should be called in refreshSession
@@ -125,15 +122,14 @@ extension Workspace {
     let focus = focus
     let frozenFocus = focus.frozen
     var hasFocusChanged = false
-    var hasFocusedWorkspaceChanged = false
     var hasFocusedMonitorChanged = false
+    var newFocusedWorkspace: String? = nil
     if frozenFocus != _lastKnownFocus {
-        _prevFocus = _lastKnownFocus
         hasFocusChanged = true
     }
     if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
+        newFocusedWorkspace = frozenFocus.workspaceName
         _prevFocusedWorkspaceName = _lastKnownFocus.workspaceName
-        hasFocusedWorkspaceChanged = true
     }
     if frozenFocus.monitorId != _lastKnownFocus.monitorId {
         hasFocusedMonitorChanged = true
@@ -146,45 +142,41 @@ extension Workspace {
     if hasFocusChanged {
         onFocusChanged(focus)
     }
-    if let _prevFocusedWorkspaceName, hasFocusedWorkspaceChanged {
-        onWorkspaceChanged(_prevFocusedWorkspaceName, frozenFocus.workspaceName)
-    }
+
     if hasFocusedMonitorChanged {
         onFocusedMonitorChanged(focus)
+    }
+    if let newFocusedWorkspace {
+        onWorkspaceChanged(newFocusedWorkspace)
     }
 }
 
 @MainActor private func onFocusedMonitorChanged(_ focus: LiveFocus) {
-    if config.onFocusedMonitorChanged.isEmpty { return }
-    guard let token: RunSessionGuard = .isServerEnabled else { return }
+    if runtimeContext.config.onFocusedMonitorChanged.isEmpty { return }
     // todo potential optimization: don't run runSession if we are already in runSession
     Task {
-        try await runLightSession(.onFocusedMonitorChanged, token) {
-            _ = try await config.onFocusedMonitorChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
+        try await runLightSession(.onFocusedMonitorChanged) {
+            _ = try await runtimeContext.config.onFocusedMonitorChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }
 }
 @MainActor private func onFocusChanged(_ focus: LiveFocus) {
-    if config.onFocusChanged.isEmpty { return }
-    guard let token: RunSessionGuard = .isServerEnabled else { return }
+    if runtimeContext.config.onFocusChanged.isEmpty { return }
     // todo potential optimization: don't run runSession if we are already in runSession
     Task {
-        try await runLightSession(.onFocusChanged, token) {
-            _ = try await config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
+        try await runLightSession(.onFocusChanged) {
+            _ = try await runtimeContext.config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
         }
     }
 }
 
-@MainActor private func onWorkspaceChanged(_ oldWorkspace: String, _ newWorkspace: String) {
-    if let exec = config.execOnWorkspaceChange.first {
-        let process = Process()
-        process.executableURL = URL(filePath: exec)
-        process.arguments = Array(config.execOnWorkspaceChange.dropFirst())
-        var environment = config.execConfig.envVariables
-        environment["AEROSPACE_FOCUSED_WORKSPACE"] = newWorkspace
-        environment["AEROSPACE_PREV_WORKSPACE"] = oldWorkspace
-        environment[AEROSPACE_WORKSPACE] = newWorkspace
-        process.environment = environment
-        _ = Result { try process.run() }
-    }
+@MainActor private func onWorkspaceChanged(_ newWorkspace: String) {
+    guard let executable = runtimeContext.config.execOnWorkspaceChange.first else { return }
+    let process = Process()
+    process.executableURL = URL(filePath: executable)
+    process.arguments = Array(runtimeContext.config.execOnWorkspaceChange.dropFirst())
+    process.environment = runtimeContext.config.execConfig.envVariables + [
+        FRAME_FOCUSED_WORKSPACE: newWorkspace,
+    ]
+    _ = Result { try process.run() }
 }

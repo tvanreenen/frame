@@ -75,7 +75,7 @@ extension NSScreen {
 
     /// The property is a replacement for Apple's crazy ``frame``
     ///
-    /// - For ``MacWindow.topLeftCorner``, (0, 0) is main screen top left corner, and positive y-axis goes down.
+    /// - For window top-left coordinates, (0, 0) is main screen top left corner, and positive y-axis goes down.
     /// - For ``frame``, (0, 0) is main screen bottom left corner, and positive y-axis goes up (which is crazy).
     ///
     /// The property "normalizes" ``frame``

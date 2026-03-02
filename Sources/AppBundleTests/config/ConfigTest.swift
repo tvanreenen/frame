@@ -4,62 +4,25 @@ import XCTest
 
 @MainActor
 final class ConfigTest: XCTestCase {
-    func testParseI3Config() {
-        let toml = try! String(contentsOf: projectRoot.appending(component: "docs/config-examples/i3-like-config-example.toml"), encoding: .utf8)
-        let (i3Config, errors) = parseConfig(toml)
-        assertEquals(errors, [])
-        assertEquals(i3Config.execConfig, defaultConfig.execConfig)
-        assertEquals(i3Config.enableNormalizationFlattenContainers, false)
-        assertEquals(i3Config.enableNormalizationOppositeOrientationForNestedContainers, false)
-    }
-
     func testParseDefaultConfig() {
         let toml = try! String(contentsOf: projectRoot.appending(component: "docs/config-examples/default-config.toml"), encoding: .utf8)
         let (_, errors) = parseConfig(toml)
         assertEquals(errors, [])
     }
 
-    func testConfigVersionOutOfBounds() {
-        let (_, errors) = parseConfig(
-            """
-            config-version = 0
-            """,
-        )
-        assertEquals(errors.descriptions, ["config-version: Must be in [1, 2] range"])
-    }
-
-    func testExecOnWorkspaceChangeDifferentTypesError() {
-        let (_, errors) = parseConfig(
-            """
-            exec-on-workspace-change = ['', 1]
-            """,
-        )
-        assertEquals(errors.descriptions, ["exec-on-workspace-change[1]: Expected type is \'string\'. But actual type is \'integer\'"])
-    }
-
     func testDuplicatedPersistentWorkspaces() {
         let (_, errors) = parseConfig(
             """
-            config-version = 2
             persistent-workspaces = ['a', 'a']
             """,
         )
         assertEquals(errors.descriptions, ["persistent-workspaces: Contains duplicated workspace names"])
     }
 
-    func testPersistentWorkspacesAreAvailableOnlySinceVersion2() {
-        let (_, errors) = parseConfig(
-            """
-            persistent-workspaces = ['a']
-            """,
-        )
-        assertEquals(errors.descriptions, ["persistent-workspaces: This config option is only available since \'config-version = 2\'"])
-    }
-
     func testQueryCantBeUsedInConfig() {
         let (_, errors) = parseConfig(
             """
-            [mode.main.binding]
+            [binding]
                 alt-a = 'list-apps'
             """,
         )
@@ -69,46 +32,29 @@ final class ConfigTest: XCTestCase {
     func testDropBindings() {
         let (config, errors) = parseConfig(
             """
-            mode.main = {}
+            [binding]
             """,
         )
         assertEquals(errors, [])
-        XCTAssertTrue(config.modes[mainModeId]?.bindings.isEmpty == true)
+        XCTAssertTrue(config.bindings.isEmpty == true)
     }
 
-    func testParseMode() {
+    func testParseBindings() {
         let (config, errors) = parseConfig(
             """
-            [mode.main.binding]
+            [binding]
                 alt-h = 'focus left'
             """,
         )
         assertEquals(errors, [])
         let binding = HotkeyBinding(.option, .h, [FocusCommand.new(direction: .left)])
-        assertEquals(
-            config.modes[mainModeId],
-            Mode(name: nil, bindings: [binding.descriptionWithKeyCode: binding]),
-        )
-    }
-
-    func testModesMustContainDefaultModeError() {
-        let (config, errors) = parseConfig(
-            """
-            [mode.foo.binding]
-                alt-h = 'focus left'
-            """,
-        )
-        assertEquals(
-            errors.descriptions,
-            ["mode: Please specify \'main\' mode"],
-        )
-        assertEquals(config.modes[mainModeId], nil)
+        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
     }
 
     func testHotkeyParseError() {
         let (config, errors) = parseConfig(
             """
-            [mode.main.binding]
+            [binding]
                 alt-hh = 'focus left'
                 aalt-j = 'focus down'
                 alt-k = 'focus up'
@@ -117,49 +63,65 @@ final class ConfigTest: XCTestCase {
         assertEquals(
             errors.descriptions,
             [
-                "mode.main.binding.aalt-j: Can\'t parse modifiers in \'aalt-j\' binding",
-                "mode.main.binding.alt-hh: Can\'t parse the key in \'alt-hh\' binding",
+                "binding.aalt-j: Can\'t parse modifiers in \'aalt-j\' binding",
+                "binding.alt-hh: Can\'t parse the key in \'alt-hh\' binding",
             ],
         )
         let binding = HotkeyBinding(.option, .k, [FocusCommand.new(direction: .up)])
-        assertEquals(
-            config.modes[mainModeId],
-            Mode(name: nil, bindings: [binding.descriptionWithKeyCode: binding]),
-        )
+        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
     }
 
-    func testPermanentWorkspaceNames() {
+    func testPersistentWorkspaces() {
         let (config, errors) = parseConfig(
             """
-            [mode.main.binding]
+            persistent-workspaces = ['1', '2', '3', '4']
+            [binding]
                 alt-1 = 'workspace 1'
-                alt-2 = 'workspace 2'
-                alt-3 = ['workspace 3']
-                alt-4 = ['workspace 4', 'focus left']
             """,
         )
         assertEquals(errors.descriptions, [])
         assertEquals(config.persistentWorkspaces.sorted(), ["1", "2", "3", "4"])
     }
 
+    func testParseExecOnWorkspaceChange() {
+        let (config, errors) = parseConfig(
+            """
+            exec-on-workspace-change = ['/bin/bash', '-c', 'echo changed']
+            """,
+        )
+        assertEquals(errors.descriptions, [])
+        assertEquals(config.execOnWorkspaceChange, ["/bin/bash", "-c", "echo changed"])
+    }
+
     func testUnknownTopLevelKeyParseError() {
         let (config, errors) = parseConfig(
             """
             unknownKey = true
-            enable-normalization-flatten-containers = false
+            start-at-login = true
             """,
         )
         assertEquals(
             errors.descriptions,
             ["unknownKey: Unknown top-level key"],
         )
-        assertEquals(config.enableNormalizationFlattenContainers, false)
+        assertEquals(config.startAtLogin, true)
+    }
+
+    func testConfigVersionIsUnknownTopLevelKeyParseError() {
+        let (_, errors) = parseConfig(
+            """
+            config-version = 2
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["config-version: Unknown top-level key"],
+        )
     }
 
     func testUnknownKeyParseError() {
-        let (config, errors) = parseConfig(
+        let (_, errors) = parseConfig(
             """
-            enable-normalization-flatten-containers = false
             [gaps]
                 unknownKey = true
             """,
@@ -168,18 +130,17 @@ final class ConfigTest: XCTestCase {
             errors.descriptions,
             ["gaps.unknownKey: Unknown key"],
         )
-        assertEquals(config.enableNormalizationFlattenContainers, false)
     }
 
     func testTypeMismatch() {
         let (_, errors) = parseConfig(
             """
-            enable-normalization-flatten-containers = 'true'
+            start-at-login = 'true'
             """,
         )
         assertEquals(
             errors.descriptions,
-            ["enable-normalization-flatten-containers: Expected type is \'bool\'. But actual type is \'string\'"],
+            ["start-at-login: Expected type is \'bool\'. But actual type is \'string\'"],
         )
     }
 
@@ -191,42 +152,15 @@ final class ConfigTest: XCTestCase {
         )
     }
 
-    func testMoveWorkspaceToMonitorCommandParsing() {
-        XCTAssertTrue(parseCommand("move-workspace-to-monitor --wrap-around next").cmdOrNil is MoveWorkspaceToMonitorCommand)
-        XCTAssertTrue(parseCommand("move-workspace-to-display --wrap-around next").cmdOrNil is MoveWorkspaceToMonitorCommand)
-    }
-
-    func testParseTiles() {
-        let command = parseCommand("layout tiles h_tiles v_tiles list h_list v_list").cmdOrNil
+    func testParseLayout() {
+        let command = parseCommand("layout tiling floating").cmdOrNil
         XCTAssertTrue(command is LayoutCommand)
-        assertEquals((command as! LayoutCommand).args.toggleBetween.val, [.tiles, .h_tiles, .v_tiles, .tiles, .h_tiles, .v_tiles])
+        assertEquals((command as! LayoutCommand).args.toggleBetween.val, [.tiling, .floating])
 
-        guard case .help = parseCommand("layout tiles -h") else {
+        guard case .help = parseCommand("layout -h") else {
             XCTFail()
             return
         }
-    }
-
-    func testSplitCommandAndFlattenContainersNormalization() {
-        let (_, errors) = parseConfig(
-            """
-            enable-normalization-flatten-containers = true
-            [mode.main.binding]
-            [mode.foo.binding]
-                alt-s = 'split horizontal'
-            """,
-        )
-        assertEquals(
-            ["""
-                The config contains:
-                1. usage of 'split' command
-                2. enable-normalization-flatten-containers = true
-                These two settings don't play nicely together. 'split' command has no effect when enable-normalization-flatten-containers is disabled.
-
-                My recommendation: keep the normalizations enabled, and prefer 'join-with' over 'split'.
-                """],
-            errors.descriptions,
-        )
     }
 
     func testParseWorkspaceToMonitorAssignment() {
@@ -282,7 +216,7 @@ final class ConfigTest: XCTestCase {
             [[on-window-detected]] # 4
                 run = ['move-node-to-workspace S', 'move-node-to-workspace W']
             [[on-window-detected]] # 5
-                run = ['move-node-to-workspace S', 'layout h_tiles']
+                run = ['move-node-to-workspace S', 'layout tiling']
             """,
         )
         assertEquals(parsed.onWindowDetected, [
@@ -321,7 +255,7 @@ final class ConfigTest: XCTestCase {
             WindowDetectedCallback( // 5
                 rawRun: [
                     MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "S")),
-                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.h_tiles])),
+                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.tiling])),
                 ],
             ),
         ])
@@ -408,7 +342,7 @@ final class ConfigTest: XCTestCase {
                 q = 'q'
                 unicorn = 'u'
 
-            [mode.main.binding]
+            [binding]
                 alt-unicorn = 'workspace wonderland'
             """,
         )
@@ -418,7 +352,7 @@ final class ConfigTest: XCTestCase {
             "unicorn": .u,
         ]))
         let binding = HotkeyBinding(.option, .u, [WorkspaceCommand(args: WorkspaceCmdArgs(target: .direct(.parse("unicorn").getOrDie())))])
-        assertEquals(config.modes[mainModeId]?.bindings, [binding.descriptionWithKeyCode: binding])
+        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
 
         let (_, errors1) = parseConfig(
             """

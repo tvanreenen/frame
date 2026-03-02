@@ -10,20 +10,18 @@ public func parseSpecificCmdArgs<T: CmdArgs>(_ raw: T, _ args: StrArrSlice) -> P
         let arg = args[index]
         if arg == "-h" || arg == "--help" {
             return .help(T.info.help)
-        } else if arg.starts(with: "-") && !isResizeNegativeUnitsArg(raw, arg: arg) {
-            if let optionParser: any SubArgParserProtocol<T> = T.parser.flags[arg] {
-                index += 1
-                if !options.insert(arg).inserted {
-                    errors.append("Duplicated option \(arg.singleQuoted)")
-                }
-                raw = optionParser.transformRaw(raw, superArg: arg, &index, args, &errors)
-            } else {
-                errors.append("Unknown flag \(arg.singleQuoted)")
-                break
+        } else if let optionParser: any SubArgParserProtocol<T> = T.parser.flags[arg] {
+            index += 1
+            if !options.insert(arg).inserted {
+                errors.append("Duplicated option \(arg.singleQuoted)")
             }
+            raw = optionParser.transformRaw(raw, superArg: arg, &index, args, &errors)
         } else if let parser = T.parser.positionalArgs.getOrNil(atIndex: posArgumentParserIndex) {
             raw = parser.transformRaw(raw, &index, args, &errors)
             posArgumentParserIndex += 1
+        } else if arg.starts(with: "-") {
+            errors.append("Unknown flag \(arg.singleQuoted)")
+            break
         } else {
             errors.append("Unknown argument \(arg.singleQuoted)")
             break
@@ -119,10 +117,4 @@ extension ArgParserProtocol {
             return raw
         }
     }
-}
-
-// Hack to preserve backwards compatibility
-private func isResizeNegativeUnitsArg(_ raw: any CmdArgs, arg: String) -> Bool {
-    var iter = arg.makeIterator()
-    return raw is ResizeCmdArgs && iter.next() == "-" && iter.next()?.isNumber == true
 }

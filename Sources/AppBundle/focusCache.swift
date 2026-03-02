@@ -11,5 +11,5 @@
         _ = nativeFocused?.focusWindow()
         lastKnownNativeFocusedWindowId = nativeFocused?.windowId
     }
-    nativeFocused?.macAppUnsafe.lastNativeFocusedWindowId = nativeFocused?.windowId
+    nativeFocused?.app.setLastNativeFocusedWindowId(nativeFocused?.windowId)
 }

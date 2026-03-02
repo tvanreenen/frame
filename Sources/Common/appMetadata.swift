@@ -1,8 +1,13 @@
-public let stableAeroSpaceAppId: String = "bobko.aerospace"
+public let productName: String = "Frame"
+public let cliName: String = "frame"
+public let stableAppBundleId: String = "com.frame.app"
+public let configDotfileName: String = ".frame.toml"
+public let configDirName: String = "frame"
+
 #if DEBUG
-    public let aeroSpaceAppId: String = "bobko.aerospace.debug"
-    public let aeroSpaceAppName: String = "AeroSpace-Debug"
+    public let appBundleId: String = "com.frame.app.debug"
+    public let appDisplayName: String = "Frame-Debug"
 #else
-    public let aeroSpaceAppId: String = stableAeroSpaceAppId
-    public let aeroSpaceAppName: String = "AeroSpace"
+    public let appBundleId: String = stableAppBundleId
+    public let appDisplayName: String = productName
 #endif

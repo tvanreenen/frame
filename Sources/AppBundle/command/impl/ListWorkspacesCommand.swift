@@ -22,19 +22,20 @@ struct ListWorkspacesCommand: Command {
         if args.outputOnlyCount {
             return io.out("\(result.count)")
         } else {
-            let list = result.map { AeroObj.workspace($0) }
             if args.json {
-                return switch list.formatToJson(args.format, ignoreRightPaddingVar: args._format.isEmpty) {
-                    case .success(let json): io.out(json)
-                    case .failure(let msg): io.err(msg)
-                }
+                return outputJson(result.map(ListWorkspacesJsonRow.init), io)
             } else {
-                return switch list.format(args.format) {
-                    case .success(let lines): io.out(lines)
-                    case .failure(let msg): io.err(msg)
-                }
+                return io.out(result.map(\.name))
             }
         }
+    }
+}
+
+private struct ListWorkspacesJsonRow: Encodable {
+    let workspace: String
+
+    init(_ workspace: Workspace) {
+        self.workspace = workspace.name
     }
 }
 

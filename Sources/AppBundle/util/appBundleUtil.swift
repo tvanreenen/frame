@@ -3,7 +3,7 @@ import Common
 import Foundation
 import os
 
-let signposter = OSSignposter(subsystem: aeroSpaceAppId, category: .pointsOfInterest)
+let signposter = OSSignposter(subsystem: appBundleId, category: .pointsOfInterest)
 
 let myPid = NSRunningApplication.current.processIdentifier
 let lockScreenAppBundleId = "com.apple.loginwindow"
@@ -31,14 +31,13 @@ func initTerminationHandler() {
 private struct AppServerTerminationHandler: TerminationHandler {
     func beforeTermination() async throws {
         try await makeAllWindowsVisibleAndRestoreSize()
-        await toggleReleaseServerIfDebug(.on)
     }
 }
 
 @MainActor
 private func makeAllWindowsVisibleAndRestoreSize() async throws {
     // Make all windows fullscreen before Quit
-    for (_, window) in MacWindow.allWindowsMap {
+    for (_, window) in Window.allWindowsMap {
         // makeAllWindowsVisibleAndRestoreSize may be invoked when something went wrong (e.g. some windows are unbound)
         // that's why it's not allowed to use `.parent` call in here
         let monitor = try await window.getCenter()?.monitorApproximation ?? mainMonitor
@@ -57,17 +56,8 @@ extension String? {
 }
 
 @MainActor
-func terminateApp() -> Never {
+func terminateApp() {
     NSApplication.shared.terminate(nil)
-    die("Unreachable code")
-}
-
-extension String {
-    func copyToClipboard() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.declareTypes([.string], owner: nil)
-        pasteboard.setString(self, forType: .string)
-    }
 }
 
 func - (a: CGPoint, b: CGPoint) -> CGPoint {

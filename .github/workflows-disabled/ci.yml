@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - "main"
+      - "rr/**" # "rr" stands for "remote run"
+  pull_request:
+    branches:
+      - "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - name: select xcode 26
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${XCODE_26_DEVELOPER_DIR:-}" ]]; then
+            echo "XCODE_26_DEVELOPER_DIR is not available on this runner"
+            env | grep '^XCODE_.*_DEVELOPER_DIR' || true
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE_26_DEVELOPER_DIR"
+          xcodebuild -version
+      - run: brew bundle --file Brewfile
+      - run: just check

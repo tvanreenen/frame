@@ -72,8 +72,4 @@ public func parseCardinalDirectionArg(i: ArgParserInput) -> ParsedCliArgs<Cardin
     .init(parseEnum(i.arg, CardinalDirection.self), advanceBy: 1)
 }
 
-func parseCardinalOrDfsDirection(i: ArgParserInput) -> ParsedCliArgs<CardinalOrDfsDirection> {
-    .init(parseEnum(i.arg, CardinalOrDfsDirection.self), advanceBy: 1)
-}
-
 func upcastArgParserFun<T>(_ fun: @escaping ArgParserFun<T>) -> ArgParserFun<T?> { { fun($0).map { $0 } } }

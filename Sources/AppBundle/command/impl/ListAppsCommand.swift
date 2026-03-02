@@ -14,18 +14,42 @@ struct ListAppsCommand: Command {
         if args.outputOnlyCount {
             return io.out("\(result.count)")
         } else {
-            let list = result.map { AeroObj.app($0) }
             if args.json {
-                return switch list.formatToJson(args.format, ignoreRightPaddingVar: args._format.isEmpty) {
-                    case .success(let json): io.out(json)
-                    case .failure(let msg): io.err(msg)
-                }
+                return outputJson(result.map(ListAppsJsonRow.init), io)
             } else {
-                return switch list.format(args.format) {
-                    case .success(let lines): io.out(lines)
-                    case .failure(let msg): io.err(msg)
-                }
+                let lines = result.map(ListAppsTextRow.init).map(\.columns).toPaddingTable()
+                return io.out(lines)
             }
         }
+    }
+}
+
+private struct ListAppsTextRow {
+    let columns: [String]
+
+    init(_ app: MacApp) {
+        columns = [
+            app.pid.description,
+            app.rawAppBundleId ?? "NULL-APP-BUNDLE-ID",
+            app.name ?? "NULL-APP-NAME",
+        ]
+    }
+}
+
+private struct ListAppsJsonRow: Encodable {
+    let appPid: Int32
+    let appBundleId: String
+    let appName: String
+
+    enum CodingKeys: String, CodingKey {
+        case appPid = "app-pid"
+        case appBundleId = "app-bundle-id"
+        case appName = "app-name"
+    }
+
+    init(_ app: MacApp) {
+        appPid = app.pid
+        appBundleId = app.rawAppBundleId ?? "NULL-APP-BUNDLE-ID"
+        appName = app.name ?? "NULL-APP-NAME"
     }
 }

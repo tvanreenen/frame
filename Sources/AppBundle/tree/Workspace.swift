@@ -26,7 +26,7 @@ private func getStubWorkspace(forPoint point: CGPoint) -> Workspace {
     }
     return (1 ... Int.max).lazy
         .map { Workspace.get(byName: String($0)) }
-        .first { $0.isEffectivelyEmpty && !$0.isVisible && !config.persistentWorkspaces.contains($0.name) && $0.forceAssignedMonitor == nil }
+        .first { $0.isEffectivelyEmpty && !$0.isVisible && !runtimeContext.config.persistentWorkspaces.contains($0.name) && $0.forceAssignedMonitor == nil }
         .orDie("Can't create empty workspace")
 }
 
@@ -75,18 +75,18 @@ final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
             ("name", name),
             ("isVisible", String(isVisible)),
             ("isEffectivelyEmpty", String(isEffectivelyEmpty)),
-            ("doKeepAlive", String(config.persistentWorkspaces.contains(name))),
+            ("doKeepAlive", String(runtimeContext.config.persistentWorkspaces.contains(name))),
         ].map { "\($0.0): '\(String(describing: $0.1))'" }.joined(separator: ", ")
         return "Workspace(\(description))"
     }
 
     @MainActor
     static func garbageCollectUnusedWorkspaces() {
-        for name in config.persistentWorkspaces {
+        for name in runtimeContext.config.persistentWorkspaces {
             _ = get(byName: name) // Make sure that all persistent workspaces are "cached"
         }
         workspaceNameToWorkspace = workspaceNameToWorkspace.filter { (_, workspace: Workspace) in
-            config.persistentWorkspaces.contains(workspace.name) ||
+            runtimeContext.config.persistentWorkspaces.contains(workspace.name) ||
                 !workspace.isEffectivelyEmpty ||
                 workspace.isVisible ||
                 workspace.name == focus.workspace.name

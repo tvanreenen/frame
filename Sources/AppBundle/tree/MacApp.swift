@@ -4,7 +4,7 @@ import Common
 // Potential alternative implementation
 // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0392-custom-actor-executors.md
 // (only available since macOS 14)
-final class MacApp: AbstractApp {
+final class MacApp: WindowPlatformApp {
     /*conforms*/ let pid: Int32
     /*conforms*/ let rawAppBundleId: String?
     let appId: KnownBundleId?
@@ -16,16 +16,26 @@ final class MacApp: AbstractApp {
     public var lastNativeFocusedWindowId: UInt32? = nil
     private var thread: Thread?
     private var setFrameJobs: [UInt32: RunLoopJob] = [:]
-    @MainActor private static var focusJob: RunLoopJob? = nil
+    @MainActor private static var focusJob: RunLoopJob? {
+        get { runtimeContext.appFocusJob }
+        set { runtimeContext.appFocusJob = newValue }
+    }
 
     /*conforms*/ var name: String? { nsApp.localizedName }
     /*conforms*/ var execPath: String? { nsApp.executableURL?.path }
     /*conforms*/ var bundlePath: String? { nsApp.bundleURL?.path }
+    /*conforms*/ var isHidden: Bool { nsApp.isHidden }
 
-    // todo think if it's possible to integrate this global mutable state to https://github.com/nikitabobko/AeroSpace/issues/1215
+    // todo think if it's possible to integrate this global mutable state to https://github.com/tvanreenen/frame/issues/1215
     //      and make deinitialization automatic in deinit
-    @MainActor static var allAppsMap: [pid_t: MacApp] = [:]
-    @MainActor private static var wipPids: [pid_t: AwaitableOneTimeBroadcastLatch] = [:]
+    @MainActor static var allAppsMap: [pid_t: MacApp] {
+        get { runtimeContext.appsByPid }
+        set { runtimeContext.appsByPid = newValue }
+    }
+    @MainActor private static var wipPids: [pid_t: AwaitableOneTimeBroadcastLatch] {
+        get { runtimeContext.appsWipByPid }
+        set { runtimeContext.appsWipByPid = newValue }
+    }
 
     private init(_ nsApp: NSRunningApplication, _ axApp: AXUIElement, _ axSubscriptions: [AxSubscription], _ thread: Thread) {
         self.nsApp = nsApp
@@ -83,8 +93,8 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func closeAndUnregisterAxWindow(_ windowId: UInt32) {
-        if serverArgs.isReadOnly { return }
+    @MainActor
+    func closeAndUnregisterAxWindow(windowId: UInt32) {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         _ = withWindowAsync(windowId) { [windows] window, job in
             guard let closeButton = window.get(Ax.closeButtonAttr) else { return }
@@ -94,7 +104,7 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func getAxSize(_ windowId: UInt32) async throws -> CGSize? {
+    func getAxSize(windowId: UInt32) async throws -> CGSize? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.sizeAttr)
         }
@@ -108,15 +118,19 @@ final class MacApp: AbstractApp {
                 .windowId
         }
         guard let windowId else { return nil }
-        return try await MacWindow.getOrRegister(windowId: windowId, macApp: self)
+        return try await Window.getOrRegister(windowId: windowId, app: self)
     }
 
-    @MainActor func nativeFocus(_ windowId: UInt32) {
-        if serverArgs.isReadOnly { return }
+    @MainActor
+    func setLastNativeFocusedWindowId(_ windowId: UInt32?) {
+        lastNativeFocusedWindowId = windowId
+    }
+
+    @MainActor func nativeFocus(windowId: UInt32) {
         MacApp.focusJob?.cancel()
         // Performance optimization. If possible avoid doing AX requests
         // (important for apps which are slow at responding even such basic AX requests. E.g. Godot)
-        // Beware of the macOS bug: https://github.com/nikitabobko/AeroSpace/issues/101
+        // Beware of the macOS bug: https://github.com/tvanreenen/frame/issues/101
         if (!NSScreen.screensHaveSeparateSpaces || monitors.count == 1) &&
             (lastNativeFocusedWindowId == windowId || windowsCount == 1)
         {
@@ -131,7 +145,7 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func setAxFrame(_ windowId: UInt32, _ topLeft: CGPoint?, _ size: CGSize?) {
+    func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         setFrameJobs[windowId] = withWindowAsync(windowId) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
@@ -140,7 +154,7 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func setAxFrameBlocking(_ windowId: UInt32, _ topLeft: CGPoint?, _ size: CGSize?) async throws {
+    func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         try await withWindow(windowId) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
@@ -155,13 +169,13 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func getAxTopLeftCorner(_ windowId: UInt32) async throws -> CGPoint? {
+    func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.topLeftCornerAttr)
         }
     }
 
-    func getAxRect(_ windowId: UInt32) async throws -> Rect? {
+    func getAxRect(windowId: UInt32) async throws -> Rect? {
         try await withWindow(windowId) { window, job in
             guard let topLeftCorner = window.get(Ax.topLeftCornerAttr) else { return nil }
             guard let size = window.get(Ax.sizeAttr) else { return nil }
@@ -169,19 +183,19 @@ final class MacApp: AbstractApp {
         }
     }
 
-    func isWindowHeuristic(_ windowId: UInt32, _ windowLevel: MacOsWindowLevel?) async throws -> Bool {
+    func isWindowHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
         return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             window.isWindowHeuristic(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } == true
     }
 
-    func getAxUiElementWindowType(_ windowId: UInt32, _ windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
+    func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
         return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } ?? .window
     }
 
-    func isDialogHeuristic(_ windowId: UInt32, _ windowLevel: MacOsWindowLevel?) async throws -> Bool {
+    func isDialogHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
         try await withWindow(windowId) { [appId] window, job in
             window.isDialogHeuristic(appId, windowLevel)
         } == true
@@ -213,19 +227,19 @@ final class MacApp: AbstractApp {
         } ?? [:]
     }
 
-    func getAxTitle(_ windowId: UInt32) async throws -> String? {
+    func getAxTitle(windowId: UInt32) async throws -> String? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.titleAttr)
         }
     }
 
-    func isMacosNativeFullscreen(_ windowId: UInt32) async throws -> Bool? {
+    func isMacosNativeFullscreen(windowId: UInt32) async throws -> Bool? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.isFullscreenAttr)
         }
     }
 
-    func isMacosNativeMinimized(_ windowId: UInt32) async throws -> Bool? {
+    func isMacosNativeMinimized(windowId: UInt32) async throws -> Bool? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.minimizedAttr)
         }
@@ -364,7 +378,7 @@ extension [UInt32: AxWindow] {
         if let existing = self[id] { return existing }
         // Delay new window detection if mouse is down
         // It helps with apps that allow dragging their tabs out to create new windows
-        // https://github.com/nikitabobko/AeroSpace/issues/1001
+        // https://github.com/tvanreenen/frame/issues/1001
         if isLeftMouseButtonDown { return nil }
 
         if let window = try AxWindow.new(windowId: id, axWindow, nsApp, job) {
@@ -377,8 +391,8 @@ extension [UInt32: AxWindow] {
 }
 
 private func setFrame(_ window: AXUIElement, _ topLeft: CGPoint?, _ size: CGSize?, _ job: RunLoopJob) throws {
-    // Set size and then the position. The order is important https://github.com/nikitabobko/AeroSpace/issues/143
-    //                                                        https://github.com/nikitabobko/AeroSpace/issues/335
+    // Set size and then the position. The order is important https://github.com/tvanreenen/frame/issues/143
+    //                                                        https://github.com/tvanreenen/frame/issues/335
     if let size { window.set(Ax.sizeAttr, size) }
     try job.checkCancellation()
     if let topLeft { window.set(Ax.topLeftCornerAttr, topLeft) } else { return }

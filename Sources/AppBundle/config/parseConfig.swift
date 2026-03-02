@@ -2,7 +2,6 @@ import AppKit
 import Common
 import HotKey
 import TOMLKit
-import OrderedCollections
 
 @MainActor
 func readConfig(forceConfigUrl: URL? = nil) -> Result<(Config, URL), String> {
@@ -41,7 +40,6 @@ enum TomlParseError: Error, CustomStringConvertible, Equatable {
 
     var description: String {
         return switch self {
-            // todo Make 'split' + flatten normalization prettier
             case .semantic(let backtrace, let message): backtrace.isEmptyRoot ? message : "\(backtrace): \(message)"
             case .syntax(let message): message
         }
@@ -86,74 +84,58 @@ struct Parser<S: ConvenienceCopyable, T>: ParserProtocol {
 }
 
 private let keyMappingConfigRootKey = "key-mapping"
-private let modeConfigRootKey = "mode"
+private let bindingConfigRootKey = "binding"
 private let persistentWorkspacesKey = "persistent-workspaces"
+private let configAllowedCmdKinds: Set<CmdKind> = [
+    .addColumn,
+    .balanceSizes,
+    .focus,
+    .focusMonitor,
+    .fullscreen,
+    .layout,
+    .move,
+    .moveMouse,
+    .moveNodeToWorkspace,
+    .reloadConfig,
+    .removeColumn,
+    .resize,
+    .workspace,
+]
 
 // For every new config option you add, think:
 // 1. Does it make sense to have different value
 // 2. Prefer commands and commands flags over toml options if possible
 private let configParser: [String: any ParserProtocol<Config>] = [
-    "config-version": Parser(\.configVersion, parseConfigVersion),
-
-    "after-login-command": Parser(\.afterLoginCommand, parseAfterLoginCommand),
     "after-startup-command": Parser(\.afterStartupCommand) { parseCommandOrCommands($0).toParsedToml($1) },
 
     "on-focus-changed": Parser(\.onFocusChanged) { parseCommandOrCommands($0).toParsedToml($1) },
-    "on-mode-changed": Parser(\.onModeChanged) { parseCommandOrCommands($0).toParsedToml($1) },
     "on-focused-monitor-changed": Parser(\.onFocusedMonitorChanged) { parseCommandOrCommands($0).toParsedToml($1) },
     // "on-focused-workspace-changed": Parser(\.onFocusedWorkspaceChanged, { parseCommandOrCommands($0).toParsedToml($1) }),
 
-    "enable-normalization-flatten-containers": Parser(\.enableNormalizationFlattenContainers, parseBool),
-    "enable-normalization-opposite-orientation-for-nested-containers": Parser(\.enableNormalizationOppositeOrientationForNestedContainers, parseBool),
-
-    "default-root-container-layout": Parser(\.defaultRootContainerLayout, parseLayout),
-    "default-root-container-orientation": Parser(\.defaultRootContainerOrientation, parseDefaultContainerOrientation),
-
     "start-at-login": Parser(\.startAtLogin, parseBool),
-    "auto-reload-config": Parser(\.autoReloadConfig, parseBool),
-    "automatically-unhide-macos-hidden-apps": Parser(\.automaticallyUnhideMacosHiddenApps, parseBool),
-    "accordion-padding": Parser(\.accordionPadding, parseInt),
     persistentWorkspacesKey: Parser(\.persistentWorkspaces, parsePersistentWorkspaces),
     "exec-on-workspace-change": Parser(\.execOnWorkspaceChange, parseArrayOfStrings),
     "exec": Parser(\.execConfig, parseExecConfig),
 
     keyMappingConfigRootKey: Parser(\.keyMapping, skipParsing(Config().keyMapping)), // Parsed manually
-    modeConfigRootKey: Parser(\.modes, skipParsing(Config().modes)), // Parsed manually
+    bindingConfigRootKey: Parser(\.bindings, skipParsing(Config().bindings)), // Parsed manually
 
     "gaps": Parser(\.gaps, parseGaps),
     "workspace-to-monitor-force-assignment": Parser(\.workspaceToMonitorForceAssignment, parseWorkspaceToMonitorAssignment),
     "on-window-detected": Parser(\.onWindowDetected, parseOnWindowDetectedArray),
-
-    // Deprecated
-    "non-empty-workspaces-root-containers-layout-on-startup": Parser(\._nonEmptyWorkspacesRootContainersLayoutOnStartup, parseStartupRootContainerLayout),
-    "indent-for-nested-containers-with-the-same-orientation": Parser(\._indentForNestedContainersWithTheSameOrientation, parseIndentForNestedContainersWithTheSameOrientation),
 ]
 
 extension ParsedCmd where T == any Command {
     fileprivate func toEither() -> Parsed<T> {
         return switch self {
             case .cmd(let a):
-                a.info.allowInConfig
+                configAllowedCmdKinds.contains(a.info.kind)
                     ? .success(a)
                     : .failure("Command '\(a.info.kind.rawValue)' cannot be used in config")
             case .help(let a): .failure(a)
             case .failure(let a): .failure(a)
         }
     }
-}
-
-extension Command {
-    fileprivate var isMacOsNativeCommand: Bool { // Problem ID-B6E178F2
-        self is MacosNativeMinimizeCommand || self is MacosNativeFullscreenCommand
-    }
-}
-
-func parseAfterLoginCommand(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<[any Command]> {
-    if let array = raw.array, array.count == 0 {
-        return .success([])
-    }
-    let msg = "after-login-command is deprecated since AeroSpace 0.19.0. https://github.com/nikitabobko/AeroSpace/issues/1482"
-    return .failure(.semantic(backtrace, msg))
 }
 
 func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]> {
@@ -164,9 +146,7 @@ func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]
             let rawString: String = rawArray[index].string ?? expectedActualTypeError(expected: .string, actual: rawArray[index].type)
             return parseCommand(rawString).toEither()
         }
-        return commands.filter("macos-native-* commands are only allowed to be the last commands in the list") {
-            !$0.dropLast().contains(where: { $0.isMacOsNativeCommand })
-        }
+        return commands
     } else {
         return .failure(expectedActualTypeError(expected: [.string, .array], actual: raw.type))
     }
@@ -190,59 +170,12 @@ func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]
         config.keyMapping = mapping
     }
 
-    // Parse modeConfigRootKey after keyMappingConfigRootKey
-    if let modes = rawTable[modeConfigRootKey].flatMap({ parseModes($0, .rootKey(modeConfigRootKey), &errors, config.keyMapping.resolve()) }) {
-        config.modes = modes
+    // Parse bindingConfigRootKey after keyMappingConfigRootKey
+    if let bindings = rawTable[bindingConfigRootKey].flatMap({ parseBindings($0, .rootKey(bindingConfigRootKey), &errors, config.keyMapping.resolve()) }) {
+        config.bindings = bindings
     }
 
-    if config.configVersion <= 1 {
-        if rawTable.contains(key: persistentWorkspacesKey) {
-            errors += [.semantic(.rootKey(persistentWorkspacesKey), "This config option is only available since 'config-version = 2'")]
-        }
-        config.persistentWorkspaces = (config.modes.values.lazy
-            .flatMap { (mode: Mode) -> [HotkeyBinding] in Array(mode.bindings.values) }
-            .flatMap { (binding: HotkeyBinding) -> [String] in
-                binding.commands.filterIsInstance(of: WorkspaceCommand.self).compactMap { $0.args.target.val.workspaceNameOrNil()?.raw } +
-                    binding.commands.filterIsInstance(of: MoveNodeToWorkspaceCommand.self).compactMap { $0.args.target.val.workspaceNameOrNil()?.raw }
-            }
-            + (config.workspaceToMonitorForceAssignment).keys)
-            .toOrderedSet()
-    }
-
-    if config.enableNormalizationFlattenContainers {
-        let containsSplitCommand = config.modes.values.lazy.flatMap { $0.bindings.values }
-            .flatMap { $0.commands }
-            .contains { $0 is SplitCommand }
-        if containsSplitCommand {
-            errors += [.semantic(
-                .emptyRoot, // todo Make 'split' + flatten normalization prettier
-                """
-                The config contains:
-                1. usage of 'split' command
-                2. enable-normalization-flatten-containers = true
-                These two settings don't play nicely together. 'split' command has no effect when enable-normalization-flatten-containers is disabled.
-
-                My recommendation: keep the normalizations enabled, and prefer 'join-with' over 'split'.
-                """,
-            )]
-        }
-    }
     return (config, errors)
-}
-
-func parseIndentForNestedContainersWithTheSameOrientation(
-    _ raw: TOMLValueConvertible,
-    _ backtrace: TomlBacktrace,
-) -> ParsedToml<Void> {
-    let msg = "Deprecated. Please drop it from the config. See https://github.com/nikitabobko/AeroSpace/issues/96"
-    return .failure(.semantic(backtrace, msg))
-}
-
-func parseConfigVersion(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Int> {
-    let min = 1
-    let max = 2
-    return parseInt(raw, backtrace)
-        .filter(.semantic(backtrace, "Must be in [\(min), \(max)] range")) { (min ... max).contains($0) }
 }
 
 func parseInt(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Int> {
@@ -297,26 +230,16 @@ func parseTable<T: ConvenienceCopyable>(
     return table.parseTable(initial, fieldsParser, backtrace, &errors)
 }
 
-private func parseStartupRootContainerLayout(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Void> {
-    parseString(raw, backtrace)
-        .filter(.semantic(backtrace, "'non-empty-workspaces-root-containers-layout-on-startup' is deprecated. Please drop it from your config")) { raw in raw == "smart" }
-        .map { _ in () }
-}
-
-private func parseLayout(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Layout> {
-    parseString(raw, backtrace)
-        .flatMap { $0.parseLayout().orFailure(.semantic(backtrace, "Can't parse layout '\($0)'")) }
-}
-
 private func skipParsing<T: Sendable>(_ value: T) -> @Sendable (_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<T> {
     { _, _ in .success(value) }
 }
 
-private func parsePersistentWorkspaces(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<OrderedSet<String>> {
+private func parsePersistentWorkspaces(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<OrderedUniqueValues<String>> {
     parseArrayOfStrings(raw, backtrace)
         .flatMap { arr in
-            let set = arr.toOrderedSet()
-            return set.count == arr.count ? .success(set) : .failure(.semantic(backtrace, "Contains duplicated workspace names"))
+            OrderedUniqueValues(validatingUnique: arr)
+                .map(Result.success)
+                ?? .failure(.semantic(backtrace, "Contains duplicated workspace names"))
         }
 }
 
@@ -327,13 +250,6 @@ private func parseArrayOfStrings(_ raw: TOMLValueConvertible, _ backtrace: TomlB
                 parseString(elem, backtrace + .index(index))
             }
         }
-}
-
-private func parseDefaultContainerOrientation(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<DefaultContainerOrientation> {
-    parseString(raw, backtrace).flatMap {
-        DefaultContainerOrientation(rawValue: $0)
-            .orFailure(.semantic(backtrace, "Can't parse default container orientation '\($0)'"))
-    }
 }
 
 extension Parsed where Failure == String {
@@ -355,7 +271,7 @@ indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
 
     var description: String {
         return switch self {
-            case .emptyRoot: dieT("Impossible")
+            case .emptyRoot: "<root>"
             case .rootKey(let value): value
             case .key(let value): "." + value
             case .index(let index): "[\(index)]"
@@ -382,7 +298,7 @@ indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
             if case .key(let newRoot) = rhs {
                 return .rootKey(newRoot)
             } else {
-                die("Impossible")
+                return rhs
             }
         } else {
             return pair(lhs, rhs)

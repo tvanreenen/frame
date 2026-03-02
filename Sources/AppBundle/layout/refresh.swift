@@ -24,11 +24,9 @@ func runRefreshSessionBlocking(
 ) async throws {
     let state = signposter.beginInterval(#function, "event: \(event) axTaskLocalAppThreadToken: \(axTaskLocalAppThreadToken?.idForDebug)")
     defer { signposter.endInterval(#function, state) }
-    if !TrayMenuModel.shared.isEnabled { return }
     try await $refreshSessionEvent.withValue(event) {
         try await $_isStartup.withValue(event.isStartup) {
             let nativeFocused = try await getNativeFocusedWindow()
-            if let nativeFocused { try await debugWindowsIfRecording(nativeFocused) }
             updateFocusCache(nativeFocused)
 
             if shouldLayoutWorkspaces && optimisticallyPreLayoutWorkspaces { try await layoutWorkspaces() }
@@ -48,7 +46,6 @@ func runRefreshSessionBlocking(
 @MainActor
 func runLightSession<T>(
     _ event: RefreshSessionEvent,
-    _ token: RunSessionGuard,
     body: @MainActor () async throws -> T,
 ) async throws -> T {
     let state = signposter.beginInterval(#function, "event: \(event) axTaskLocalAppThreadToken: \(axTaskLocalAppThreadToken?.idForDebug)")
@@ -58,7 +55,6 @@ func runLightSession<T>(
     return try await $refreshSessionEvent.withValue(event) {
         try await $_isStartup.withValue(event.isStartup) {
             let nativeFocused = try await getNativeFocusedWindow()
-            if let nativeFocused { try await debugWindowsIfRecording(nativeFocused) }
             updateFocusCache(nativeFocused)
             let focusBefore = focus.windowOrNil
 
@@ -80,26 +76,6 @@ func runLightSession<T>(
     }
 }
 
-struct RunSessionGuard: Sendable {
-    @MainActor
-    static var isServerEnabled: RunSessionGuard? { TrayMenuModel.shared.isEnabled ? forceRun : nil }
-    @MainActor
-    static func isServerEnabled(orIsEnableCommand command: (any Command)?) -> RunSessionGuard? {
-        command is EnableCommand ? .forceRun : .isServerEnabled
-    }
-    @MainActor
-    static func checkServerIsEnabledOrDie(
-        file: String = #fileID,
-        line: Int = #line,
-        column: Int = #column,
-        function: String = #function,
-    ) -> RunSessionGuard {
-        .isServerEnabled ?? dieT("server is disabled", file: file, line: line, column: column, function: function)
-    }
-    static let forceRun = RunSessionGuard()
-    private init() {}
-}
-
 @MainActor
 func refreshModel() {
     Workspace.garbageCollectUnusedWorkspaces()
@@ -113,14 +89,14 @@ private func refresh() async throws {
     let mapping = try await MacApp.refreshAllAndGetAliveWindowIds(frontmostAppBundleId: NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
     let aliveWindowIds = mapping.values.flatMap { $0 }.toSet()
 
-    for window in MacWindow.allWindows {
+    for window in Window.allWindows {
         if !aliveWindowIds.contains(window.windowId) {
             window.garbageCollect(skipClosedWindowsCache: false)
         }
     }
     for (app, windowIds) in mapping {
         for windowId in windowIds {
-            try await MacWindow.getOrRegister(windowId: windowId, macApp: app)
+            try await Window.getOrRegister(windowId: windowId, app: app)
         }
     }
 
@@ -131,7 +107,6 @@ private func refresh() async throws {
 func refreshObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeMutableRawPointer?) {
     let notif = notif as String
     Task { @MainActor in
-        if !TrayMenuModel.shared.isEnabled { return }
         scheduleRefreshSession(.ax(notif))
     }
 }
@@ -142,13 +117,6 @@ enum OptimalHideCorner {
 
 @MainActor
 private func layoutWorkspaces() async throws {
-    if !TrayMenuModel.shared.isEnabled {
-        for workspace in Workspace.all {
-            workspace.allLeafWindowsRecursive.forEach { ($0 as! MacWindow).unhideFromCorner() } // todo as!
-            try await workspace.layoutWorkspace() // Unhide tiling windows from corner
-        }
-        return
-    }
     let monitors = monitors
     var monitorToOptimalHideCorner: [CGPoint: OptimalHideCorner] = [:]
     for monitor in monitors {
@@ -178,13 +146,13 @@ private func layoutWorkspaces() async throws {
     // to reduce flicker, first unhide visible workspaces, then hide invisible ones
     for monitor in monitors {
         let workspace = monitor.activeWorkspace
-        workspace.allLeafWindowsRecursive.forEach { ($0 as! MacWindow).unhideFromCorner() } // todo as!
+        workspace.allLeafWindowsRecursive.forEach { $0.unhideFromCorner() }
         try await workspace.layoutWorkspace()
     }
     for workspace in Workspace.all where !workspace.isVisible {
         let corner = monitorToOptimalHideCorner[workspace.workspaceMonitor.rect.topLeftCorner] ?? .bottomRightCorner
         for window in workspace.allLeafWindowsRecursive {
-            try await (window as! MacWindow).hideInCorner(corner) // todo as!
+            try await window.hideInCorner(corner)
         }
     }
 }

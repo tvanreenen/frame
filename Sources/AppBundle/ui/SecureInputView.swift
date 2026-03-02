@@ -15,9 +15,7 @@ public final class SecureInputPanel: NSPanelHud {
 
     @MainActor
     public func refresh() {
-        if let activeMode, TrayMenuModel.shared.isEnabled &&
-            config.modes[activeMode]?.bindings.isEmpty == false && IsSecureEventInputEnabled()
-        {
+        if !runtimeContext.config.bindings.isEmpty && IsSecureEventInputEnabled() {
             if isVisible { return }
             self.contentView?.subviews.removeAll()
             hostingView = NSHostingView(rootView: SecureInputView())
@@ -60,7 +58,7 @@ struct SecureInputView: View {
                     .aspectRatio(contentMode: .fit)
                     .padding(6)
             } else {
-                Text("AeroSpace cannot respond to keyboard shortcuts while **Secure Input** is active. **Secure Input** is a macOS security feature that prevents applications from reading keyboard events.")
+                Text("frame cannot respond to keyboard shortcuts while **Secure Input** is active. **Secure Input** is a macOS security feature that prevents applications from reading keyboard events.")
                     .font(.title3)
                     .padding(10)
             }

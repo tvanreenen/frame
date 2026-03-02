@@ -22,7 +22,7 @@ final class MoveNodeToWorkspaceCommandTest: XCTestCase {
 
         try await MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "b")).run(.defaultEnv, .emptyStdin)
         XCTAssertTrue(workspaceA.isEffectivelyEmpty)
-        assertEquals((Workspace.get(byName: "b").rootTilingContainer.children.singleOrNil() as? Window)?.windowId, 1)
+        assertEquals(Workspace.get(byName: "b").allLeafWindowsRecursive.singleOrNil()?.windowId, 1)
     }
 
     func testEmptyWorkspaceSubject() async throws {
@@ -73,6 +73,6 @@ final class MoveNodeToWorkspaceCommandTest: XCTestCase {
         assertEquals(focus.workspace, workspaceA)
         assertEquals(focus.windowOrNil?.windowId, 1)
         assertEquals(Workspace.get(byName: "b").rootTilingContainer.children.count, 0)
-        assertEquals(workspaceA.rootTilingContainer.children.count, 2)
+        assertEquals(workspaceA.allLeafWindowsRecursive.count, 2)
     }
 }

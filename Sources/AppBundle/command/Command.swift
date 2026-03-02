@@ -31,8 +31,6 @@ extension Command {
     func run(_ env: CmdEnv, _ stdin: CmdStdin) async throws -> CmdResult {
         return try await [self].runCmdSeq(env, stdin)
     }
-
-    var isExec: Bool { self is ExecAndForgetCommand }
 }
 
 // There are 4 entry points for running commands:
@@ -41,6 +39,10 @@ extension Command {
 // 3. on-window-detected callback
 // 4. Tray icon buttons
 extension [Command] {
+    var prettyDescription: String {
+        map { $0.args.description }.joined(separator: "; ")
+    }
+
     @MainActor
     func runCmdSeq(_ env: CmdEnv, _ io: sending CmdIo) async throws -> Bool {
         var isSucc = true

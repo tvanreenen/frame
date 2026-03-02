@@ -29,10 +29,9 @@ struct ReloadConfigCommand: Command {
     switch readConfig(forceConfigUrl: forceConfigUrl) {
         case .success(let (parsedConfig, url)):
             if !args.dryRun {
-                resetHotKeys()
-                config = parsedConfig
-                configUrl = url
-                try await activateMode(activeMode)
+                runtimeContext.config = parsedConfig
+                runtimeContext.configUrl = url
+                syncHotKeys()
                 syncStartAtLogin()
                 MessageModel.shared.message = nil
             }
@@ -41,13 +40,10 @@ struct ReloadConfigCommand: Command {
             stdout.append(msg)
             if !args.noGui {
                 Task { @MainActor in
-                    MessageModel.shared.message = Message(description: "AeroSpace Config Error", body: msg)
+                    MessageModel.shared.message = Message(description: "frame Config Error", body: msg)
                 }
             }
             result = false
-    }
-    if !args.dryRun {
-        syncConfigFileWatcher()
     }
     return result
 }

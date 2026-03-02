@@ -15,15 +15,17 @@ let projectRoot: URL = {
 
 @MainActor
 func setUpWorkspacesForTests() {
-    config = defaultConfig
-    configUrl = defaultConfigUrl
-    config.enableNormalizationFlattenContainers = false // Make layout tests more predictable
-    config.enableNormalizationOppositeOrientationForNestedContainers = false // Make layout tests more predictable
-    config.defaultRootContainerOrientation = .horizontal // Make default layout predictable
+    runtimeContext.config = defaultConfig
+    runtimeContext.configUrl = defaultConfigUrl
+    runtimeContext.windowsById = [:]
+    runtimeContext.appsByPid = [:]
+    runtimeContext.appsWipByPid = [:]
+    runtimeContext.appFocusJob = nil
+    runtimeContext.closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
 
     // Don't create any bindings and workspaces for tests
-    config.modes = [mainModeId: Mode(name: nil, bindings: [:])]
-    config.persistentWorkspaces = []
+    runtimeContext.config.bindings = [:]
+    runtimeContext.config.persistentWorkspaces = []
 
     for workspace in Workspace.all {
         for child in workspace.children {
@@ -36,8 +38,9 @@ func setUpWorkspacesForTests() {
     check(focus.workspace === Workspace.all.singleOrNil(), Workspace.all.map(\.description).joined(separator: ", "))
     check(mainMonitor.setActiveWorkspace(focus.workspace))
 
-    TestApp.shared.focusedWindow = nil
-    TestApp.shared.windows = []
+    Window.resetForTests()
+    TestApp.shared.resetState()
+    appForTests = nil
 }
 
 extension ParsedCmd {
@@ -70,10 +73,9 @@ func testParseCommandFail(_ command: String, msg expected: String) {
 }
 
 extension WorkspaceCmdArgs {
-    init(target: WorkspaceTarget, autoBackAndForth: Bool? = nil, wrapAround: Bool? = nil) {
+    init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
         self = WorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(target)
-        self._autoBackAndForth = autoBackAndForth
         self._wrapAround = wrapAround
     }
 }
@@ -88,14 +90,5 @@ extension MoveNodeToWorkspaceCmdArgs {
     init(workspace: String) {
         self = MoveNodeToWorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(.direct(.parse(workspace).getOrDie()))
-    }
-}
-
-extension HotkeyBinding {
-    init(_ modifiers: NSEvent.ModifierFlags, _ keyCode: Key, _ commands: [any Command]) {
-        let descriptionWithKeyNotation = modifiers.isEmpty
-            ? keyCode.toString()
-            : modifiers.toString() + "-" + keyCode.toString()
-        self.init(modifiers, keyCode, commands, descriptionWithKeyNotation: descriptionWithKeyNotation)
     }
 }

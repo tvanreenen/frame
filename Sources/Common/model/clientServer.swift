@@ -2,7 +2,7 @@ import Foundation
 
 // TO EVERYONE REVERSE-ENGINEERING THE PROTOCOL
 // client-server socket API is not public yet.
-// Tracking issue for making it public: https://github.com/nikitabobko/AeroSpace/issues/1513
+// Tracking issue for making it public: https://github.com/tvanreenen/frame/issues/1513
 public struct ServerAnswer: Codable, Sendable {
     public let exitCode: Int32
     public let stdout: String
@@ -24,16 +24,15 @@ public struct ServerAnswer: Codable, Sendable {
 
 // TO EVERYONE REVERSE-ENGINEERING THE PROTOCOL
 // client-server socket API is not public yet.
-// Tracking issue for making it public: https://github.com/nikitabobko/AeroSpace/issues/1513
+// Tracking issue for making it public: https://github.com/tvanreenen/frame/issues/1513
 public struct ClientRequest: Codable, Sendable, ConvenienceCopyable, Equatable {
-    public var command: String? = nil // Unused. keep it for API compatibility with old servers for a couple of version
-
     public let args: [String]
     public let stdin: String
 
-    // Double Optional to encode explicit null into JSON
-    public var windowId: UInt32??  // Please forward AEROSPACE_WINDOW_ID env variable here
-    public var workspace: String?? // Please forward AEROSPACE_WORKSPACE env variable here
+    // Please forward FRAME_WINDOW_ID and FRAME_WORKSPACE to these fields.
+    // The fields are required to be present in the JSON payload and can be null.
+    public var windowId: UInt32?
+    public var workspace: String?
 
     public init(
         args: [String],
@@ -43,8 +42,8 @@ public struct ClientRequest: Codable, Sendable, ConvenienceCopyable, Equatable {
     ) {
         self.args = args
         self.stdin = stdin
-        self.windowId = .some(windowId)
-        self.workspace = .some(workspace)
+        self.windowId = windowId
+        self.workspace = workspace
     }
 
     public static func decodeJson(_ data: Data) -> Result<ClientRequest, String> {
@@ -59,23 +58,30 @@ public struct ClientRequest: Codable, Sendable, ConvenienceCopyable, Equatable {
     }
 
     public init(from decoder: any Decoder) throws {
-        let data = try ClientRequestData.init(from: decoder)
-        var raw = ClientRequest(
-            args: data.args,
-            stdin: data.stdin,
-            windowId: data.windowId.flatMap { $0 },
-            workspace: data.workspace.flatMap { $0 },
-        )
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        if !container.contains(.windowId) { raw.windowId = nil }
-        if !container.contains(.workspace) { raw.workspace = nil }
-        self = raw
+        args = try container.decode([String].self, forKey: .args)
+        stdin = try container.decode(String.self, forKey: .stdin)
+        guard container.contains(.windowId) else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.windowId,
+                DecodingError.Context(codingPath: container.codingPath, debugDescription: "'windowId' field is mandatory"),
+            )
+        }
+        guard container.contains(.workspace) else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.workspace,
+                DecodingError.Context(codingPath: container.codingPath, debugDescription: "'workspace' field is mandatory"),
+            )
+        }
+        windowId = try container.decode(UInt32?.self, forKey: .windowId)
+        workspace = try container.decode(String?.self, forKey: .workspace)
     }
-}
 
-private struct ClientRequestData: Codable, Sendable {
-    public var args: [String]
-    public var stdin: String
-    public var windowId: UInt32??
-    public var workspace: String??
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(args, forKey: .args)
+        try container.encode(stdin, forKey: .stdin)
+        try container.encode(windowId, forKey: .windowId)
+        try container.encode(workspace, forKey: .workspace)
+    }
 }

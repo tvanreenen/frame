@@ -4,17 +4,14 @@ import XCTest
 
 final class ListWorkspacesTest: XCTestCase {
     func testParse() {
-        assertNotNil(parseCommand("list-workspaces --all").cmdOrNil)
-        assertNil(parseCommand("list-workspaces --all --visible").cmdOrNil)
-        assertNil(parseCommand("list-workspaces --focused --visible").cmdOrNil)
-        assertNil(parseCommand("list-workspaces --focused --all").cmdOrNil)
+        assertNotNil(parseCommand("list-workspaces --monitor all").cmdOrNil)
         assertNil(parseCommand("list-workspaces --visible").cmdOrNil)
         assertNotNil(parseCommand("list-workspaces --visible --monitor 2").cmdOrNil)
         assertNotNil(parseCommand("list-workspaces --monitor focused").cmdOrNil)
-        assertNil(parseCommand("list-workspaces --focused --monitor 2").cmdOrNil)
-        assertNotNil(parseCommand("list-workspaces --all --format %{workspace}").cmdOrNil)
-        assertEquals(parseCommand("list-workspaces --all --format %{workspace} --count").errorOrNil, "ERROR: Conflicting options: --count, --format")
-        assertEquals(parseCommand("list-workspaces --empty").errorOrNil, "Mandatory option is not specified (--all|--focused|--monitor)")
-        assertEquals(parseCommand("list-workspaces --all --focused --monitor mouse").errorOrNil, "ERROR: Conflicting options: --all, --focused, --monitor")
+        assertNotNil(parseCommand("list-workspaces --monitor focused --visible").cmdOrNil)
+        XCTAssertTrue((parseCommand("list-workspaces --all").errorOrNil ?? "").contains("Unknown flag '--all'"))
+        XCTAssertTrue((parseCommand("list-workspaces --focused").errorOrNil ?? "").contains("Unknown flag '--focused'"))
+        XCTAssertTrue((parseCommand("list-workspaces --monitor all --format %{workspace}").errorOrNil ?? "").contains("Unknown flag '--format'"))
+        assertEquals(parseCommand("list-workspaces --empty").errorOrNil, "Mandatory option is not specified (--monitor)")
     }
 }

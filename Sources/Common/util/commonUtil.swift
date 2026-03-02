@@ -2,9 +2,8 @@ import AppKit
 import Darwin
 import Foundation
 
-public let socketPath = "/tmp/\(aeroSpaceAppId)-\(unixUserName).sock"
+public let socketPath = "/tmp/\(appBundleId)-\(unixUserName).sock"
 public let unixUserName = NSUserName()
-public let mainModeId = "main"
 
 @TaskLocal
 public var refreshSessionEvent: RefreshSessionEvent? = nil
@@ -24,11 +23,11 @@ public func dieT<T>(
     let message =
         """
         Please report to:
-            https://github.com/nikitabobko/AeroSpace/discussions/categories/potential-bugs
+            https://github.com/tvanreenen/frame/issues
             Please describe what you did to trigger this error
 
         Message: \(_message)
-        Version: \(aeroSpaceAppVersion)
+        Version: \(appVersion)
         Git hash: \(gitHash)
         refreshSessionEvent: \(refreshSessionEvent.prettyDescription)
         Date: \(Date.now)
@@ -48,9 +47,9 @@ public func dieT<T>(
     if !isUnitTest && isServer {
         showMessageInGui(
             filenameIfConsoleApp: recursionDetectorDuringTermination
-                ? "aerospace-runtime-error-recursion.txt"
-                : "aerospace-runtime-error.txt",
-            title: "AeroSpace Runtime Error",
+                ? "frame-runtime-error-recursion.txt"
+                : "frame-runtime-error.txt",
+            title: "\(productName) Runtime Error",
             message: message,
         )
     }
@@ -68,7 +67,6 @@ public func dieT<T>(
 }
 
 public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
-    case configAutoReload
     case globalObserver(String)
     case globalObserverLeftMouseUp
     case menuBarButton
@@ -79,7 +77,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
     case ax(String)
     case onFocusedMonitorChanged
     case onFocusChanged
-    case onModeChanged
 
     public var isStartup: Bool {
         if case .startup = self { return true } else { return false }
@@ -88,7 +85,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
     public var description: String {
         switch self {
             case .ax(let str): "ax(\(str))"
-            case .configAutoReload: "configAutoReload"
             case .globalObserver(let str): "globalObserver(\(str))"
             case .globalObserverLeftMouseUp: "globalObserverLeftMouseUp"
             case .hotkeyBinding: "hotkeyBinding"
@@ -98,7 +94,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
             case .startup: "startup"
             case .onFocusedMonitorChanged: "onFocusedMonitorChanged"
             case .onFocusChanged: "onFocusChanged"
-            case .onModeChanged: "onModeChanged"
         }
     }
 }

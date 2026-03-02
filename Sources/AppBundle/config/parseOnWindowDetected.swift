@@ -7,7 +7,7 @@ struct WindowDetectedCallback: ConvenienceCopyable, Equatable {
     var rawRun: [any Command]? = nil
 
     var run: [any Command] {
-        rawRun ?? dieT("ID-46D063B2 should have discarded nil")
+        rawRun ?? []
     }
 
     var debugJson: Json {
@@ -30,7 +30,7 @@ struct WindowDetectedCallbackMatcher: ConvenienceCopyable, Equatable {
     var appNameRegexSubstring: Regex<AnyRegexOutput>?
     var windowTitleRegexSubstring: Regex<AnyRegexOutput>?
     var workspace: String?
-    var duringAeroSpaceStartup: Bool?
+    var duringAppStartup: Bool?
 
     var debugJson: Json {
         var resultParts: [String] = []
@@ -38,7 +38,7 @@ struct WindowDetectedCallbackMatcher: ConvenienceCopyable, Equatable {
             resultParts.append("appId=\"\(appId)\"")
         }
         if appNameRegexSubstring != nil {
-            resultParts.append("appNameRegexSubstrin=Regex")
+            resultParts.append("appNameRegexSubstring=Regex")
         }
         if windowTitleRegexSubstring != nil {
             resultParts.append("windowTitleRegexSubstring=Regex")
@@ -46,8 +46,8 @@ struct WindowDetectedCallbackMatcher: ConvenienceCopyable, Equatable {
         if let workspace {
             resultParts.append("workspace=\"\(workspace)\"")
         }
-        if let duringAeroSpaceStartup {
-            resultParts.append("duringAeroSpaceStartup=\(duringAeroSpaceStartup)")
+        if let duringAppStartup {
+            resultParts.append("duringAppStartup=\(duringAppStartup)")
         }
         return .string(resultParts.joined(separator: ", "))
     }
@@ -72,9 +72,9 @@ private let windowDetectedParser: [String: any ParserProtocol<WindowDetectedCall
 private let matcherParsers: [String: any ParserProtocol<WindowDetectedCallbackMatcher>] = [
     "app-id": Parser(\.appId, upcast(parseString)),
     "workspace": Parser(\.workspace, upcast(parseString)),
-    "app-name-regex-substring": Parser(\.appNameRegexSubstring, upcast(parseCasInsensitiveRegex)),
-    "window-title-regex-substring": Parser(\.windowTitleRegexSubstring, upcast(parseCasInsensitiveRegex)),
-    "during-aerospace-startup": Parser(\.duringAeroSpaceStartup, upcast(parseBool)),
+    "app-name-regex-substring": Parser(\.appNameRegexSubstring, upcast(parseCaseInsensitiveRegexToml)),
+    "window-title-regex-substring": Parser(\.windowTitleRegexSubstring, upcast(parseCaseInsensitiveRegexToml)),
+    "during-frame-startup": Parser(\.duringAppStartup, upcast(parseBool)),
 ]
 
 private func upcast<T>(_ fun: @escaping @Sendable (TOMLValueConvertible, TomlBacktrace) -> ParsedToml<T>) -> @Sendable (TOMLValueConvertible, TomlBacktrace) -> ParsedToml<T?> {
@@ -90,7 +90,7 @@ func parseOnWindowDetectedArray(_ raw: TOMLValueConvertible, _ backtrace: TomlBa
     }
 }
 
-private func parseCasInsensitiveRegex(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Regex<AnyRegexOutput>> {
+private func parseCaseInsensitiveRegexToml(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Regex<AnyRegexOutput>> {
     parseString(raw, backtrace).flatMap { parseCaseInsensitiveRegex($0).toParsedToml(backtrace) }
 }
 

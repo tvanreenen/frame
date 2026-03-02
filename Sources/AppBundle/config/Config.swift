@@ -1,7 +1,6 @@
 import AppKit
 import Common
 import HotKey
-import OrderedCollections
 
 func getDefaultConfigUrlFromProject() -> URL {
     var url = URL(filePath: #filePath)
@@ -29,39 +28,44 @@ var defaultConfigUrl: URL {
     }
     return parsedConfig.config
 }()
-@MainActor var config: Config = defaultConfig // todo move to Ctx?
-@MainActor var configUrl: URL = defaultConfigUrl
+
+@MainActor
+final class RuntimeContext {
+    var config: Config
+    var configUrl: URL
+    var windowsById: [UInt32: Window]
+    var appsByPid: [pid_t: MacApp]
+    var appsWipByPid: [pid_t: AwaitableOneTimeBroadcastLatch]
+    var appFocusJob: RunLoopJob?
+    var closedWindowsCache: FrozenWorld
+
+    init(config: Config, configUrl: URL) {
+        self.config = config
+        self.configUrl = configUrl
+        windowsById = [:]
+        appsByPid = [:]
+        appsWipByPid = [:]
+        appFocusJob = nil
+        closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
+    }
+}
+
+@MainActor
+let runtimeContext = RuntimeContext(config: defaultConfig, configUrl: defaultConfigUrl)
 
 struct Config: ConvenienceCopyable {
-    var configVersion: Int = 1
-    var afterLoginCommand: [any Command] = []
     var afterStartupCommand: [any Command] = []
-    var _indentForNestedContainersWithTheSameOrientation: Void = ()
-    var enableNormalizationFlattenContainers: Bool = true
-    var _nonEmptyWorkspacesRootContainersLayoutOnStartup: Void = ()
-    var defaultRootContainerLayout: Layout = .tiles
-    var defaultRootContainerOrientation: DefaultContainerOrientation = .auto
     var startAtLogin: Bool = false
-    var autoReloadConfig: Bool = false
-    var automaticallyUnhideMacosHiddenApps: Bool = false
-    var accordionPadding: Int = 30
-    var enableNormalizationOppositeOrientationForNestedContainers: Bool = true
-    var persistentWorkspaces: OrderedSet<String> = []
-    var execOnWorkspaceChange: [String] = [] // todo deprecate
+    var persistentWorkspaces: OrderedUniqueValues<String> = []
+    var execOnWorkspaceChange: [String] = []
     var keyMapping = KeyMapping()
     var execConfig: ExecConfig = ExecConfig()
 
     var onFocusChanged: [any Command] = []
-    // var onFocusedWorkspaceChanged: [any Command] = []
     var onFocusedMonitorChanged: [any Command] = []
 
     var gaps: Gaps = .zero
     var workspaceToMonitorForceAssignment: [String: [MonitorDescription]] = [:]
-    var modes: [String: Mode] = [:]
+    var bindings: [String: HotkeyBinding] = [:]
     var onWindowDetected: [WindowDetectedCallback] = []
-    var onModeChanged: [any Command] = []
-}
-
-enum DefaultContainerOrientation: String {
-    case horizontal, vertical, auto
 }

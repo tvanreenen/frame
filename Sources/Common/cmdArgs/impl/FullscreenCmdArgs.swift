@@ -3,7 +3,6 @@ public struct FullscreenCmdArgs: CmdArgs {
     fileprivate init(rawArgs: StrArrSlice) { self.commonState = .init(rawArgs) }
     public static let parser: CmdParser<Self> = cmdParser(
         kind: .fullscreen,
-        allowInConfig: true,
         help: fullscreen_help_generated,
         flags: [
             "--no-outer-gaps": trueBoolFlag(\.noOuterGaps),
@@ -22,4 +21,16 @@ public func parseFullscreenCmdArgs(_ args: StrArrSlice) -> ParsedCmd<FullscreenC
     parseSpecificCmdArgs(FullscreenCmdArgs(rawArgs: args), args)
         .filterNot("--no-outer-gaps is incompatible with 'off' argument") { $0.toggle == .off && $0.noOuterGaps }
         .filter("--fail-if-noop requires 'on' or 'off' argument") { $0.failIfNoop.implies($0.toggle == .on || $0.toggle == .off) }
+}
+
+public enum ToggleEnum: Sendable {
+    case on, off, toggle
+}
+
+func parseToggleEnum(i: ArgParserInput) -> ParsedCliArgs<ToggleEnum> {
+    switch i.arg {
+        case "on": .succ(.on, advanceBy: 1)
+        case "off": .succ(.off, advanceBy: 1)
+        default: .fail("Can't parse '\(i.arg)'. Possible values: on|off", advanceBy: 1)
+    }
 }

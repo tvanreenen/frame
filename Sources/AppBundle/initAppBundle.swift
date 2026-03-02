@@ -8,7 +8,6 @@ import Foundation
         isCli = false
         initServerArgs()
         if isDebug {
-            await toggleReleaseServerIfDebug(.off)
             interceptTermination(SIGINT)
             interceptTermination(SIGKILL)
         }
@@ -25,27 +24,15 @@ import Foundation
             )
         }
 
-        checkAccessibilityPermissions()
+        await checkAccessibilityPermissions()
         startUnixSocketServer()
         GlobalObserver.initObserver()
         Workspace.garbageCollectUnusedWorkspaces() // init workspaces
         _ = Workspace.all.first?.focusWorkspace()
         try await runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
-        try await runLightSession(.startup, .forceRun) {
-            smartLayoutAtStartup()
-            _ = try await config.afterStartupCommand.runCmdSeq(.defaultEnv, .emptyStdin)
+        try await runLightSession(.startup) {
+            _ = try await runtimeContext.config.afterStartupCommand.runCmdSeq(.defaultEnv, .emptyStdin)
         }
-    }
-}
-
-@MainActor
-private func smartLayoutAtStartup() {
-    let workspace = focus.workspace
-    let root = workspace.rootTilingContainer
-    if root.children.count <= 3 {
-        root.layout = .tiles
-    } else {
-        root.layout = .accordion
     }
 }
 
@@ -55,19 +42,16 @@ var isStartup: Bool { _isStartup ?? dieT("isStartup is not initialized") }
 
 struct ServerArgs: Sendable {
     var configLocation: String? = nil
-    var isReadOnly: Bool = false
 }
 
 private let serverHelp = """
-    USAGE: \(CommandLine.arguments.first ?? "AeroSpace.app/Contents/MacOS/AeroSpace") [<options>]
+    USAGE: \(CommandLine.arguments.first ?? "\(cliName).app/Contents/MacOS/FrameApp") [<options>]
 
     OPTIONS:
       -h, --help              Print help
-      -v, --version           Print AeroSpace.app version
-      --config-path <path>    Config path. It will take priority over ~/.aerospace.toml
-                              and ${XDG_CONFIG_HOME}/aerospace/aerospace.toml
-      --read-only             Disable window management.
-                              Useful if you want to use only debug-windows or other query commands.
+      -v, --version           Print \(productName) version
+      --config-path <path>    Config path. It will take priority over ~/\(configDotfileName)
+                              and ${XDG_CONFIG_HOME}/\(configDirName)/\(configDotfileName.removePrefix("."))
     """
 
 nonisolated(unsafe) private var _serverArgs = ServerArgs()
@@ -84,7 +68,7 @@ private func initServerArgs() {
         index += 1
         switch current {
             case "--version", "-v":
-                print("\(aeroSpaceAppVersion) \(gitHash)")
+                print(appVersionForDisplay)
                 exit(0)
             case "--config-path":
                 if let arg = args.getOrNil(atIndex: index) {
@@ -93,8 +77,6 @@ private func initServerArgs() {
                     exit(stderrMsg: "Missing <path> in --config-path flag")
                 }
                 index += 1
-            case "--read-only": // todo rename to '--disabled' and unite with disabled feature
-                _serverArgs.isReadOnly = true
             case "-NSDocumentRevisionsDebugMode" where isDebug:
                 // Skip Xcode CLI args.
                 // Usually it's '-NSDocumentRevisionsDebugMode NO'/'-NSDocumentRevisionsDebugMode YES'
