@@ -123,7 +123,14 @@ workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_work
 
 ### Config Errors and Recovery
 
-- On startup, if your config fails to parse, Frame shows a config error and falls back to the built-in default config so it can still run.
+- Config parsing is strict: unknown keys, type mismatches, and invalid values fail validation.
+- On startup, if config validation fails, Frame shows a config error and falls back to the built-in default config so it can still run.
+- Validate your file directly:
+
+```bash
+frame check-config
+```
+
 - After fixing your config, apply it with:
 
 ```bash
@@ -135,6 +142,8 @@ frame reload-config
 ```bash
 frame reload-config --dry-run
 ```
+
+- Error output is grouped by section and includes stable `CFG###` codes to make failures easier to identify and fix.
 
 ### Window Classification Overrides (Optional)
 

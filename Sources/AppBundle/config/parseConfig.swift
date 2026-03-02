@@ -25,12 +25,7 @@ func readConfig(forceConfigUrl: URL? = nil) -> Result<(Config, URL), String> {
     if errors.isEmpty {
         return .success((parsedConfig, configUrl))
     } else {
-        let msg = """
-            Failed to parse \(configUrl.absoluteURL.path)
-
-            \(errors.map(\.description).joined(separator: "\n\n"))
-            """
-        return .failure(msg)
+        return .failure(formatConfigErrors(configUrl: configUrl, errors: errors))
     }
 }
 
@@ -42,6 +37,36 @@ enum TomlParseError: Error, CustomStringConvertible, Equatable {
         return switch self {
             case .semantic(let backtrace, let message): backtrace.isEmptyRoot ? message : "\(backtrace): \(message)"
             case .syntax(let message): message
+        }
+    }
+}
+
+extension TomlParseError {
+    var code: String {
+        switch self {
+            case .syntax:
+                return "CFG000"
+            case .semantic(_, let message) where message == "Unknown top-level key":
+                return "CFG001"
+            case .semantic(_, let message) where message == "Unknown key":
+                return "CFG002"
+            case .semantic(_, let message) where message.contains("Expected type is"):
+                return "CFG003"
+            case .semantic(_, let message) where message.contains("mandatory key"):
+                return "CFG004"
+            case .semantic(_, let message) where message.contains("Cannot be empty") || message.contains("Must contain at least one argument"):
+                return "CFG005"
+            case .semantic:
+                return "CFG999"
+        }
+    }
+
+    var groupKey: String {
+        switch self {
+            case .syntax:
+                return "<syntax>"
+            case .semantic(let backtrace, _):
+                return backtrace.topLevelKey ?? "<root>"
         }
     }
 }
@@ -167,6 +192,8 @@ func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]
     if let bindings = rawTable[bindingConfigRootKey].flatMap({ parseBindings($0, .rootKey(bindingConfigRootKey), &errors, config.keyMapping.resolve()) }) {
         config.bindings = bindings
     }
+
+    errors += validateConfig(config)
 
     return (config, errors)
 }
@@ -294,6 +321,17 @@ indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
         }
     }
 
+    var topLevelKey: String? {
+        switch self {
+            case .rootKey(let value):
+                return value
+            case .pair(let first, let second):
+                return first.topLevelKey ?? second.topLevelKey
+            case .emptyRoot, .key, .index:
+                return nil
+        }
+    }
+
     static func + (lhs: TomlBacktrace, rhs: TomlBacktrace) -> TomlBacktrace {
         if case .emptyRoot = lhs {
             if case .key(let newRoot) = rhs {
@@ -339,4 +377,31 @@ func expectedActualTypeError(expected: TOMLType, actual: TOMLType, _ backtrace: 
 
 func expectedActualTypeError(expected: [TOMLType], actual: TOMLType, _ backtrace: TomlBacktrace) -> TomlParseError {
     .semantic(backtrace, expectedActualTypeError(expected: expected, actual: actual))
+}
+
+private func formatConfigErrors(configUrl: URL, errors: [TomlParseError]) -> String {
+    let grouped = Dictionary(grouping: errors, by: \.groupKey)
+    let formattedGroups = grouped
+        .keys
+        .sorted()
+        .map { key -> String in
+            let formattedErrors = grouped[key]!
+                .map { "[\($0.code)] \($0.description)" }
+                .joined(separator: "\n  - ")
+            return """
+                [\(key)]
+                  - \(formattedErrors)
+                """
+        }
+        .joined(separator: "\n\n")
+
+    return """
+        Failed to parse \(configUrl.absoluteURL.path)
+
+        \(formattedGroups)
+
+        Recovery:
+        1. Fix the config and run '\(cliName) check-config'
+        2. Apply with '\(cliName) reload-config' (or validate only: '\(cliName) reload-config --dry-run')
+        """
 }

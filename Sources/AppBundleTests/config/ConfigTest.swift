@@ -1,5 +1,6 @@
 @testable import AppBundle
 import Common
+import Foundation
 import XCTest
 
 @MainActor
@@ -103,6 +104,41 @@ final class ConfigTest: XCTestCase {
             errors.descriptions,
             ["workspace-change-hook: Must contain at least one argument (executable path)"],
         )
+    }
+
+    func testWorkspaceChangeHookArgsMustNotBeBlank() {
+        let (_, errors) = parseConfig(
+            """
+            workspace-change-hook = ['/bin/bash', '   ', 'echo changed']
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["workspace-change-hook[1]: Cannot be empty"],
+        )
+    }
+
+    func testReadConfigFormatsErrorsWithCodesAndRecovery() throws {
+        let configUrl = FileManager.default.temporaryDirectory
+            .appendingPathComponent("frame-config-\(UUID().uuidString).toml")
+        defer { try? FileManager.default.removeItem(at: configUrl) }
+        try """
+        unknownKey = true
+        workspace-change-hook = ['/bin/bash', '   ']
+        """.write(to: configUrl, atomically: true, encoding: .utf8)
+
+        guard case let .failure(message) = readConfig(forceConfigUrl: configUrl) else {
+            XCTFail("Expected readConfig to fail")
+            return
+        }
+
+        XCTAssertTrue(message.contains("Failed to parse \(configUrl.path)"), message)
+        XCTAssertTrue(message.contains("[unknownKey]"), message)
+        XCTAssertTrue(message.contains("[workspace-change-hook]"), message)
+        XCTAssertTrue(message.contains("[CFG001] unknownKey: Unknown top-level key"), message)
+        XCTAssertTrue(message.contains("[CFG005] workspace-change-hook[1]: Cannot be empty"), message)
+        XCTAssertTrue(message.contains("frame check-config"), message)
+        XCTAssertTrue(message.contains("frame reload-config --dry-run"), message)
     }
 
     func testParseWindowClassificationOverrides() {

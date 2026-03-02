@@ -14,4 +14,10 @@ final class ExecCommandTest: XCTestCase {
         let enableErr = parseCommand("enable off").errorOrNil ?? ""
         XCTAssertTrue(enableErr.contains("enable"), enableErr)
     }
+
+    func testCheckConfigCommandIsAvailable() {
+        let command = parseCommand("check-config").cmdOrNil
+        XCTAssertNotNil(command)
+        XCTAssertTrue(command is CheckConfigCommand)
+    }
 }
