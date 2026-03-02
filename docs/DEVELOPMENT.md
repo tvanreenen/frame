@@ -28,7 +28,8 @@ Optional tools:
 - Run CLI smoke checks only: `just smoke`
 - Format/lint with fixes: `just fmt`
 - Normal pre-commit checks: `just check`
-- Clean local Xcode/derived artifacts: `just clean`
+- Clean local build artifacts: `just clean`
+- Regenerate generated files + Xcode project: `just regen`
 
 `just check` runs unit tests + CLI smoke checks + non-mutating format/lint verification.
 

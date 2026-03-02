@@ -34,9 +34,13 @@ check:
 fmt:
     ./script/dev/format.sh
 
-# Remove local build artifacts and regenerate the Xcode project.
+# Remove local build artifacts.
 clean:
-    bash -euo pipefail -c 'source ./script/identity.sh; rm -rf "$HOME/Library/Developer/Xcode/DerivedData/${FRAME_XCODE_SCHEME}-*" ./.xcode-build "${FRAME_XCODE_SCHEME}.xcodeproj"; ./script/dev/generate.sh'
+    bash -euo pipefail -c 'source ./script/identity.sh; rm -rf "$HOME/Library/Developer/Xcode/DerivedData/${FRAME_XCODE_SCHEME}-*" ./.build ./.debug ./.xcode-build'
+
+# Regenerate generated version/hash files and the Xcode project.
+regen:
+    ./script/dev/generate.sh
 
 # Build release artifacts (zip + checksums) for a version.
 release-build VERSION:
