@@ -402,6 +402,6 @@ private func formatConfigErrors(configUrl: URL, errors: [TomlParseError]) -> Str
 
         Recovery:
         1. Fix the config and run '\(cliName) check-config'
-        2. Apply with '\(cliName) reload-config' (or validate only: '\(cliName) reload-config --dry-run')
+        2. Apply with '\(cliName) reload-config'
         """
 }

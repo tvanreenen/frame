@@ -1,8 +1,8 @@
 # Frame
 
-![Frame icon](./resources/Assets.xcassets/AppIcon.appiconset/Frame-macOS-Default-256x256@1x.png)
-
 Frame is a keyboard-first window manager for macOS built to make window management simple and intuitive.
+
+![Frame icon](./resources/Assets.xcassets/AppIcon.appiconset/Frame-macOS-Default-128x128@1x.png)
 
 It focuses on layout and navigation — automatically organizing windows to fill the available screen space with no overlapping or layering. Keyboard shortcuts provide deliberate control over navigating, resizing, and movement within and across workspaces, while native macOS window behavior remains intact.
 
@@ -30,7 +30,8 @@ These are intentionally layered: keep direction/number keys the same, add modifi
 
 ## Configuration
 
-If you want to customize settings, start by copying the default config:
+Frame runs without a user config file on first launch (it uses the built-in defaults).
+If you want to customize settings, copy the default config to your home directory:
 
 ```bash
 cp docs/config-examples/default-config.toml ~/.frame.toml
@@ -71,6 +72,7 @@ ctrl-shift-alt-k = "resize height -50"
 
 alt-1 = "workspace 1"
 alt-shift-1 = "move-node-to-workspace 1"
+alt-f = "fullscreen"
 ```
 
 Gaps config example (`~/.frame.toml`):
@@ -91,23 +93,34 @@ By default, workspaces are monitor-agnostic. You only need monitor config if you
 
 `workspace-to-monitor-force-assignment` supports `main`, `secondary`, numeric monitor order (`1`, `2`, ...), and regex on monitor names.
 
-Dual-monitor example (`~/.frame.toml`) with `1-5` on left and `6-0` on right:
+On a single monitor, you get all workspaces `1-0` without any monitor-assignment config.
+The dual-monitor mapping below only takes effect when a second monitor is present.
+
+Dual-monitor example (`~/.frame.toml`) with `1-5` on secondary and `6-0` on main:
 
 ```toml
 [workspace-to-monitor-force-assignment]
-1 = 1
-2 = 1
-3 = 1
-4 = 1
-5 = 1
-6 = 2
-7 = 2
-8 = 2
-9 = 2
-0 = 2
+1 = "secondary"
+2 = "secondary"
+3 = "secondary"
+4 = "secondary"
+5 = "secondary"
+6 = "main"
+7 = "main"
+8 = "main"
+9 = "main"
+0 = "main"
 ```
 
-Note: `main` means the macOS primary display (not necessarily left), and `secondary` means the other display in a 2-monitor setup. Regex matching is case-insensitive.
+Simplified alternatives:
+
+```toml
+[workspace-to-monitor-force-assignment]
+1 = 1               # numeric monitor order
+2 = ".*studio.*"    # regex partial monitor name match (case-insensitive)
+```
+
+Note: `main` means the macOS primary display (not necessarily left), and `secondary` means the other display in a 2-monitor setup. Regex is matched case-insensitively against each monitor's macOS display name (`NSScreen.localizedName`).
 
 ### Workspace Change Hook (SketchyBar, etc.)
 
@@ -118,7 +131,7 @@ If set, `workspace-change-hook` must be a non-empty command array (first element
 Example:
 
 ```toml
-workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
+workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger frame_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
 ```
 
 ### Config Errors and Recovery
@@ -137,12 +150,6 @@ frame check-config
 frame reload-config
 ```
 
-- To validate without applying:
-
-```bash
-frame reload-config --dry-run
-```
-
 - Error output is grouped by section and includes stable `CFG###` codes to make failures easier to identify and fix.
 
 ### Window Classification Overrides (Optional)
@@ -153,6 +160,10 @@ If Frame misclassifies a specific app window as `popup`/`dialog`/`window`, you c
 [[window-classification-override]]
 if.app-id = "com.apple.finder"
 kind = "window"
+
+[[window-classification-override]]
+if.app-name-regex-substring = "slack"
+kind = "dialog"
 
 [[window-classification-override]]
 if.window-title-regex-substring = "picture-in-picture"

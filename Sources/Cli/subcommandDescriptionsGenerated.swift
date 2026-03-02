@@ -16,7 +16,7 @@ let subcommandDescriptions = [
     ["  move-mouse", "Move mouse to the requested position"],
     ["  move-node-to-workspace", "Move the focused window to the specified workspace"],
     ["  move", "Move the focused window in the given direction"],
-    ["  reload-config", "Reload currently active config"],
+    ["  reload-config", "Reload and apply config"],
     ["  remove-column", "Remove the last column in the target workspace"],
     ["  resize", "Resize the focused window"],
     ["  workspace", "Focus the specified workspace"],

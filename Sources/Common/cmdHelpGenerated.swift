@@ -59,7 +59,7 @@ let move_help_generated = """
     USAGE: move [-h|--help] [--window-id <window-id>] (left|down|up|right)
     """
 let reload_config_help_generated = """
-    USAGE: reload-config [-h|--help] [--no-gui] [--dry-run]
+    USAGE: reload-config [-h|--help]
     """
 let remove_column_help_generated = """
     USAGE: remove-column [-h|--help]

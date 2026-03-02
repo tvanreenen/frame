@@ -7,7 +7,7 @@ struct ReloadConfigCommand: Command {
 
     func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         var stdout = ""
-        let isOk = try await reloadConfig(args: args, stdout: &stdout)
+        let isOk = try await reloadConfig(stdout: &stdout)
         if !stdout.isEmpty {
             io.out(stdout)
         }
@@ -21,31 +21,26 @@ struct ReloadConfigCommand: Command {
 }
 
 @MainActor func reloadConfig(
-    args: ReloadConfigCmdArgs = ReloadConfigCmdArgs(rawArgs: []),
     forceConfigUrl: URL? = nil,
     stdout: inout String,
 ) async throws -> Bool {
     let result: Bool
     switch readConfig(forceConfigUrl: forceConfigUrl) {
         case .success(let (parsedConfig, url)):
-            if !args.dryRun {
-                runtimeContext.config = parsedConfig
-                runtimeContext.configUrl = url
-                syncHotKeys()
-                syncStartAtLogin()
-                MessageModel.shared.message = nil
-            }
+            runtimeContext.config = parsedConfig
+            runtimeContext.configUrl = url
+            syncHotKeys()
+            syncStartAtLogin()
+            MessageModel.shared.message = nil
             result = true
         case .failure(let msg):
             stdout.append(msg)
-            if !args.noGui {
-                Task { @MainActor in
-                    MessageModel.shared.message = Message(
-                        title: "Frame.app Configuration Error",
-                        description: "Frame could not load your configuration file.",
-                        body: msg,
-                    )
-                }
+            Task { @MainActor in
+                MessageModel.shared.message = Message(
+                    title: "Frame.app Configuration Error",
+                    description: "Frame could not load your configuration file.",
+                    body: msg,
+                )
             }
             result = false
     }

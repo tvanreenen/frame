@@ -20,4 +20,12 @@ final class ExecCommandTest: XCTestCase {
         XCTAssertNotNil(command)
         XCTAssertTrue(command is CheckConfigCommand)
     }
+
+    func testReloadConfigRemovedFlagsAreRejected() {
+        let dryRunErr = parseCommand("reload-config --dry-run").errorOrNil ?? ""
+        XCTAssertTrue(dryRunErr.contains("--dry-run"), dryRunErr)
+
+        let noGuiErr = parseCommand("reload-config --no-gui").errorOrNil ?? ""
+        XCTAssertTrue(noGuiErr.contains("--no-gui"), noGuiErr)
+    }
 }
