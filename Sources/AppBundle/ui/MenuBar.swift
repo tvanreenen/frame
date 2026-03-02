@@ -29,13 +29,3 @@ private func menuMetadataBlock() -> some View {
     }
     .font(.caption)
 }
-
-func shortcutGroup(label: some View, content: some View) -> some View {
-    GroupBox {
-        VStack(alignment: .trailing, spacing: 6) {
-            label
-                .foregroundStyle(Color.secondary)
-            content
-        }
-    }
-}
