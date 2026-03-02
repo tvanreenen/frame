@@ -44,8 +44,6 @@ final class TestApp: WindowPlatformApp {
     private var windowRects: [UInt32: Rect] = [:]
     private var windowTitles: [UInt32: String] = [:]
     private var windowTypes: [UInt32: AxUiElementWindowType] = [:]
-    private var windowHeuristics: [UInt32: Bool] = [:]
-    private var dialogHeuristics: [UInt32: Bool] = [:]
     private var macosFullscreen: [UInt32: Bool] = [:]
     private var macosMinimized: [UInt32: Bool] = [:]
 
@@ -69,8 +67,6 @@ final class TestApp: WindowPlatformApp {
         windowRects = [:]
         windowTitles = [:]
         windowTypes = [:]
-        windowHeuristics = [:]
-        dialogHeuristics = [:]
         macosFullscreen = [:]
         macosMinimized = [:]
         isHidden = false
@@ -79,11 +75,6 @@ final class TestApp: WindowPlatformApp {
     @MainActor
     func setWindowType(windowId: UInt32, _ type: AxUiElementWindowType) {
         windowTypes[windowId] = type
-    }
-
-    @MainActor
-    func setWindowHeuristic(windowId: UInt32, _ isWindow: Bool) {
-        windowHeuristics[windowId] = isWindow
     }
 
     @MainActor func getFocusedWindow() async throws -> Window? { focusedWindow }
@@ -135,8 +126,6 @@ final class TestApp: WindowPlatformApp {
         windowRects.removeValue(forKey: windowId)
         windowTitles.removeValue(forKey: windowId)
         windowTypes.removeValue(forKey: windowId)
-        windowHeuristics.removeValue(forKey: windowId)
-        dialogHeuristics.removeValue(forKey: windowId)
         macosFullscreen.removeValue(forKey: windowId)
         macosMinimized.removeValue(forKey: windowId)
     }
@@ -155,14 +144,6 @@ final class TestApp: WindowPlatformApp {
 
     func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] {
         [:]
-    }
-
-    func isWindowHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
-        windowHeuristics[windowId] ?? true
-    }
-
-    func isDialogHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
-        dialogHeuristics[windowId] ?? false
     }
 
     func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {

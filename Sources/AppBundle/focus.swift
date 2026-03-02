@@ -34,7 +34,7 @@ struct LiveFocus: AeroAny, Equatable {
 struct FrozenFocus: AeroAny, Equatable, Sendable {
     let windowId: UInt32?
     let workspaceName: String
-    // monitorId is not part of the focus. We keep it here only for 'on-monitor-changed' to work
+    // monitorId is not part of focus identity. We keep it only to detect monitor transitions for side effects.
     let monitorId: Int // 0-based
 
     @MainActor var live: LiveFocus { // Important: don't access focus.monitorId here. monitorId is not part of the focus. Always prefer workspace
@@ -113,20 +113,16 @@ extension Workspace {
 @MainActor var prevFocusedWorkspaceDate: Date = .distantPast
 @MainActor var prevFocusedWorkspace: Workspace? { _prevFocusedWorkspaceName.map { Workspace.get(byName: $0) } }
 
-@MainActor private var onFocusChangedRecursionGuard = false
+@MainActor private var focusCallbacksRecursionGuard = false
 // Should be called in refreshSession
-@MainActor func checkOnFocusChangedCallbacks() {
+@MainActor func checkFocusCallbacks() {
     if refreshSessionEvent?.isStartup == true {
         return
     }
     let focus = focus
     let frozenFocus = focus.frozen
-    var hasFocusChanged = false
     var hasFocusedMonitorChanged = false
     var newFocusedWorkspace: String? = nil
-    if frozenFocus != _lastKnownFocus {
-        hasFocusChanged = true
-    }
     if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
         newFocusedWorkspace = frozenFocus.workspaceName
         _prevFocusedWorkspaceName = _lastKnownFocus.workspaceName
@@ -136,37 +132,14 @@ extension Workspace {
     }
     _lastKnownFocus = frozenFocus
 
-    if onFocusChangedRecursionGuard { return }
-    onFocusChangedRecursionGuard = true
-    defer { onFocusChangedRecursionGuard = false }
-    if hasFocusChanged {
-        onFocusChanged(focus)
-    }
-
+    if focusCallbacksRecursionGuard { return }
+    focusCallbacksRecursionGuard = true
+    defer { focusCallbacksRecursionGuard = false }
     if hasFocusedMonitorChanged {
-        onFocusedMonitorChanged(focus)
+        followFocusedMonitorWithMouseIfNeeded(focus)
     }
     if let newFocusedWorkspace {
         onWorkspaceChanged(newFocusedWorkspace)
-    }
-}
-
-@MainActor private func onFocusedMonitorChanged(_ focus: LiveFocus) {
-    if runtimeContext.config.onFocusedMonitorChanged.isEmpty { return }
-    // todo potential optimization: don't run runSession if we are already in runSession
-    Task {
-        try await runLightSession(.onFocusedMonitorChanged) {
-            _ = try await runtimeContext.config.onFocusedMonitorChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
-        }
-    }
-}
-@MainActor private func onFocusChanged(_ focus: LiveFocus) {
-    if runtimeContext.config.onFocusChanged.isEmpty { return }
-    // todo potential optimization: don't run runSession if we are already in runSession
-    Task {
-        try await runLightSession(.onFocusChanged) {
-            _ = try await runtimeContext.config.onFocusChanged.runCmdSeq(.defaultEnv.withFocus(focus), .emptyStdin)
-        }
     }
 }
 
@@ -179,4 +152,17 @@ extension Workspace {
         FRAME_FOCUSED_WORKSPACE: newWorkspace,
     ]
     _ = Result { try process.run() }
+}
+
+@MainActor
+private func followFocusedMonitorWithMouseIfNeeded(_ focus: LiveFocus) {
+    let rect = focus.workspace.workspaceMonitor.rect
+    if rect.contains(mouseLocation) { return }
+    let event = CGEvent(
+        mouseEventSource: nil,
+        mouseType: .mouseMoved,
+        mouseCursorPosition: rect.center,
+        mouseButton: .left,
+    )
+    event?.post(tap: .cghidEventTap)
 }

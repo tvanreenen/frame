@@ -86,9 +86,6 @@
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "dialog",
   "Aero.macOS.version" : "Version 15.4.1 (Build 24E263)",
-  "Aero.on-window-detected" : [
-
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.TilingContainer)",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "G"

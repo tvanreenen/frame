@@ -45,7 +45,5 @@ protocol WindowPlatformApp: AbstractApp {
     func getAxTitle(windowId: UInt32) async throws -> String?
     func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json]
 
-    func isWindowHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool
-    func isDialogHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool
     func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType
 }

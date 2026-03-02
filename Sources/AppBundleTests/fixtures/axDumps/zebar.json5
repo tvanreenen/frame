@@ -57,12 +57,6 @@
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.axWindowId" : 10742,
   "Aero.macOS.version" : "Version 26.0 (Build 25A354)",
-  "Aero.on-window-detected" : [
-    {
-      "commands" : "layout tiling",
-      "matcher" : ""
-    }
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.TilingContainer)",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "1"

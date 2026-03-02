@@ -13,9 +13,8 @@ private func validateStillPopups() async throws {
     for node in macosPopupWindowsContainer.children {
         guard let popup = node as? Window else { continue }
         let windowLevel = getWindowLevel(for: popup.windowId)
-        if try await popup.isWindowHeuristic(windowLevel) {
+        if try await popup.getResolvedAxUiElementWindowType(windowLevel) != .popup {
             try await popup.relayoutWindow(on: focus.workspace)
-            try await tryOnWindowDetected(popup)
         }
     }
 }

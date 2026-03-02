@@ -58,12 +58,6 @@
   "Aero.axWindowId" : 14403,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "popup",
-  "Aero.on-window-detected" : [
-    {
-      "commands" : "move-node-to-workspace F",
-      "matcher" : "appId=\"com.google.Chrome\""
-    }
-  ],
   "Aero.treeNodeParent" : "AppBundle.MacosPopupWindowsContainer",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : null

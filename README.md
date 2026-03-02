@@ -118,3 +118,19 @@ Example:
 ```toml
 exec-on-workspace-change = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
 ```
+
+### Window Classification Overrides (Optional)
+
+If Frame misclassifies a specific app window as `popup`/`dialog`/`window`, you can force a kind with first-match-wins rules:
+
+```toml
+[[window-classification-override]]
+if.app-id = "com.apple.finder"
+kind = "window"
+
+[[window-classification-override]]
+if.window-title-regex-substring = "picture-in-picture"
+kind = "popup"
+```
+
+Matcher fields are optional per rule (`app-id`, `app-name-regex-substring`, `window-title-regex-substring`), but each rule must define at least one matcher and a `kind`.

@@ -93,6 +93,52 @@ final class ConfigTest: XCTestCase {
         assertEquals(config.execOnWorkspaceChange, ["/bin/bash", "-c", "echo changed"])
     }
 
+    func testParseWindowClassificationOverrides() {
+        let (config, errors) = parseConfig(
+            """
+            [[window-classification-override]]
+                if.app-id = 'com.apple.finder'
+                kind = 'popup'
+
+            [[window-classification-override]]
+                if.window-title-regex-substring = 'picture-in-picture'
+                kind = 'window'
+            """,
+        )
+        assertEquals(errors.descriptions, [])
+        assertEquals(config.windowClassificationOverrides.map(\.resolvedKind), [.popup, .window])
+        XCTAssertTrue(
+            config.windowClassificationOverrides[0].matcher.matches(
+                appBundleId: "com.apple.finder",
+                appName: nil,
+                windowTitle: nil,
+            ),
+        )
+        XCTAssertTrue(
+            config.windowClassificationOverrides[1].matcher.matches(
+                appBundleId: nil,
+                appName: nil,
+                windowTitle: "Picture-In-Picture",
+            ),
+        )
+    }
+
+    func testWindowClassificationOverrideValidationErrors() {
+        let (_, errors) = parseConfig(
+            """
+            [[window-classification-override]]
+                if.app-id = 'com.apple.finder'
+
+            [[window-classification-override]]
+                kind = 'window'
+            """,
+        )
+        assertEquals(errors.descriptions, [
+            "window-classification-override[0]: 'kind' is mandatory key",
+            "window-classification-override[1]: 'if' must include at least one matcher key",
+        ])
+    }
+
     func testUnknownTopLevelKeyParseError() {
         let (config, errors) = parseConfig(
             """
@@ -105,6 +151,55 @@ final class ConfigTest: XCTestCase {
             ["unknownKey: Unknown top-level key"],
         )
         assertEquals(config.startAtLogin, true)
+    }
+
+    func testOnFocusedMonitorChangedIsUnknownTopLevelKey() {
+        let (_, errors) = parseConfig(
+            """
+            on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["on-focused-monitor-changed: Unknown top-level key"],
+        )
+    }
+
+    func testAfterStartupCommandIsUnknownTopLevelKey() {
+        let (_, errors) = parseConfig(
+            """
+            after-startup-command = ['focus left']
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["after-startup-command: Unknown top-level key"],
+        )
+    }
+
+    func testOnFocusChangedIsUnknownTopLevelKey() {
+        let (_, errors) = parseConfig(
+            """
+            on-focus-changed = ['focus left']
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["on-focus-changed: Unknown top-level key"],
+        )
+    }
+
+    func testOnWindowDetectedIsUnknownTopLevelKey() {
+        let (_, errors) = parseConfig(
+            """
+            [[on-window-detected]]
+                run = ['focus left']
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["on-window-detected: Unknown top-level key"],
+        )
     }
 
     func testConfigVersionIsUnknownTopLevelKeyParseError() {
@@ -199,82 +294,6 @@ final class ConfigTest: XCTestCase {
             "workspace-to-monitor-force-assignment.w8: Monitor sequence numbers uses 1-based indexing. Values less than 1 are illegal",
         ], errors.descriptions)
         assertEquals([:], defaultConfig.workspaceToMonitorForceAssignment)
-    }
-
-    func testParseOnWindowDetected() {
-        let (parsed, errors) = parseConfig(
-            """
-            [[on-window-detected]] # 0
-                check-further-callbacks = true
-                run = ['layout floating', 'move-node-to-workspace W']
-            [[on-window-detected]] # 1
-                if.app-id = 'com.apple.systempreferences'
-                run = []
-            [[on-window-detected]] # 2
-            [[on-window-detected]] # 3
-                run = ['move-node-to-workspace S', 'layout tiling']
-            [[on-window-detected]] # 4
-                run = ['move-node-to-workspace S', 'move-node-to-workspace W']
-            [[on-window-detected]] # 5
-                run = ['move-node-to-workspace S', 'layout tiling']
-            """,
-        )
-        assertEquals(parsed.onWindowDetected, [
-            WindowDetectedCallback( // 0
-                matcher: WindowDetectedCallbackMatcher(
-                    appId: nil,
-                    appNameRegexSubstring: nil,
-                    windowTitleRegexSubstring: nil,
-                ),
-                checkFurtherCallbacks: true,
-                rawRun: [
-                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.floating])),
-                    MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "W")),
-                ],
-            ),
-            WindowDetectedCallback( // 1
-                matcher: WindowDetectedCallbackMatcher(
-                    appId: "com.apple.systempreferences",
-                    appNameRegexSubstring: nil,
-                    windowTitleRegexSubstring: nil,
-                ),
-                rawRun: [],
-            ),
-            WindowDetectedCallback( // 3
-                rawRun: [
-                    MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "S")),
-                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.tiling])),
-                ],
-            ),
-            WindowDetectedCallback( // 4
-                rawRun: [
-                    MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "S")),
-                    MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "W")),
-                ],
-            ),
-            WindowDetectedCallback( // 5
-                rawRun: [
-                    MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "S")),
-                    LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [.tiling])),
-                ],
-            ),
-        ])
-
-        assertEquals(errors.descriptions, [
-            "on-window-detected[2]: \'run\' is mandatory key",
-        ])
-    }
-
-    func testParseOnWindowDetectedRegex() {
-        let (config, errors) = parseConfig(
-            """
-            [[on-window-detected]]
-                if.app-name-regex-substring = '^system settings$'
-                run = []
-            """,
-        )
-        XCTAssertTrue(config.onWindowDetected.singleOrNil()!.matcher.appNameRegexSubstring != nil)
-        assertEquals(errors, [])
     }
 
     func testRegex() {

@@ -75,8 +75,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
     case socketServer
     case resetManipulatedWithMouse
     case ax(String)
-    case onFocusedMonitorChanged
-    case onFocusChanged
 
     public var isStartup: Bool {
         if case .startup = self { return true } else { return false }
@@ -92,8 +90,6 @@ public enum RefreshSessionEvent: Sendable, CustomStringConvertible {
             case .resetManipulatedWithMouse: "resetManipulatedWithMouse"
             case .socketServer: " socketServer"
             case .startup: "startup"
-            case .onFocusedMonitorChanged: "onFocusedMonitorChanged"
-            case .onFocusChanged: "onFocusChanged"
         }
     }
 }

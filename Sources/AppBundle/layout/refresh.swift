@@ -79,7 +79,7 @@ func runLightSession<T>(
 @MainActor
 func refreshModel() {
     Workspace.garbageCollectUnusedWorkspaces()
-    checkOnFocusChangedCallbacks()
+    checkFocusCallbacks()
     normalizeContainers()
 }
 
