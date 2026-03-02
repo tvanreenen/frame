@@ -17,6 +17,7 @@ func checkAxDumpsRecursive(_ dir: URL) throws {
         if file.pathExtension == "md" { continue }
 
         let rawJson = try JSONSerialization.jsonObject(with: Data.init(contentsOf: file), options: [.json5Allowed]) as! [String: Any]
+        try assertAxDumpSchema(rawJson, file)
         let json = Json.newOrDie(rawJson).asDictOrDie
         let app = json["Aero.AXApp"]!.asDictOrDie
         let appBundleId = (rawJson["Aero.App.appBundleId"] as? String).flatMap { KnownBundleId.init(rawValue: $0) }
@@ -31,6 +32,29 @@ func checkAxDumpsRecursive(_ dir: URL) throws {
             json.isDialogHeuristic(appBundleId, windowLevel),
             rawJson["Aero.AxUiElementWindowType_isDialogHeuristic"] as? Bool ?? dieT(),
             additionalMsg: "\(file.path()):0:0: AxUiElementWindowType_isDialogHeuristic doesn't match",
+        )
+    }
+}
+
+private func assertAxDumpSchema(_ rawJson: [String: Any], _ file: URL) throws {
+    let requiredKeys = [
+        "Aero.AXApp",
+        "Aero.App.nsApp.activationPolicy",
+        "Aero.AxUiElementWindowType",
+        "Aero.AxUiElementWindowType_isDialogHeuristic",
+    ]
+    for key in requiredKeys where rawJson[key] == nil {
+        throw NSError(
+            domain: "AxWindowKindTest",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "\(file.path):0:0: Missing required fixture key '\(key)'"],
+        )
+    }
+    if rawJson["Aero.on-window-detected"] != nil {
+        throw NSError(
+            domain: "AxWindowKindTest",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "\(file.path):0:0: Legacy key 'Aero.on-window-detected' is no longer allowed"],
         )
     }
 }

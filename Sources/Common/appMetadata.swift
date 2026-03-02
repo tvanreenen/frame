@@ -3,6 +3,7 @@ public let cliName: String = "frame"
 public let stableAppBundleId: String = "com.frame.app"
 public let configDotfileName: String = ".frame.toml"
 public let configDirName: String = "frame"
+public let repositoryUrl: String = "https://github.com/tvanreenen/frame"
 
 #if DEBUG
     public let appBundleId: String = "com.frame.app.debug"

@@ -88,9 +88,6 @@
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.axWindowId" : 9383,
   "Aero.macOS.version" : "Version 15.5 (Build 24F74)",
-  "Aero.on-window-detected" : [
-
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.Workspace)",
   "Aero.workspace" : "M"
 }

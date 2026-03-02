@@ -15,6 +15,30 @@ enum AxUiElementWindowType: String {
     }
 }
 
+// Slowly roll out window-level based popup filtering only for apps with reliable dumps.
+private let nonNormalWindowPopupIds: Set<KnownBundleId> = [
+    .slack,
+    .chrome,
+    .braveBrowser,
+    .screenstudio,
+    .cleanshotx,
+    .iterm2,
+]
+
+// These apps can intentionally hide/disable fullscreen controls for normal windows.
+private let noFullscreenDialogExemptIds: Set<KnownBundleId> = [
+    .gimp,
+    .chrome,
+    .activityMonitor,
+    .alacritty,
+    .kitty,
+    .wezterm,
+    .qutebrowser,
+    .iterm2,
+    .emacs,
+    .steam,
+]
+
 // Covered by fixtures in Sources/AppBundleTests/fixtures/axDumps
 extension AxUiElementMock {
     // 'isDialogHeuristic' function name is referenced in the guide
@@ -23,74 +47,25 @@ extension AxUiElementMock {
         _ windowLevel: MacOsWindowLevel?,
     ) -> Bool {
         // Note: a lot of windows don't have title on startup. So please don't rely on the title
+        if id == ._1password && windowLevel != .normalWindow { return true }
+        if id == .iphonesimulator { return true }
 
-        if id == ._1password && windowLevel != .normalWindow {
-            return true
-        }
+        // Minimized windows or windows of a hidden app have subrole "AXDialog".
+        // qutebrowser regular windows can also use AXDialog when decorations are disabled.
+        if get(Ax.subroleAttr) != kAXStandardWindowSubrole && id != .qutebrowser { return true }
 
-        if id == .iphonesimulator {
-            return true
-        }
-
-        // Don't tile:
-        // - Chrome cmd+f window ("AXUnknown" value)
-        // - login screen (Yes fuck, it's also a window from Apple's API perspective) ("AXUnknown" value)
-        // - XCode "Build succeeded" popup
-        // - IntelliJ tooltips, context menus, drop downs
-        // - macOS native file picker (IntelliJ -> "Open...") (kAXDialogSubrole value)
-        //
-        // Minimized windows or windows of a hidden app have subrole "AXDialog"
-        if get(Ax.subroleAttr) != kAXStandardWindowSubrole &&
-            id != .qutebrowser // qutebrowser regular window has AXDialog subrole when decorations are disabled
-        {
-            return true
-        }
         // Firefox: Picture in Picture window doesn't have minimize button.
         // todo. bug: when firefox shows non-native fullscreen, minimize button is disabled for all other non-fullscreen windows
-        if id?.isFirefox == true && get(Ax.minimizeButtonAttr)?.get(Ax.enabledAttr) != true {
-            return true
-        }
+        if id?.isFirefox == true && get(Ax.minimizeButtonAttr)?.get(Ax.enabledAttr) != true { return true }
         if id == .photoBooth { return true }
+
         if id == .ghostty {
             return get(Ax.fullscreenButtonAttr)?.get(Ax.enabledAttr) != true &&
                 get(Ax.closeButtonAttr)?.get(Ax.enabledAttr) == true
         }
-        // Heuristic: float windows without fullscreen button (such windows are not designed to be big)
-        // - IntelliJ various dialogs (Rebase..., Edit commit message, Settings, Project structure)
-        // - Finder copy file dialog
-        // - System Settings
-        // - Apple logo -> About this Mac
-        // - Calculator
-        // - Battle.net login dialog
-        // Fullscreen button is presented but disabled:
-        // - Safari -> Pinterest -> Log in with Google
-        // - Kap screen recorder https://github.com/wulkano/Kap
-        // - flameshot? https://github.com/tvanreenen/frame/issues/112
-        // - Drata Agent https://github.com/tvanreenen/frame/issues/134
-        if get(Ax.fullscreenButtonAttr)?.get(Ax.enabledAttr) != true &&
-            id != .gimp && // Gimp doesn't show fullscreen button
 
-            // "Drag out" a tab out of Chrome window. Technically, it shouldn't be necessary, but
-            // apparently there is some sort of race condition between users releasing mouse up and
-            // Chrome reactivating the fullscreen button
-            // todo: consider checking for fullscreen cirteria periodically (downside: will affect performance)
-            id != .chrome &&
-
-            id != .activityMonitor && // Activity Monitor doesn't show fullscreen button
-
-            // Terminal apps and Emacs have an option to hide their title bars
-            id != .alacritty && // ~/.alacritty.toml: window.decorations = "Buttonless"
-            id != .kitty && // ~/.config/kitty/kitty.conf: hide_window_decorations titlebar-and-corners
-            id != .wezterm &&
-            id != .qutebrowser && // :set window.hide_decoration
-            id != .iterm2 &&
-            id != .emacs &&
-            id?.isVscode != true && // "window.nativeFullScreen": false
-            id != .steam
-        {
-            return true
-        }
-        return false
+        // Float windows without fullscreen control unless the app is known to hide it for regular windows.
+        return shouldTreatNoFullscreenAsDialog(id)
     }
 
     /// Alternative name: !isPopup
@@ -104,34 +79,20 @@ extension AxUiElementMock {
         _ activationPolicy: NSApplication.ActivationPolicy,
         _ windowLevel: MacOsWindowLevel?,
     ) -> Bool {
-        if windowLevel != .normalWindow &&
-            // Slowly roll out windowLevel for applications for which we have the appropriate dumps
-            (id == .slack || id == .chrome || id?.isFirefox == true || id == .braveBrowser || id == .screenstudio || id == .cleanshotx || id == .iterm2)
-        {
-            return false
-        }
+        if shouldRejectNonNormalLevelWindow(id, windowLevel) { return false }
 
         // Just don't do anything with "Ghostty Quick Terminal" windows.
         // Its position and size are managed by the Ghostty itself
         // https://github.com/tvanreenen/frame/issues/103
         // https://github.com/ghostty-org/ghostty/discussions/3512
-        if id == .ghostty && get(Ax.identifierAttr) == "com.mitchellh.ghostty.quickTerminal" {
-            return false
-        }
+        if id == .ghostty && get(Ax.identifierAttr) == "com.mitchellh.ghostty.quickTerminal" { return false }
 
         lazy var fullscreenButton = get(Ax.fullscreenButtonAttr)
 
-        if id == .xcode && get(Ax.identifierAttr) == "open_quickly" {
-            return false
-        }
+        if id == .xcode && get(Ax.identifierAttr) == "open_quickly" { return false }
+        if id == .iterm2 && fullscreenButton == nil { return false }
 
-        if id == .iterm2 && fullscreenButton == nil {
-            return false
-        }
-
-        if activationPolicy == .accessory && get(Ax.closeButtonAttr) == nil && id != .steam {
-            return false
-        }
+        if activationPolicy == .accessory && get(Ax.closeButtonAttr) == nil && id != .steam { return false }
 
         if id?.isFirefox != true {
             return isWindowHeuristicOld(axApp: axApp, id)
@@ -202,5 +163,16 @@ extension AxUiElementMock {
             isWindow: isWindowHeuristic(axApp: axApp, id, activationPolicy, windowLevel),
             isDialog: { isDialogHeuristic(id, windowLevel) },
         )
+    }
+
+    private func shouldRejectNonNormalLevelWindow(_ id: KnownBundleId?, _ windowLevel: MacOsWindowLevel?) -> Bool {
+        guard windowLevel != .normalWindow else { return false }
+        return id?.isFirefox == true || (id.map { nonNormalWindowPopupIds.contains($0) } ?? false)
+    }
+
+    private func shouldTreatNoFullscreenAsDialog(_ id: KnownBundleId?) -> Bool {
+        guard get(Ax.fullscreenButtonAttr)?.get(Ax.enabledAttr) != true else { return false }
+        if id?.isVscode == true { return false } // "window.nativeFullScreen": false
+        return !(id.map { noFullscreenDialogExemptIds.contains($0) } ?? false)
     }
 }

@@ -22,20 +22,24 @@ Optional tools:
 
 ## Day-to-day commands
 
-- Run debug app: `just dev`
+- Build debug app: `just build`
+- Run debug app: `just run`
 - Run unit tests only: `just test`
+- Run CLI smoke checks only: `just smoke`
 - Format/lint with fixes: `just fmt`
 - Normal pre-commit checks: `just check`
-- Clean local Xcode/derived artifacts: `just clean`
+- Clean local build artifacts: `just clean`
+- Regenerate generated files + Xcode project: `just regen`
 
-`just check` runs build + tests + CLI smoke checks + non-mutating format/lint verification.
+`just check` runs unit tests + CLI smoke checks + non-mutating format/lint verification.
 
 ## Typical loop
 
-1. Start app with `just dev`
-2. Make code changes
-3. Run `just test`
-4. Before commit, run `just check`
+1. Build app with `just build`
+2. Launch app with `just run`
+3. Make code changes
+4. Run `just test`
+5. Before commit, run `just check`
 
 ## Accessibility reset helper
 
@@ -45,7 +49,7 @@ When permission state gets out of sync:
 just reset-accessibility
 ```
 
-Then relaunch the app with `just dev`.
+Then relaunch the app with `just run`.
 
 ## AX dump fixtures (window classification regression tests)
 

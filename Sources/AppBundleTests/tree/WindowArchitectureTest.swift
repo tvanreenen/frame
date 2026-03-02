@@ -47,12 +47,28 @@ final class WindowArchitectureTest: XCTestCase {
 
     func testPopupNormalizationPathWithoutMacWindowCast() async throws {
         let popup = TestWindow.new(id: 779, parent: macosPopupWindowsContainer)
-        TestApp.shared.setWindowHeuristic(windowId: 779, true)
         TestApp.shared.setWindowType(windowId: 779, .window)
 
         XCTAssertTrue(popup.parent is MacosPopupWindowsContainer)
         try await normalizeLayoutReason()
         XCTAssertFalse(popup.parent is MacosPopupWindowsContainer)
+    }
+
+    func testWindowClassificationOverrideAppliedOnRegistration() async throws {
+        runtimeContext.config.windowClassificationOverrides = [
+            WindowClassificationOverride(
+                matcher: WindowClassificationOverrideMatcher(
+                    appId: TestApp.shared.rawAppBundleId,
+                    appNameRegexSubstring: nil,
+                    windowTitleRegexSubstring: nil,
+                ),
+                kind: .window,
+            ),
+        ]
+        TestApp.shared.setWindowType(windowId: 781, .popup)
+
+        let window = try await Window.getOrRegister(windowId: 781, app: TestApp.shared)
+        XCTAssertTrue(window.parent is Column)
     }
 
     func testHideUnhideCornerRoundTrip() async throws {

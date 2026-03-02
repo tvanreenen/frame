@@ -17,6 +17,7 @@ extension CmdArgs {
 
 extension AddColumnCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { AddColumnCommand(args: self) } }
 extension BalanceSizesCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { BalanceSizesCommand(args: self) } }
+extension CheckConfigCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { CheckConfigCommand(args: self) } }
 extension FocusCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { FocusCommand(args: self) } }
 extension FocusMonitorCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { FocusMonitorCommand(args: self) } }
 extension FullscreenCmdArgs: CommandFactoryArgs { func eraseToCommand() -> any Command { FullscreenCommand(args: self) } }

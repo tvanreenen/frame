@@ -25,12 +25,7 @@ func readConfig(forceConfigUrl: URL? = nil) -> Result<(Config, URL), String> {
     if errors.isEmpty {
         return .success((parsedConfig, configUrl))
     } else {
-        let msg = """
-            Failed to parse \(configUrl.absoluteURL.path)
-
-            \(errors.map(\.description).joined(separator: "\n\n"))
-            """
-        return .failure(msg)
+        return .failure(formatConfigErrors(configUrl: configUrl, errors: errors))
     }
 }
 
@@ -42,6 +37,36 @@ enum TomlParseError: Error, CustomStringConvertible, Equatable {
         return switch self {
             case .semantic(let backtrace, let message): backtrace.isEmptyRoot ? message : "\(backtrace): \(message)"
             case .syntax(let message): message
+        }
+    }
+}
+
+extension TomlParseError {
+    var code: String {
+        switch self {
+            case .syntax:
+                return "CFG000"
+            case .semantic(_, let message) where message == "Unknown top-level key":
+                return "CFG001"
+            case .semantic(_, let message) where message == "Unknown key":
+                return "CFG002"
+            case .semantic(_, let message) where message.contains("Expected type is"):
+                return "CFG003"
+            case .semantic(_, let message) where message.contains("mandatory key"):
+                return "CFG004"
+            case .semantic(_, let message) where message.contains("Cannot be empty") || message.contains("Must contain at least one argument"):
+                return "CFG005"
+            case .semantic:
+                return "CFG999"
+        }
+    }
+
+    var groupKey: String {
+        switch self {
+            case .syntax:
+                return "<syntax>"
+            case .semantic(let backtrace, _):
+                return backtrace.topLevelKey ?? "<root>"
         }
     }
 }
@@ -106,23 +131,16 @@ private let configAllowedCmdKinds: Set<CmdKind> = [
 // 1. Does it make sense to have different value
 // 2. Prefer commands and commands flags over toml options if possible
 private let configParser: [String: any ParserProtocol<Config>] = [
-    "after-startup-command": Parser(\.afterStartupCommand) { parseCommandOrCommands($0).toParsedToml($1) },
-
-    "on-focus-changed": Parser(\.onFocusChanged) { parseCommandOrCommands($0).toParsedToml($1) },
-    "on-focused-monitor-changed": Parser(\.onFocusedMonitorChanged) { parseCommandOrCommands($0).toParsedToml($1) },
-    // "on-focused-workspace-changed": Parser(\.onFocusedWorkspaceChanged, { parseCommandOrCommands($0).toParsedToml($1) }),
-
     "start-at-login": Parser(\.startAtLogin, parseBool),
     persistentWorkspacesKey: Parser(\.persistentWorkspaces, parsePersistentWorkspaces),
-    "exec-on-workspace-change": Parser(\.execOnWorkspaceChange, parseArrayOfStrings),
-    "exec": Parser(\.execConfig, parseExecConfig),
+    "workspace-change-hook": Parser(\.workspaceChangeHook, parseNonEmptyArrayOfStrings),
+    "window-classification-override": Parser(\.windowClassificationOverrides, parseWindowClassificationOverrides),
 
     keyMappingConfigRootKey: Parser(\.keyMapping, skipParsing(Config().keyMapping)), // Parsed manually
     bindingConfigRootKey: Parser(\.bindings, skipParsing(Config().bindings)), // Parsed manually
 
     "gaps": Parser(\.gaps, parseGaps),
     "workspace-to-monitor-force-assignment": Parser(\.workspaceToMonitorForceAssignment, parseWorkspaceToMonitorAssignment),
-    "on-window-detected": Parser(\.onWindowDetected, parseOnWindowDetectedArray),
 ]
 
 extension ParsedCmd where T == any Command {
@@ -174,6 +192,8 @@ func parseCommandOrCommands(_ raw: TOMLValueConvertible) -> Parsed<[any Command]
     if let bindings = rawTable[bindingConfigRootKey].flatMap({ parseBindings($0, .rootKey(bindingConfigRootKey), &errors, config.keyMapping.resolve()) }) {
         config.bindings = bindings
     }
+
+    errors += validateConfig(config)
 
     return (config, errors)
 }
@@ -252,6 +272,14 @@ private func parseArrayOfStrings(_ raw: TOMLValueConvertible, _ backtrace: TomlB
         }
 }
 
+private func parseNonEmptyArrayOfStrings(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<[String]> {
+    parseArrayOfStrings(raw, backtrace).flatMap { parsed in
+        parsed.isEmpty
+            ? .failure(.semantic(backtrace, "Must contain at least one argument (executable path)"))
+            : .success(parsed)
+    }
+}
+
 extension Parsed where Failure == String {
     func toParsedToml(_ backtrace: TomlBacktrace) -> ParsedToml<Success> {
         mapError { .semantic(backtrace, $0) }
@@ -290,6 +318,17 @@ indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
         return switch self {
             case .rootKey: true
             default: false
+        }
+    }
+
+    var topLevelKey: String? {
+        switch self {
+            case .rootKey(let value):
+                return value
+            case .pair(let first, let second):
+                return first.topLevelKey ?? second.topLevelKey
+            case .emptyRoot, .key, .index:
+                return nil
         }
     }
 
@@ -338,4 +377,31 @@ func expectedActualTypeError(expected: TOMLType, actual: TOMLType, _ backtrace: 
 
 func expectedActualTypeError(expected: [TOMLType], actual: TOMLType, _ backtrace: TomlBacktrace) -> TomlParseError {
     .semantic(backtrace, expectedActualTypeError(expected: expected, actual: actual))
+}
+
+private func formatConfigErrors(configUrl: URL, errors: [TomlParseError]) -> String {
+    let grouped = Dictionary(grouping: errors, by: \.groupKey)
+    let formattedGroups = grouped
+        .keys
+        .sorted()
+        .map { key -> String in
+            let formattedErrors = grouped[key]!
+                .map { "[\($0.code)] \($0.description)" }
+                .joined(separator: "\n  - ")
+            return """
+                [\(key)]
+                  - \(formattedErrors)
+                """
+        }
+        .joined(separator: "\n\n")
+
+    return """
+        Failed to parse \(configUrl.absoluteURL.path)
+
+        \(formattedGroups)
+
+        Recovery:
+        1. Fix the config and run '\(cliName) check-config'
+        2. Apply with '\(cliName) reload-config'
+        """
 }

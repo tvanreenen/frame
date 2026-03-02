@@ -61,9 +61,7 @@ final class Window: TreeNode, Hashable {
         )
         allWindowsMap[windowId] = window
 
-        if try await !restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: window) {
-            try await tryOnWindowDetected(window)
-        }
+        _ = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: window)
         return window
     }
 
@@ -106,17 +104,9 @@ final class Window: TreeNode, Hashable {
         app.setAxFrame(windowId: windowId, topLeft: topLeft, size: size)
     }
 
-    func isWindowHeuristic(_ windowLevel: MacOsWindowLevel?) async throws -> Bool { // todo cache
-        try await app.isWindowHeuristic(windowId: windowId, windowLevel: windowLevel)
-    }
-
-    func isDialogHeuristic(_ windowLevel: MacOsWindowLevel?) async throws -> Bool { // todo cache
-        try await app.isDialogHeuristic(windowId: windowId, windowLevel: windowLevel)
-    }
-
     @MainActor
-    func getAxUiElementWindowType(_ windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
-        try await app.getAxUiElementWindowType(windowId: windowId, windowLevel: windowLevel)
+    func getResolvedAxUiElementWindowType(_ windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
+        try await Window.resolveWindowType(windowId: windowId, app: app, windowLevel: windowLevel)
     }
 
     func dumpAxInfo() async throws -> [String: Json] {
@@ -205,6 +195,33 @@ final class Window: TreeNode, Hashable {
                     break // Don't switch back on popup destruction
             }
         }
+    }
+}
+
+extension Window {
+    @MainActor
+    static func resolveWindowType(
+        windowId: UInt32,
+        app: any WindowPlatformApp,
+        windowLevel: MacOsWindowLevel?,
+    ) async throws -> AxUiElementWindowType {
+        let heuristicType = try await app.getAxUiElementWindowType(windowId: windowId, windowLevel: windowLevel)
+        let overrides = runtimeContext.config.windowClassificationOverrides
+        guard !overrides.isEmpty else { return heuristicType }
+
+        let appBundleId = app.rawAppBundleId
+        let appName = app.name
+        var cachedTitle: String? = nil
+
+        for override in overrides {
+            if override.matcher.windowTitleRegexSubstring != nil, cachedTitle == nil {
+                cachedTitle = try await app.getAxTitle(windowId: windowId) ?? ""
+            }
+            if override.matcher.matches(appBundleId: appBundleId, appName: appName, windowTitle: cachedTitle) {
+                return override.resolvedKind
+            }
+        }
+        return heuristicType
     }
 }
 

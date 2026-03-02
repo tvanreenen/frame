@@ -96,9 +96,6 @@
   "Aero.AxWritable" : "AXPosition, AXSections, AXMain, AXMinimized",
   "Aero.axWindowId" : 22408,
   "Aero.macOS.version" : "Version 15.6 (Build 24G84)",
-  "Aero.on-window-detected" : [
-
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.Workspace)",
   "Aero.windowLevel" : 1001,
   "Aero.workspace" : "1"

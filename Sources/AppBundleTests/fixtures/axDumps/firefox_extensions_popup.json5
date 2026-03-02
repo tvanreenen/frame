@@ -64,9 +64,6 @@
   "Aero.AxWritable" : "AXPosition, AXSections",
   "Aero.axWindowId" : 2198,
   "Aero.macOS.version" : "Version 15.6.1 (Build 24G90)",
-  "Aero.on-window-detected" : [
-
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.MacosPopupWindowsContainer)",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : null

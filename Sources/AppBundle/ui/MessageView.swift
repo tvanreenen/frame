@@ -1,3 +1,4 @@
+import AppKit
 import Common
 import SwiftUI
 
@@ -16,10 +17,8 @@ public func getMessageWindow(messageModel: MessageModel) -> some Scene {
                     }
                 }
             }
-        // .windowMinimizeBehavior(WindowInteractionBehavior.disabled) // SwiftUI way of hiding minimize button. Available only since macOS 15
     }
     .windowResizability(.contentMinSize)
-    //.windowLevel(.floating) //This might be the SwiftUI way of doing window level instead of the onAppear block above, but it's only available from macOS 15.0
 }
 
 public let messageWindowId = "\(appDisplayName).messageView"
@@ -35,15 +34,30 @@ public struct MessageView: View {
 
     public var body: some View {
         VStack(alignment: .leading) {
-            HStack(alignment: .center) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.yellow)
-                    .font(.system(size: 48))
-                Text("\(model.message?.description ?? "")")
-                    .padding(.horizontal)
+            HStack(alignment: .top, spacing: 12) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 36, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(model.message?.description ?? "")")
+                    if let steps = model.message?.steps, !steps.isEmpty {
+                        Text("Steps to follow:")
+                            .font(.headline)
+                        ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                            Text("\(index + 1). \(step)")
+                        }
+                    }
+                }
+                .font(.callout)
+                .frame(maxWidth: .infinity, alignment: .leading)
                     .focusable()
             }
             .padding()
+            Text("Config errors:")
+                .font(.headline)
+                .padding(.horizontal)
             ScrollView {
                 VStack(alignment: .leading) {
                     HStack {
@@ -58,7 +72,6 @@ public struct MessageView: View {
                         TextEditor(text: cancelOnEnterBinding)
                             .font(.system(size: 12).monospaced())
                             .focused($focus)
-                        //  .onKeyPress(.return) { return .handled } // enter handling alternative. Only available since macOS 14
                         Spacer()
                     }
                     Spacer()
@@ -70,20 +83,13 @@ public struct MessageView: View {
             .padding(.horizontal)
             HStack {
                 Spacer()
-                if let type = model.message?.type {
-                    switch type {
-                        case .config:
-                            reloadConfigButton(showShortcutGroup: true)
-                            openConfigButton(showShortcutGroup: true)
-                    }
-                }
-                let closeButton = Button("Close") { model.message = nil }.keyboardShortcut(.defaultAction)
-                shortcutGroup(label: Image(systemName: "return.left"), content: closeButton)
+                Button("Close") { model.message = nil }
+                    .keyboardShortcut(.defaultAction)
             }
             .padding()
         }
         .textSelection(.enabled)
-        .frame(minWidth: 480, maxWidth: 960, minHeight: 200)
+        .frame(minWidth: 520, idealWidth: 620, maxWidth: 760, minHeight: 200)
         .onChange(of: model.message) { message in
             if message == nil {
                 self.dismiss()
@@ -106,20 +112,16 @@ public final class MessageModel: ObservableObject {
     private init() {}
 }
 
-public enum MessageType {
-    case config
-}
-
 public struct Message: Hashable, Equatable {
-    public let type: MessageType
     public let title: String
     public let description: String
     public let body: String
+    public let steps: [String]
 
-    init(type: MessageType = .config, title: String = appDisplayName, description: String, body: String) {
-        self.type = type
+    init(title: String = appDisplayName, description: String, body: String, steps: [String] = []) {
         self.title = title
         self.description = description
         self.body = body
+        self.steps = steps
     }
 }

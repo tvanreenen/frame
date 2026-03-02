@@ -3,8 +3,7 @@ cd "$(dirname "$0")/../.."
 source ./script/setup.sh
 source ./script/identity.sh
 
-./script/dev/build-debug.sh -Xswiftc -warnings-as-errors
-swift test
+./script/dev/smoke-build.sh -Xswiftc -warnings-as-errors
 
 "./.debug/${FRAME_CLI_NAME}" -h > /dev/null
 "./.debug/${FRAME_CLI_NAME}" --help > /dev/null
@@ -12,4 +11,4 @@ swift test
 "./.debug/${FRAME_CLI_NAME}" --version | grep -q "0.0.0-dev"
 
 echo
-echo "✅ Build, tests, and CLI smoke checks passed"
+echo "✅ CLI smoke checks passed"

@@ -54,18 +54,13 @@ final class RuntimeContext {
 let runtimeContext = RuntimeContext(config: defaultConfig, configUrl: defaultConfigUrl)
 
 struct Config: ConvenienceCopyable {
-    var afterStartupCommand: [any Command] = []
     var startAtLogin: Bool = false
     var persistentWorkspaces: OrderedUniqueValues<String> = []
-    var execOnWorkspaceChange: [String] = []
+    var workspaceChangeHook: [String] = []
+    var windowClassificationOverrides: [WindowClassificationOverride] = []
     var keyMapping = KeyMapping()
-    var execConfig: ExecConfig = ExecConfig()
-
-    var onFocusChanged: [any Command] = []
-    var onFocusedMonitorChanged: [any Command] = []
 
     var gaps: Gaps = .zero
     var workspaceToMonitorForceAssignment: [String: [MonitorDescription]] = [:]
     var bindings: [String: HotkeyBinding] = [:]
-    var onWindowDetected: [WindowDetectedCallback] = []
 }

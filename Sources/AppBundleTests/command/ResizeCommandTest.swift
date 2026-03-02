@@ -75,6 +75,17 @@ final class ResizeBehaviorTest: XCTestCase {
         assertEquals(col.getWeight(.h), 1.0)
     }
 
+    func testResize_focusedFloatingWindow_isSilentNoOp() async throws {
+        let workspace = Workspace.get(byName: name)
+        let floating = TestWindow.new(id: 42, parent: workspace)
+        assertEquals(floating.focusWindow(), true)
+
+        let result = try await ResizeCommand(args: ResizeCmdArgs(rawArgs: [], dimension: .width, units: .add(10))).run(.defaultEnv, .emptyStdin)
+
+        assertEquals(result.exitCode, 0)
+        assertEquals(result.stderr, [])
+    }
+
     func testResize_smart_resizesWindowHeight() async throws {
         let workspace = Workspace.get(byName: name)
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)

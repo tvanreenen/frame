@@ -92,12 +92,6 @@
   "Aero.axWindowId" : 14057,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : false,
   "Aero.AxUiElementWindowType" : "window",
-  "Aero.on-window-detected" : [
-    {
-      "commands" : "move-node-to-workspace F",
-      "matcher" : "appId=\"com.google.Chrome\""
-    }
-  ],
   "Aero.treeNodeParent" : "AppBundle.TilingContainer",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "F"

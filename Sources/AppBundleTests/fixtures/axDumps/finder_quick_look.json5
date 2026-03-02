@@ -82,9 +82,6 @@
   "Aero.axWindowId" : 3126,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "dialog",
-  "Aero.on-window-detected" : [
-
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.Workspace)",
   "Aero.windowLevel" : "alwaysOnTopWindow",
   "Aero.workspace" : "M"

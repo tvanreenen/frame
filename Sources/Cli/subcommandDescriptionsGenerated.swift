@@ -4,6 +4,7 @@
 let subcommandDescriptions = [
     ["  add-column", "Insert a new column after the focused window's column"],
     ["  balance-sizes", "Balance sizes of all windows in the current workspace"],
+    ["  check-config", "Validate config file and print diagnostics"],
     ["  focus-monitor", "Focus monitor by relative direction, by order, or by pattern"],
     ["  focus", "Set focus to a window."],
     ["  fullscreen", "Toggle the fullscreen mode for the focused window"],
@@ -15,7 +16,7 @@ let subcommandDescriptions = [
     ["  move-mouse", "Move mouse to the requested position"],
     ["  move-node-to-workspace", "Move the focused window to the specified workspace"],
     ["  move", "Move the focused window in the given direction"],
-    ["  reload-config", "Reload currently active config"],
+    ["  reload-config", "Reload and apply config"],
     ["  remove-column", "Remove the last column in the target workspace"],
     ["  resize", "Resize the focused window"],
     ["  workspace", "Focus the specified workspace"],

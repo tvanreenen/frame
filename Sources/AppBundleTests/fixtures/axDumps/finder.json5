@@ -103,9 +103,6 @@
   "Aero.axWindowId" : 14283,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : false,
   "Aero.AxUiElementWindowType" : "window",
-  "Aero.on-window-detected" : [
-
-  ],
   "Aero.treeNodeParent" : "AppBundle.TilingContainer",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "F"

@@ -65,7 +65,7 @@ just release-cask <version>
 1. Run checks and build release artifacts:
 
 ```bash
-./script/dev/run-tests.sh
+just check
 just release-build 0.12.3
 ```
 

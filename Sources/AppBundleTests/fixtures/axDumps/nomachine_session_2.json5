@@ -84,12 +84,6 @@
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.axWindowId" : 38734,
   "Aero.macOS.version" : "Version 15.5 (Build 24F74)",
-  "Aero.on-window-detected" : [
-    {
-      "commands" : "layout floating; move-node-to-workspace V",
-      "matcher" : "appId=\"com.nomachine.nxdock\""
-    }
-  ],
   "Aero.treeNodeParent" : "Optional(AppBundle.Workspace)",
   "Aero.workspace" : "V"
 }

@@ -183,22 +183,10 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func isWindowHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
-        return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
-            window.isWindowHeuristic(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
-        } == true
-    }
-
     func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
         return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } ?? .window
-    }
-
-    func isDialogHeuristic(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> Bool {
-        try await withWindow(windowId) { [appId] window, job in
-            window.isDialogHeuristic(appId, windowLevel)
-        } == true
     }
 
     func setNativeFullscreen(_ windowId: UInt32, _ value: Bool) {
