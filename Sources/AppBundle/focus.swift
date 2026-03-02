@@ -139,19 +139,8 @@ extension Workspace {
         followFocusedMonitorWithMouseIfNeeded(focus)
     }
     if let newFocusedWorkspace {
-        onWorkspaceChanged(newFocusedWorkspace)
+        runWorkspaceChangeHook(newFocusedWorkspace)
     }
-}
-
-@MainActor private func onWorkspaceChanged(_ newWorkspace: String) {
-    guard let executable = runtimeContext.config.execOnWorkspaceChange.first else { return }
-    let process = Process()
-    process.executableURL = URL(filePath: executable)
-    process.arguments = Array(runtimeContext.config.execOnWorkspaceChange.dropFirst())
-    process.environment = runtimeContext.config.execConfig.envVariables + [
-        FRAME_FOCUSED_WORKSPACE: newWorkspace,
-    ]
-    _ = Result { try process.run() }
 }
 
 @MainActor

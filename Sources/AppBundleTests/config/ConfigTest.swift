@@ -83,14 +83,26 @@ final class ConfigTest: XCTestCase {
         assertEquals(config.persistentWorkspaces.sorted(), ["1", "2", "3", "4"])
     }
 
-    func testParseExecOnWorkspaceChange() {
+    func testParseWorkspaceChangeHook() {
         let (config, errors) = parseConfig(
             """
-            exec-on-workspace-change = ['/bin/bash', '-c', 'echo changed']
+            workspace-change-hook = ['/bin/bash', '-c', 'echo changed']
             """,
         )
         assertEquals(errors.descriptions, [])
-        assertEquals(config.execOnWorkspaceChange, ["/bin/bash", "-c", "echo changed"])
+        assertEquals(config.workspaceChangeHook, ["/bin/bash", "-c", "echo changed"])
+    }
+
+    func testWorkspaceChangeHookMustNotBeEmpty() {
+        let (_, errors) = parseConfig(
+            """
+            workspace-change-hook = []
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["workspace-change-hook: Must contain at least one argument (executable path)"],
+        )
     }
 
     func testParseWindowClassificationOverrides() {
@@ -199,6 +211,31 @@ final class ConfigTest: XCTestCase {
         assertEquals(
             errors.descriptions,
             ["on-window-detected: Unknown top-level key"],
+        )
+    }
+
+    func testExecOnWorkspaceChangeIsUnknownTopLevelKey() {
+        let (_, errors) = parseConfig(
+            """
+            exec-on-workspace-change = ['/bin/bash', '-c', 'echo changed']
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["exec-on-workspace-change: Unknown top-level key"],
+        )
+    }
+
+    func testExecConfigBlockIsUnknownTopLevelKey() {
+        let (_, errors) = parseConfig(
+            """
+            [exec]
+                inherit-env-vars = true
+            """,
+        )
+        assertEquals(
+            errors.descriptions,
+            ["exec: Unknown top-level key"],
         )
     }
 

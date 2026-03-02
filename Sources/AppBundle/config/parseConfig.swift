@@ -108,9 +108,8 @@ private let configAllowedCmdKinds: Set<CmdKind> = [
 private let configParser: [String: any ParserProtocol<Config>] = [
     "start-at-login": Parser(\.startAtLogin, parseBool),
     persistentWorkspacesKey: Parser(\.persistentWorkspaces, parsePersistentWorkspaces),
-    "exec-on-workspace-change": Parser(\.execOnWorkspaceChange, parseArrayOfStrings),
+    "workspace-change-hook": Parser(\.workspaceChangeHook, parseNonEmptyArrayOfStrings),
     "window-classification-override": Parser(\.windowClassificationOverrides, parseWindowClassificationOverrides),
-    "exec": Parser(\.execConfig, parseExecConfig),
 
     keyMappingConfigRootKey: Parser(\.keyMapping, skipParsing(Config().keyMapping)), // Parsed manually
     bindingConfigRootKey: Parser(\.bindings, skipParsing(Config().bindings)), // Parsed manually
@@ -244,6 +243,14 @@ private func parseArrayOfStrings(_ raw: TOMLValueConvertible, _ backtrace: TomlB
                 parseString(elem, backtrace + .index(index))
             }
         }
+}
+
+private func parseNonEmptyArrayOfStrings(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<[String]> {
+    parseArrayOfStrings(raw, backtrace).flatMap { parsed in
+        parsed.isEmpty
+            ? .failure(.semantic(backtrace, "Must contain at least one argument (executable path)"))
+            : .success(parsed)
+    }
 }
 
 extension Parsed where Failure == String {

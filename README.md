@@ -111,12 +111,29 @@ Note: `main` means the macOS primary display (not necessarily left), and `second
 
 ### Workspace Change Hook (SketchyBar, etc.)
 
-`exec-on-workspace-change` is supported and runs a process whenever focused workspace changes. The callback environment includes `FRAME_FOCUSED_WORKSPACE`.
+`workspace-change-hook` runs a process whenever focused workspace changes. The callback environment injects `FRAME_FOCUSED_WORKSPACE`, includes inherited environment variables, and prepends Homebrew paths (`/opt/homebrew/bin:/opt/homebrew/sbin`) to `PATH`.
+
+If set, `workspace-change-hook` must be a non-empty command array (first element is executable path).
 
 Example:
 
 ```toml
-exec-on-workspace-change = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
+workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
+```
+
+### Config Errors and Recovery
+
+- On startup, if your config fails to parse, Frame shows a config error and falls back to the built-in default config so it can still run.
+- After fixing your config, apply it with:
+
+```bash
+frame reload-config
+```
+
+- To validate without applying:
+
+```bash
+frame reload-config --dry-run
 ```
 
 ### Window Classification Overrides (Optional)
