@@ -42,18 +42,6 @@ clean:
 regen:
     ./script/dev/generate.sh
 
-# Run release preflight checks for a version.
-release-preflight VERSION:
-    bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release-preflight.sh "${args[@]}"'
-
-# Build release artifacts (zip + checksums) for a version.
-release-build VERSION:
-    bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/build-release.sh "${args[@]}"'
-
-# Generate the Homebrew cask for a GitHub release version.
-release-cask VERSION:
-    ./script/release/build-brew-cask.sh --build-version "{{VERSION}}"
-
 # Full release flow: preflight, checks, build, cask, tap update, tag push, and draft GitHub release.
 release VERSION:
     bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release.sh "${args[@]}"'

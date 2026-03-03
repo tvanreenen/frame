@@ -49,7 +49,11 @@ build_dir="$work_dir/.build"
 xcode_build_dir="$work_dir/.xcode-build"
 
 cleanup() {
+    local exit_code=$?
+    trap - EXIT
+    git restore Sources/Common/versionGenerated.swift Sources/Common/gitHashGenerated.swift >/dev/null 2>&1 || true
     rm -rf "$work_dir"
+    exit "$exit_code"
 }
 trap cleanup EXIT
 
