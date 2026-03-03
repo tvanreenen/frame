@@ -42,10 +42,6 @@ clean:
 regen:
     ./script/dev/generate.sh
 
-# Run release preflight checks for a version.
-release-preflight VERSION:
-    bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release-preflight.sh "${args[@]}"'
-
 # Full release flow: preflight, checks, build, cask, tap update, tag push, and draft GitHub release.
 release VERSION:
     bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release.sh "${args[@]}"'
