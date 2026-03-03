@@ -45,7 +45,7 @@ struct ReloadConfigCommand: Command {
                     body: parsedError.errors,
                     steps: [
                         "Address the config errors below.",
-                        "Run frame check-config.",
+                        "Run frame doctor.",
                         "Run frame reload-config (or quit and restart Frame).",
                     ],
                 )

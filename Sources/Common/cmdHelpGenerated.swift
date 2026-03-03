@@ -7,8 +7,8 @@ let add_column_help_generated = """
 let balance_sizes_help_generated = """
     USAGE: balance-sizes [-h|--help] [--workspace <workspace>]
     """
-let check_config_help_generated = """
-    USAGE: check-config [-h|--help]
+let doctor_help_generated = """
+    USAGE: doctor [-h|--help]
     """
 let focus_monitor_help_generated = """
     USAGE: focus-monitor [-h|--help] [--wrap-around] (left|down|up|right)

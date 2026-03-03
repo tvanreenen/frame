@@ -39,6 +39,17 @@ This builds:
 
 Build intermediates are created in a temporary work directory and removed automatically.
 
+### Version metadata gate
+
+`just release-build <version>` now hard-fails if version metadata is stale or inconsistent.
+
+The release script regenerates compile-time metadata with the requested build version and current git short hash, then validates staged binaries:
+
+- `bin/frame --version` must equal `<version>+<git_short_hash>`
+- `Frame.app` daemon binary (`Frame.app/Contents/MacOS/Frame --version`) must equal `<version>+<git_short_hash>`
+
+If either check fails, the release build exits non-zero before packaging.
+
 ## Notarization (planned)
 
 Notarization is not yet automated in `just release-build`.

@@ -33,6 +33,16 @@ Optional tools:
 
 `just check` runs unit tests + CLI smoke checks + non-mutating format/lint verification.
 
+## Version output
+
+`frame --version` (and `frame -v`) prints the CLI version only:
+
+- `<version+hash>`
+
+`frame doctor` prints CLI + daemon diagnostics, including daemon-not-running and mismatch status.
+
+The smoke checks validate both commands for debug artifacts.
+
 ## Typical loop
 
 1. Build app with `just build`

@@ -28,6 +28,22 @@ Learn the core defaults:
 
 These are intentionally layered: keep direction/number keys the same, add modifiers for stronger variants (focus -> move/resize, workspace -> move-to-workspace).
 
+### Version Command
+
+```bash
+frame --version
+```
+
+CLI version output:
+
+- `<version+hash>`
+
+For CLI + daemon diagnostics:
+
+```bash
+frame doctor
+```
+
 ## Configuration
 
 Frame runs without a user config file on first launch (it uses the built-in defaults).
@@ -141,7 +157,7 @@ workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger frame_workspac
 - Validate your file directly:
 
 ```bash
-frame check-config
+frame doctor
 ```
 
 - After fixing your config, apply it with:

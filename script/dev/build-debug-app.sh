@@ -11,7 +11,7 @@ fi
 derived_data_path=".debug/.xcode-build"
 app_path="$derived_data_path/Build/Products/Debug/${FRAME_PRODUCT_NAME_DEBUG}.app"
 
-./script/dev/generate.sh --build-version "0.0.0-dev" --codesign-identity "$codesign_identity"
+./script/dev/generate.sh --build-version "0.0.0-dev" --generate-git-hash --codesign-identity "$codesign_identity"
 
 mkdir -p .debug
 xcodebuild-pretty .debug/xcodebuild.log build \
