@@ -9,36 +9,6 @@ This project keeps Homebrew release support. Use `just` commands as the primary 
 - Release zip: `Frame-v<version>.zip`
 - Cask: `frame`
 
-## Build release artifacts
-
-```bash
-just release-build <version>
-```
-
-Example:
-
-```bash
-just release-build 0.12.3
-```
-
-Signing identity behavior:
-
-- If `FRAME_CODESIGN_IDENTITY` (or `--codesign-identity`) is provided, that value is used.
-- Otherwise, the build auto-selects from Keychain only when there is exactly one valid `Developer ID Application` identity.
-- If none or multiple are found, the build fails with a clear message so you can pick explicitly.
-- For unsigned local smoke builds, use:
-
-```bash
-FRAME_CODESIGN_IDENTITY=- just release-build 0.12.3
-```
-
-This builds:
-
-- `dist/Frame-v<version>.zip`
-- `dist/checksums.txt`
-
-Build intermediates are created in a temporary work directory and removed automatically.
-
 ## Preflight checks
 
 Run preflight only:
@@ -68,8 +38,8 @@ This runs:
 
 1. preflight checks
 2. `just test`
-3. `just release-build <version>`
-4. `just release-cask <version>`
+3. build release artifacts (`script/release/build-release.sh`)
+4. generate cask (`script/release/build-brew-cask.sh`)
 5. copy `dist/frame.rb` into `$FRAME_HOMEBREW_TAP_DIR/Casks/frame.rb`, commit, push
 6. create/push annotated tag `v<version>` with inferred title:
    - `Major Release`
@@ -83,7 +53,7 @@ This runs:
 
 ### Version metadata gate
 
-`just release-build <version>` now hard-fails if version metadata is stale or inconsistent.
+Release build now hard-fails if version metadata is stale or inconsistent.
 
 The release script regenerates compile-time metadata with the requested build version and current git short hash, then validates staged binaries:
 
@@ -94,7 +64,7 @@ If either check fails, the release build exits non-zero before packaging.
 
 ## Notarization (planned)
 
-Notarization is not yet automated in `just release-build`.
+Notarization is not yet automated in `just release`.
 
 When added, it should run after signing/validation and before zipping:
 
@@ -106,10 +76,10 @@ When added, it should run after signing/validation and before zipping:
 ## Generate cask manually
 
 ```bash
-just release-cask <version>
+./script/release/build-brew-cask.sh --build-version <version>
 ```
 
-`just release-cask` always writes a GitHub release URL into `dist/frame.rb`:
+`build-brew-cask.sh` always writes a GitHub release URL into `dist/frame.rb`:
 
 `https://github.com/tvanreenen/frame/releases/download/v<version>/Frame-v<version>.zip`
 
@@ -121,7 +91,7 @@ If you don't want the one-command flow, manual steps are still:
 
 ```bash
 just test
-just release-build 0.12.3
+./script/release/build-release.sh --build-version 0.12.3
 ```
 
 2. Create and push annotated release tag:
@@ -138,7 +108,7 @@ git push origin v0.12.3
 4. Regenerate cask for that release version:
 
 ```bash
-just release-cask 0.12.3
+./script/release/build-brew-cask.sh --build-version 0.12.3
 ```
 
 5. Copy cask into your tap repo and commit/push:
@@ -153,6 +123,6 @@ git push
 
 ## Rollback/retry notes
 
-- If build fails, fix and re-run `just release-build <version>`.
+- If build fails, fix and re-run `just release <version>` (or `build-release.sh` directly while debugging).
 - If tag push failed partially, clean up the local/remote tag before retrying.
-- If cask output looks wrong, regenerate with `just release-cask ...` and re-copy.
+- If cask output looks wrong, regenerate with `build-brew-cask.sh` and re-copy.
