@@ -3,7 +3,7 @@ cd "$(dirname "$0")/../.."
 source ./script/setup.sh
 source ./script/identity.sh
 
-./script/dev/generate.sh --ignore-xcodeproj
+./script/dev/generate.sh --generate-git-hash --ignore-xcodeproj
 swift build "$@"
 
 rm -rf .debug && mkdir .debug

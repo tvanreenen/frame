@@ -26,29 +26,7 @@ struct Main {
         }
 
         if args.first == "--version" || args.first == "-v" {
-            let connection = NWConnection(to: NWEndpoint.unix(path: socketPath), using: .tcp)
-            let serverVersionAndHash: String?
-            if await connection.startBlocking() == nil {
-                let ans = await run(connection, [], stdin: "", windowId: nil, workspace: nil)
-                serverVersionAndHash = ans.serverVersionAndHash
-            } else {
-                serverVersionAndHash = nil
-            }
-            print(
-                """
-                \(productName) CLI client version: \(cliClientVersionAndHash)
-                \(productName) server version: \(serverVersionAndHash ?? "Unknown. The server is not running")
-                """,
-            )
-            if serverVersionAndHash != nil && cliClientVersionAndHash != serverVersionAndHash {
-                eprint(
-                    """
-                    Warning: \(productName) client/server versions don't match. Possible fixes:
-                      - Restart \(productName) (server restart is required after each update)
-                      - Reinstall and restart \(productName) (corrupted installation)
-                    """,
-                )
-            }
+            print(cliClientVersionAndHash)
             exit(0)
         }
 
@@ -63,10 +41,14 @@ struct Main {
                 exit(stderrMsg: e)
         }
 
+        if parsedArgs is DoctorCmdArgs {
+            exit(await runDoctor())
+        }
+
         let connection = NWConnection(to: NWEndpoint.unix(path: socketPath), using: .tcp)
 
         if let e = await connection.startBlocking() {
-            exit(stderrMsg: "Can't connect to \(productName) server. Is \(productName) running?\n\(e.localizedDescription)")
+            exit(stderrMsg: "Can't connect to \(productName).app Daemon. Is \(productName) running?\n\(e.localizedDescription)")
         }
 
         var stdin = ""
@@ -101,31 +83,52 @@ struct Main {
 
         if !ans.stdout.isEmpty { print(ans.stdout) }
         if !ans.stderr.isEmpty { eprint(ans.stderr) }
-        if ans.exitCode != 0 && ans.serverVersionAndHash != cliClientVersionAndHash {
-            eprint(
-                """
-                Warning: \(productName) client/server versions don't match
-                  - \(productName) CLI client version: \(cliClientVersionAndHash)
-                  - \(productName) server version: \(ans.serverVersionAndHash)
-                  Possible fixes:
-                  - Restart \(productName) (server restart is required after each update)
-                  - Reinstall and restart \(productName) (corrupted installation)
-                """,
-            )
-        }
         exit(ans.exitCode)
     }
 }
 
+func runDoctor() async -> Int32 {
+    let connection = NWConnection(to: NWEndpoint.unix(path: socketPath), using: .tcp)
+    if await connection.startBlocking() != nil {
+        print(
+            VersionPresentation.doctorOutput(
+                cliVersion: cliClientVersionAndHash,
+                daemonVersion: nil,
+                configHealthy: nil,
+                configDetails: nil,
+            ),
+        )
+        return VersionPresentation.doctorExitCode(cliVersion: cliClientVersionAndHash, daemonVersion: nil, configHealthy: nil)
+    }
+    let ans = await run(connection, ["doctor"], stdin: "", windowId: nil, workspace: nil)
+    let configHealthy = ans.exitCode == 0
+    let configDetails = [ans.stdout, ans.stderr]
+        .filter { !$0.trim().isEmpty }
+        .joined(separator: "\n")
+    print(
+        VersionPresentation.doctorOutput(
+            cliVersion: cliClientVersionAndHash,
+            daemonVersion: ans.serverVersionAndHash,
+            configHealthy: configHealthy,
+            configDetails: configDetails.isEmpty ? nil : configDetails,
+        ),
+    )
+    return VersionPresentation.doctorExitCode(
+        cliVersion: cliClientVersionAndHash,
+        daemonVersion: ans.serverVersionAndHash,
+        configHealthy: configHealthy,
+    )
+}
+
 func run(_ connection: NWConnection, _ args: StrArrSlice, stdin: String, windowId: UInt32?, workspace: String?) async -> ServerAnswer {
     if let e = await connection.write(ClientRequest(args: args.toArray(), stdin: stdin, windowId: windowId, workspace: workspace)) {
-        exit(stderrMsg: "Failed to write to server socket: \(e)")
+        exit(stderrMsg: "Failed to write to daemon socket: \(e)")
     }
 
     switch await connection.read() {
         case .success(let answer):
-            return (try? JSONDecoder().decode(ServerAnswer.self, from: answer)) ?? exitT(stderrMsg: "Failed to parse server response")
+            return (try? JSONDecoder().decode(ServerAnswer.self, from: answer)) ?? exitT(stderrMsg: "Failed to parse daemon response")
         case .failure(let error):
-            exit(stderrMsg: "Failed to read from server socket: \(error)")
+            exit(stderrMsg: "Failed to read from daemon socket: \(error)")
     }
 }

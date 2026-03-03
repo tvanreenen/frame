@@ -61,6 +61,11 @@ fi
 rm -rf "$dist_dir"
 mkdir -p "$dist_dir" "$stage_dir"
 
+echo "[prep] Preparing generated version metadata..."
+./script/dev/generate.sh --build-version "$build_version" --generate-git-hash --ignore-xcodeproj
+expected_git_short_hash="$(git rev-parse --short HEAD)"
+expected_display_version="${build_version}+${expected_git_short_hash}"
+
 #############
 ### BUILD ###
 #############
@@ -82,6 +87,7 @@ xcodebuild-pretty "$work_dir/xcodebuild.log" build \
     -destination "generic/platform=macOS" \
     -configuration "$xcode_configuration" \
     -derivedDataPath "$xcode_build_dir" \
+    MARKETING_VERSION="$build_version" \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="$codesign_identity"
 
@@ -118,6 +124,23 @@ for path in "${required_paths[@]}"; do
         exit 1
     fi
 done
+
+cli_version_output="$("$cli_binary" --version)"
+if [[ "$cli_version_output" != "$expected_display_version" ]]; then
+    echo "Release metadata mismatch for CLI version." >&2
+    echo "Expected: $expected_display_version" >&2
+    echo "Actual:   $cli_version_output" >&2
+    exit 1
+fi
+
+app_binary="$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
+app_version_output="$("$app_binary" --version)"
+if [[ "$app_version_output" != "$expected_display_version" ]]; then
+    echo "Release metadata mismatch for app daemon version." >&2
+    echo "Expected: $expected_display_version" >&2
+    echo "Actual:   $app_version_output" >&2
+    exit 1
+fi
 
 check-universal-binary() {
     if ! file "$1" | grep --fixed-string -q "Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit executable x86_64] [arm64"; then

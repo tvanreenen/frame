@@ -401,7 +401,7 @@ private func formatConfigErrors(configUrl: URL, errors: [TomlParseError]) -> Str
         \(formattedGroups)
 
         Recovery:
-        1. Fix the config and run '\(cliName) check-config'
+        1. Fix the config and run '\(cliName) doctor'
         2. Apply with '\(cliName) reload-config'
         """
 }

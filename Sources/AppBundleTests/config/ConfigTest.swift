@@ -137,7 +137,7 @@ final class ConfigTest: XCTestCase {
         XCTAssertTrue(message.contains("[workspace-change-hook]"), message)
         XCTAssertTrue(message.contains("[CFG001] unknownKey: Unknown top-level key"), message)
         XCTAssertTrue(message.contains("[CFG005] workspace-change-hook[1]: Cannot be empty"), message)
-        XCTAssertTrue(message.contains("frame check-config"), message)
+        XCTAssertTrue(message.contains("frame doctor"), message)
         XCTAssertTrue(message.contains("frame reload-config"), message)
     }
 

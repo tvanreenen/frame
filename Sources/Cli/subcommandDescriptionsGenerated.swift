@@ -4,7 +4,7 @@
 let subcommandDescriptions = [
     ["  add-column", "Insert a new column after the focused window's column"],
     ["  balance-sizes", "Balance sizes of all windows in the current workspace"],
-    ["  check-config", "Validate config file and print diagnostics"],
+    ["  doctor", "Print CLI/daemon/config diagnostics"],
     ["  focus-monitor", "Focus monitor by relative direction, by order, or by pattern"],
     ["  focus", "Set focus to a window."],
     ["  fullscreen", "Toggle the fullscreen mode for the focused window"],

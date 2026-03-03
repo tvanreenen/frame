@@ -15,10 +15,9 @@ final class ExecCommandTest: XCTestCase {
         XCTAssertTrue(enableErr.contains("enable"), enableErr)
     }
 
-    func testCheckConfigCommandIsAvailable() {
-        let command = parseCommand("check-config").cmdOrNil
-        XCTAssertNotNil(command)
-        XCTAssertTrue(command is CheckConfigCommand)
+    func testCheckConfigCommandIsRejected() {
+        let err = parseCommand("check-config").errorOrNil ?? ""
+        XCTAssertTrue(err.contains("check-config"), err)
     }
 
     func testReloadConfigRemovedFlagsAreRejected() {
