@@ -31,6 +31,20 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertFalse(content.contains("static func refreshAllAndGetAliveWindowIds("))
     }
 
+    func testRuntimeCodeUsesSessionUiBoundary() throws {
+        let refreshFile = projectRoot.appending(path: "Sources/AppBundle/layout/refresh.swift")
+        let reloadConfigFile = projectRoot.appending(path: "Sources/AppBundle/command/impl/ReloadConfigCommand.swift")
+        let refreshContent = try String(contentsOf: refreshFile)
+        let reloadConfigContent = try String(contentsOf: reloadConfigFile)
+
+        XCTAssertTrue(refreshContent.contains("syncUiState()"))
+        XCTAssertFalse(refreshContent.contains("SecureInputPanel.shared.refresh()"))
+        XCTAssertFalse(refreshContent.contains("updateTrayText()"))
+        XCTAssertTrue(reloadConfigContent.contains("session.clearConfigMessage()"))
+        XCTAssertTrue(reloadConfigContent.contains("session.setConfigMessage("))
+        XCTAssertFalse(reloadConfigContent.contains("MessageModel.shared.message"))
+    }
+
     func testWindowHasNoNotImplementedStubs() throws {
         let file = projectRoot.appending(path: "Sources/AppBundle/tree/Window.swift")
         let content = try String(contentsOf: file)

@@ -16,10 +16,10 @@ func initAppBundle(session: AppSession) {
             interceptTermination(SIGINT)
             interceptTermination(SIGKILL)
         }
-        if try await !reloadConfig() {
+        if try await !reloadConfig(session: session) {
             var out = ""
             check(
-                try await reloadConfig(forceConfigUrl: defaultConfigUrl, stdout: &out),
+                try await reloadConfig(session: session, forceConfigUrl: defaultConfigUrl, stdout: &out),
                 """
                 Can't load default config. Your installation is probably corrupted.
                 Please don't modify '\(defaultConfigUrl)'

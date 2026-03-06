@@ -33,8 +33,7 @@ extension AppSession {
                 try await refresh()
                 gcMonitors()
 
-                updateTrayText()
-                SecureInputPanel.shared.refresh()
+                syncUiState()
                 try await normalizeLayoutReason()
                 if shouldLayoutWorkspaces { try await layoutWorkspaces() }
             }
@@ -62,8 +61,7 @@ extension AppSession {
 
                 let focusAfter = focus.windowOrNil
 
-                updateTrayText()
-                SecureInputPanel.shared.refresh()
+                syncUiState()
                 try await layoutWorkspaces()
                 if focusBefore != focusAfter {
                     focusAfter?.nativeFocus()
