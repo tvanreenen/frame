@@ -5,7 +5,7 @@ struct ResizeCommand: Command { // todo cover with tests
     let args: ResizeCmdArgs
     /*conforms*/ var shouldResetClosedWindowsCache = true
 
-    func run(_ env: CmdEnv, _ io: CmdIo) -> Bool {
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }
 
         let candidates = target.windowOrNil?.parentsWithSelf ?? []

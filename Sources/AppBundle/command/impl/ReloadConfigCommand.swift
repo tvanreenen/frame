@@ -5,7 +5,7 @@ struct ReloadConfigCommand: Command {
     let args: ReloadConfigCmdArgs
     /*conforms*/ var shouldResetClosedWindowsCache = false
 
-    func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         var stdout = ""
         let isOk = try await reloadConfig(stdout: &stdout)
         if !stdout.isEmpty {

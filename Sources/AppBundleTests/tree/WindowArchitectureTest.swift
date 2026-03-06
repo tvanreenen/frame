@@ -1,4 +1,5 @@
 @testable import AppBundle
+import Common
 import Foundation
 import XCTest
 
@@ -44,6 +45,38 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(Workspace.all.isEmpty)
         XCTAssertNil(Window.get(byId: 788))
         XCTAssertTrue(runtimeContext === currentSession)
+    }
+
+    func testRunCmdSeqUsesProvidedSessionAndRestoresCurrentSession() async throws {
+        struct SessionProbeCommand: Command {
+            typealias T = AddColumnCmdArgs
+            let args = AddColumnCmdArgs(rawArgs: [])
+            let expectedSession: AppSession
+            let previousSession: AppSession
+
+            @MainActor
+            func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
+                XCTAssertTrue(session === expectedSession)
+                XCTAssertTrue(currentSession === expectedSession)
+                XCTAssertFalse(currentSession === previousSession)
+                return true
+            }
+
+            var shouldResetClosedWindowsCache: Bool { false }
+        }
+
+        let previousSession = currentSession
+        let isolatedSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+        let commands: [any Command] = [SessionProbeCommand(
+            expectedSession: isolatedSession,
+            previousSession: previousSession,
+        )]
+
+        let result = try await commands.runCmdSeq(in: isolatedSession, .defaultEnv, .emptyStdin)
+
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertTrue(currentSession === previousSession)
+        XCTAssertFalse(currentSession === isolatedSession)
     }
 
     func testRelayoutWindowFromFloatingStillWorks() async throws {

@@ -47,7 +47,7 @@ extension HotKey {
         hotkeys[hotkeyId] = HotKey(key: binding.keyCode, modifiers: binding.modifiers, keyDownHandler: {
             Task {
                 try await runLightSession(.hotkeyBinding) {
-                    _ = try await binding.commands.runCmdSeq(.defaultEnv, .emptyStdin)
+                    _ = try await binding.commands.runCmdSeq(in: currentSession, .defaultEnv, .emptyStdin)
                 }
             }
         })

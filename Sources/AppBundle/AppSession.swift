@@ -58,4 +58,11 @@ final class AppSession {
         lastKnownFocus = focus
         return focus
     }
+
+    func runAsCurrentSession<T>(_ body: () async throws -> T) async throws -> T {
+        let previousSession = currentSession
+        currentSession = self
+        defer { currentSession = previousSession }
+        return try await body()
+    }
 }

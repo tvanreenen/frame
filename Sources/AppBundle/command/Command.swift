@@ -5,7 +5,7 @@ protocol Command: AeroAny, Equatable, Sendable {
     associatedtype T where T: CmdArgs
     var args: T { get }
     @MainActor
-    func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool
 
     /// We should reset closedWindowsCache when the command can potentiall change the tree
     var shouldResetClosedWindowsCache: Bool { get }
@@ -22,6 +22,13 @@ extension Command {
 }
 
 extension Command {
+    @MainActor
+    func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
+        try await run(in: currentSession, env, io)
+    }
+}
+
+extension Command {
     var info: CmdStaticInfo { T.info }
 }
 
@@ -29,7 +36,7 @@ extension Command {
     @MainActor
     @discardableResult
     func run(_ env: CmdEnv, _ stdin: CmdStdin) async throws -> CmdResult {
-        return try await [self].runCmdSeq(env, stdin)
+        return try await [self].runCmdSeq(in: currentSession, env, stdin)
     }
 }
 
@@ -43,20 +50,32 @@ extension [Command] {
     }
 
     @MainActor
-    func runCmdSeq(_ env: CmdEnv, _ io: sending CmdIo) async throws -> Bool {
-        var isSucc = true
-        for command in self {
-            isSucc = try await command.run(env, io) && isSucc
-            if command.shouldResetClosedWindowsCache { resetClosedWindowsCache() }
-            refreshModel()
+    func runCmdSeq(in session: AppSession, _ env: CmdEnv, _ io: sending CmdIo) async throws -> Bool {
+        try await session.runAsCurrentSession {
+            var isSucc = true
+            for command in self {
+                isSucc = try await command.run(in: session, env, io) && isSucc
+                if command.shouldResetClosedWindowsCache { resetClosedWindowsCache() }
+                refreshModel()
+            }
+            return isSucc
         }
-        return isSucc
+    }
+
+    @MainActor
+    func runCmdSeq(_ env: CmdEnv, _ io: sending CmdIo) async throws -> Bool {
+        try await runCmdSeq(in: currentSession, env, io)
+    }
+
+    @MainActor
+    func runCmdSeq(in session: AppSession, _ env: CmdEnv, _ stdin: CmdStdin) async throws -> CmdResult {
+        let io: CmdIo = CmdIo(stdin: stdin)
+        let isSucc = try await runCmdSeq(in: session, env, io)
+        return CmdResult(stdout: io.stdout, stderr: io.stderr, exitCode: isSucc ? 0 : 1)
     }
 
     @MainActor
     func runCmdSeq(_ env: CmdEnv, _ stdin: CmdStdin) async throws -> CmdResult {
-        let io: CmdIo = CmdIo(stdin: stdin)
-        let isSucc = try await runCmdSeq(env, io)
-        return CmdResult(stdout: io.stdout, stderr: io.stderr, exitCode: isSucc ? 0 : 1)
+        try await runCmdSeq(in: currentSession, env, stdin)
     }
 }
