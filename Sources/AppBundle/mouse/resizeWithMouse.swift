@@ -65,7 +65,7 @@ private func resizeWithMouse(_ window: Window) async throws { // todo cover with
                         .prefix(while: { $0 != parent })
                         .filter {
                             let parent = $0.parent as? Column
-                            return parent?.orientation == orientation && parent?.layout == .tiles
+                            return parent?.orientation == orientation
                         }
                         .forEach { $0.setWeight(orientation, $0.getWeightBeforeResize(orientation) + diff) }
                     for sibling in parent.children[startIndex ..< pastTheEndIndex] {

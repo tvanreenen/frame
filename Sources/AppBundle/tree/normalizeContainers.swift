@@ -20,7 +20,6 @@ extension Workspace {
 
     @MainActor private func normalizeColumnsRoot(_ root: Column) {
         if root.orientation != .h { root.setOrientation(.h) }
-        if root.layout != .tiles { root.layout = .tiles }
     }
 
     @MainActor private func normalizeLegacyColumnsUnderRoot(_ root: Column) {

@@ -5,7 +5,7 @@ extension Workspace {
         let containers = children.filterIsInstance(of: Column.self)
         switch containers.count {
             case 0:
-                return Column(parent: self, adaptiveWeight: 1, .h, .tiles, index: INDEX_BIND_LAST)
+                return Column(parent: self, adaptiveWeight: 1, .h, index: INDEX_BIND_LAST)
             case 1:
                 return containers.singleOrNil().orDie()
             default:

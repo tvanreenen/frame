@@ -8,7 +8,6 @@ enum FrozenTreeNode: Sendable {
 
 struct FrozenContainer: Sendable {
     let children: [FrozenTreeNode]
-    let layout: Layout
     let orientation: Orientation
     let weight: CGFloat
 
@@ -25,7 +24,6 @@ struct FrozenContainer: Sendable {
                     illegalChildParentRelation(child: $0, parent: container)
             }
         }
-        layout = container.layout
         orientation = container.orientation
         weight = getWeightOrNil(container) ?? 1
     }

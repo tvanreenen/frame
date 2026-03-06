@@ -4,23 +4,21 @@ import Common
 final class Column: TreeNode, NonLeafTreeNodeObject { // todo consider renaming to GenericContainer
     fileprivate var _orientation: Orientation
     var orientation: Orientation { _orientation }
-    var layout: Layout
 
     @MainActor
-    init(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, _ orientation: Orientation, _ layout: Layout, index: Int) {
+    init(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, _ orientation: Orientation, index: Int) {
         self._orientation = orientation
-        self.layout = layout
         super.init(parent: parent, adaptiveWeight: adaptiveWeight, index: index)
     }
 
     @MainActor
     static func newHTiles(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, index: Int) -> Column {
-        Column(parent: parent, adaptiveWeight: adaptiveWeight, .h, .tiles, index: index)
+        Column(parent: parent, adaptiveWeight: adaptiveWeight, .h, index: index)
     }
 
     @MainActor
     static func newVTiles(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, index: Int) -> Column {
-        Column(parent: parent, adaptiveWeight: adaptiveWeight, .v, .tiles, index: index)
+        Column(parent: parent, adaptiveWeight: adaptiveWeight, .v, index: index)
     }
 }
 
@@ -29,15 +27,5 @@ extension Column {
 
     func setOrientation(_ orientation: Orientation) {
         _orientation = orientation
-    }
-}
-
-enum Layout: String {
-    case tiles
-}
-
-extension String {
-    func parseLayout() -> Layout? {
-        self == "tiles" ? .tiles : nil
     }
 }
