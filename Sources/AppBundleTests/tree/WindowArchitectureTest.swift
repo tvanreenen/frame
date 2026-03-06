@@ -45,6 +45,23 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(window.parent is Column)
     }
 
+    func testRelayoutWindowUsesFocusedColumnForNewTilingPlacement() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        _ = TestWindow.new(id: 782, parent: col1)
+        _ = TestWindow.new(id: 783, parent: col2).focusWindow()
+        let window = TestWindow.new(
+            id: 784,
+            parent: workspace,
+            rect: Rect(topLeftX: 5, topLeftY: 5, width: 100, height: 100),
+        )
+
+        try await window.relayoutWindow(on: workspace)
+
+        XCTAssertTrue(window.parent === col2)
+    }
+
     func testPopupNormalizationPathWithoutMacWindowCast() async throws {
         let popup = TestWindow.new(id: 779, parent: macosPopupWindowsContainer)
         TestApp.shared.setWindowType(windowId: 779, .window)
@@ -69,6 +86,18 @@ final class WindowArchitectureTest: XCTestCase {
 
         let window = try await Window.getOrRegister(windowId: 781, app: TestApp.shared)
         XCTAssertTrue(window.parent is Column)
+    }
+
+    func testWindowRegistrationUsesFocusedColumnForNewTilingPlacement() async throws {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        _ = TestWindow.new(id: 785, parent: col1)
+        _ = TestWindow.new(id: 786, parent: col2).focusWindow()
+
+        let window = try await Window.getOrRegister(windowId: 787, app: TestApp.shared)
+
+        XCTAssertTrue(window.parent === col2)
     }
 
     func testHideUnhideCornerRoundTrip() async throws {
