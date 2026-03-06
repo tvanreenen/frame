@@ -2,7 +2,10 @@ import AppKit
 import Common
 
 @MainActor
-private var activeRefreshTask: Task<(), any Error>? = nil
+private var activeRefreshTask: Task<(), any Error>? {
+    get { currentSession.activeRefreshTask }
+    set { currentSession.activeRefreshTask = newValue }
+}
 
 @MainActor
 func scheduleRefreshSession(

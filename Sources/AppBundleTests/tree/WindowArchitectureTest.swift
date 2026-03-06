@@ -32,6 +32,20 @@ final class WindowArchitectureTest: XCTestCase {
         assertEquals(Window.get(byId: 777), window)
     }
 
+    func testCurrentSessionOwnsRuntimeRegistries() {
+        let workspace = Workspace.get(byName: name)
+        _ = TestWindow.new(id: 788, parent: workspace.columnsRoot)
+
+        XCTAssertFalse(Workspace.all.isEmpty)
+        XCTAssertNotNil(Window.get(byId: 788))
+
+        currentSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+
+        XCTAssertTrue(Workspace.all.isEmpty)
+        XCTAssertNil(Window.get(byId: 788))
+        XCTAssertTrue(runtimeContext === currentSession)
+    }
+
     func testRelayoutWindowFromFloatingStillWorks() async throws {
         let workspace = Workspace.get(byName: name)
         let window = TestWindow.new(

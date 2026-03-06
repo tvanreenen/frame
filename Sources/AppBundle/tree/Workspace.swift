@@ -1,11 +1,27 @@
 import AppKit
 import Common
 
-@MainActor private var workspaceNameToWorkspace: [String: Workspace] = [:]
+@MainActor
+private var workspaceNameToWorkspace: [String: Workspace] {
+    get { currentSession.workspaceNameToWorkspace }
+    set { currentSession.workspaceNameToWorkspace = newValue }
+}
 
-@MainActor private var screenPointToPrevVisibleWorkspace: [CGPoint: String] = [:]
-@MainActor private var screenPointToVisibleWorkspace: [CGPoint: Workspace] = [:]
-@MainActor private var visibleWorkspaceToScreenPoint: [Workspace: CGPoint] = [:]
+@MainActor
+private var screenPointToPrevVisibleWorkspace: [CGPoint: String] {
+    get { currentSession.screenPointToPrevVisibleWorkspace }
+    set { currentSession.screenPointToPrevVisibleWorkspace = newValue }
+}
+@MainActor
+private var screenPointToVisibleWorkspace: [CGPoint: Workspace] {
+    get { currentSession.screenPointToVisibleWorkspace }
+    set { currentSession.screenPointToVisibleWorkspace = newValue }
+}
+@MainActor
+private var visibleWorkspaceToScreenPoint: [Workspace: CGPoint] {
+    get { currentSession.visibleWorkspaceToScreenPoint }
+    set { currentSession.visibleWorkspaceToScreenPoint = newValue }
+}
 
 // The returned workspace must be invisible and it must belong to the requested monitor
 @MainActor func getStubWorkspace(for monitor: Monitor) -> Workspace {

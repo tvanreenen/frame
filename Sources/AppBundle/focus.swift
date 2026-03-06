@@ -50,10 +50,11 @@ struct FrozenFocus: AeroAny, Equatable, Sendable {
     }
 }
 
-@MainActor private var _focus: FrozenFocus = {
-    let monitor = mainMonitor
-    return FrozenFocus(windowId: nil, workspaceName: monitor.activeWorkspace.name, monitorId: monitor.monitorId ?? 0)
-}()
+@MainActor
+private var _focus: FrozenFocus {
+    get { currentSession.initializedFocus() }
+    set { currentSession.focusState = newValue }
+}
 
 /// Global focus.
 /// Commands must be cautious about accessing this property directly. There are legitimate cases.
@@ -101,18 +102,33 @@ extension Workspace {
     }
 }
 
-@MainActor private var _lastKnownFocus: FrozenFocus = _focus
+@MainActor
+private var _lastKnownFocus: FrozenFocus {
+    get { currentSession.initializedLastKnownFocus() }
+    set { currentSession.lastKnownFocus = newValue }
+}
 
 // Used to track the previously focused workspace
-@MainActor var _prevFocusedWorkspaceName: String? = nil {
-    didSet {
-        prevFocusedWorkspaceDate = .now
+@MainActor
+var _prevFocusedWorkspaceName: String? {
+    get { currentSession.prevFocusedWorkspaceName }
+    set {
+        currentSession.prevFocusedWorkspaceName = newValue
+        currentSession.prevFocusedWorkspaceDate = .now
     }
 }
-@MainActor var prevFocusedWorkspaceDate: Date = .distantPast
+@MainActor
+var prevFocusedWorkspaceDate: Date {
+    get { currentSession.prevFocusedWorkspaceDate }
+    set { currentSession.prevFocusedWorkspaceDate = newValue }
+}
 @MainActor var prevFocusedWorkspace: Workspace? { _prevFocusedWorkspaceName.map { Workspace.get(byName: $0) } }
 
-@MainActor private var focusCallbacksRecursionGuard = false
+@MainActor
+private var focusCallbacksRecursionGuard: Bool {
+    get { currentSession.focusCallbacksRecursionGuard }
+    set { currentSession.focusCallbacksRecursionGuard = newValue }
+}
 // Should be called in refreshSession
 @MainActor func checkFocusCallbacks() {
     if refreshSessionEvent?.isStartup == true {
