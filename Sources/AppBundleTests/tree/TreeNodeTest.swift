@@ -25,14 +25,14 @@ final class TreeNodeTest: XCTestCase {
         let workspace = Workspace.get(byName: name)
 
         XCTAssertTrue(workspace.isEffectivelyEmpty)
-        weak var window = TestWindow.new(id: 1, parent: workspace.rootTilingContainer)
+        weak var window = TestWindow.new(id: 1, parent: workspace.columnsRoot)
         XCTAssertNotEqual(window, nil)
         XCTAssertTrue(!workspace.isEffectivelyEmpty)
         window!.unbindFromParent()
         XCTAssertTrue(workspace.isEffectivelyEmpty)
 
         // Don't save to local variable
-        TestWindow.new(id: 2, parent: workspace.rootTilingContainer)
+        TestWindow.new(id: 2, parent: workspace.columnsRoot)
         XCTAssertTrue(!workspace.isEffectivelyEmpty)
     }
 
@@ -40,21 +40,21 @@ final class TreeNodeTest: XCTestCase {
 
     func testNormalizeContainers_dontRemoveRoot() {
         let workspace = Workspace.get(byName: name)
-        weak let root = workspace.rootTilingContainer
+        weak let root = workspace.columnsRoot
         XCTAssertNotEqual(root, nil)
         XCTAssertTrue(root!.isEffectivelyEmpty)
         workspace.normalizeContainers()
         // Root container is never unbound even when empty
         XCTAssertNotEqual(root, nil)
         XCTAssertTrue(root!.isEffectivelyEmpty)
-        XCTAssertTrue(root === workspace.rootTilingContainer)
+        XCTAssertTrue(root === workspace.columnsRoot)
     }
 
     func testRootTilingContainerIsStructurallyHorizontal() {
         let workspace = Workspace.get(byName: name)
-        let root = workspace.rootTilingContainer
+        let root = workspace.columnsRoot
         workspace.normalizeContainers()
-        XCTAssertTrue(root === workspace.rootTilingContainer)
+        XCTAssertTrue(root === workspace.columnsRoot)
         assertEquals(root.orientation, .h)
     }
 

@@ -28,7 +28,7 @@ final class WindowArchitectureTest: XCTestCase {
 
     func testWindowRegistryLookupWorks() {
         let workspace = Workspace.get(byName: name)
-        let window = TestWindow.new(id: 777, parent: workspace.rootTilingContainer)
+        let window = TestWindow.new(id: 777, parent: workspace.columnsRoot)
         assertEquals(Window.get(byId: 777), window)
     }
 

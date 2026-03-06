@@ -91,7 +91,7 @@ extension TreeNode {
     @MainActor
     func findLeafWindowRecursive(snappedTo direction: CardinalDirection) -> Window? {
         if let workspace = self as? Workspace {
-            return workspace.rootTilingContainer.findLeafWindowRecursive(snappedTo: direction)
+            return workspace.columnsRoot.findLeafWindowRecursive(snappedTo: direction)
         }
         if let window = self as? Window {
             return window

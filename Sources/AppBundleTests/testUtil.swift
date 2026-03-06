@@ -43,10 +43,10 @@ func setUpWorkspacesForTests() {
 
 @MainActor
 func clearWorkspaceChildrenForTests(_ workspace: Workspace) {
-    for child in Array(workspace.rootTilingContainer.children) {
+    for child in Array(workspace.columnsRoot.children) {
         child.unbindFromParent()
     }
-    for child in Array(workspace.children) where child !== workspace.rootTilingContainer {
+    for child in Array(workspace.children) where child !== workspace.columnsRoot {
         child.unbindFromParent()
     }
 }

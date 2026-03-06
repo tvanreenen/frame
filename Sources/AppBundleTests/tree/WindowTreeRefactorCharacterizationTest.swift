@@ -22,13 +22,13 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
 
         XCTAssertTrue(didMove)
         XCTAssertTrue(window.parent === lastTargetColumn)
-        XCTAssertTrue(targetWorkspace.rootTilingContainer.children.allSatisfy { $0 is Column })
+        XCTAssertTrue(targetWorkspace.columnsRoot.children.allSatisfy { $0 is Column })
         assertColumnChildren(targetWorkspace, [[2], [3, 1]])
     }
 
     func testRestoreClosedWindowsCache_restoresColumnsStructure() async throws {
         let workspace = Workspace.get(byName: name)
-        let root = workspace.rootTilingContainer
+        let root = workspace.columnsRoot
         let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         _ = TestWindow.new(id: 1, parent: col1).focusWindow()
@@ -51,12 +51,12 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
 
         let didRestore = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: restoredWindow)
         XCTAssertTrue(didRestore)
-        XCTAssertTrue(workspace.rootTilingContainer === root)
+        XCTAssertTrue(workspace.columnsRoot === root)
         assertEquals(workspace.columns.count, 2)
         assertEquals(workspace.columns[0].children.compactMap { ($0 as? Window)?.windowId }, [1, 2])
         assertEquals(workspace.columns[1].children.compactMap { ($0 as? Window)?.windowId }, [3])
         assertEquals(workspace.floatingWindows.map(\.windowId), [4])
-        XCTAssertTrue(workspace.rootTilingContainer.children.allSatisfy { $0 is Column })
+        XCTAssertTrue(workspace.columnsRoot.children.allSatisfy { $0 is Column })
     }
 
     func testFrozenWorkspaceSnapshot_usesColumnsModel() {

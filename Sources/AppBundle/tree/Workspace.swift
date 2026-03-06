@@ -37,6 +37,7 @@ final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
     /// `assignedMonitorPoint` must be interpreted only when the workspace is invisible
     fileprivate var assignedMonitorPoint: CGPoint? = nil
 
+    /// Structural backing node for the columns model. Prefer `columnsRoot` at call sites.
     @MainActor
     var rootTilingContainer: Column {
         _rootTilingContainer.orDie("Workspace root tiling container must always exist")

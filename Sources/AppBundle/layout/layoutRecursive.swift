@@ -19,7 +19,7 @@ extension TreeNode {
         if let workspace = self as? Workspace {
             lastAppliedLayoutPhysicalRect = physicalRect
             lastAppliedLayoutVirtualRect = virtual
-            try await workspace.rootTilingContainer.layoutRecursive(point, width: width, height: height, virtual: virtual, context)
+            try await workspace.columnsRoot.layoutRecursive(point, width: width, height: height, virtual: virtual, context)
             for window in workspace.children.filterIsInstance(of: Window.self) {
                 window.lastAppliedLayoutPhysicalRect = nil
                 window.lastAppliedLayoutVirtualRect = nil
@@ -30,7 +30,7 @@ extension TreeNode {
         if let window = self as? Window {
             if window.windowId != currentlyManipulatedWithMouseWindowId {
                 lastAppliedLayoutVirtualRect = virtual
-                if window.isFullscreen && window == context.workspace.rootTilingContainer.mostRecentWindowRecursive {
+                if window.isFullscreen && window == context.workspace.columnsRoot.mostRecentWindowRecursive {
                     lastAppliedLayoutPhysicalRect = nil
                     window.layoutFullscreen(context)
                 } else {

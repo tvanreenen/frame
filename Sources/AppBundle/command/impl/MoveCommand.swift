@@ -48,7 +48,7 @@ private let moveOutMacosUnconventionalWindow =
     guard let currentColumn = window.column,
           let currentIndex = cols.firstIndex(of: currentColumn)
     else {
-        // Window is not in a column (shouldn't happen in normal usage)
+        // Defensive only. Normal runtime paths should always place tiled windows in a column.
         return true
     }
 

@@ -8,18 +8,18 @@ final class BalanceSizesCommandTest: XCTestCase {
 
     func testBalanceSizesCommand() async throws {
         let workspace = Workspace.get(byName: name).apply { wsp in
-            wsp.rootTilingContainer.apply {
-                TestWindow.new(id: 1, parent: $0).setWeight(wsp.rootTilingContainer.orientation, 1)
-                TestWindow.new(id: 2, parent: $0).setWeight(wsp.rootTilingContainer.orientation, 2)
-                TestWindow.new(id: 3, parent: $0).setWeight(wsp.rootTilingContainer.orientation, 3)
+            wsp.columnsRoot.apply {
+                TestWindow.new(id: 1, parent: $0).setWeight(wsp.columnsRoot.orientation, 1)
+                TestWindow.new(id: 2, parent: $0).setWeight(wsp.columnsRoot.orientation, 2)
+                TestWindow.new(id: 3, parent: $0).setWeight(wsp.columnsRoot.orientation, 3)
             }
         }
 
         try await BalanceSizesCommand(args: BalanceSizesCmdArgs(rawArgs: []))
             .run(.defaultEnv.copy(\.workspaceName, name), .emptyStdin)
 
-        for window in workspace.rootTilingContainer.children {
-            assertEquals(window.getWeight(workspace.rootTilingContainer.orientation), 1)
+        for window in workspace.columnsRoot.children {
+            assertEquals(window.getWeight(workspace.columnsRoot.orientation), 1)
         }
     }
 }

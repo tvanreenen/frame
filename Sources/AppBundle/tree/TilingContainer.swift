@@ -1,7 +1,7 @@
 import AppKit
 import Common
 
-final class Column: TreeNode, NonLeafTreeNodeObject { // todo consider renaming to GenericContainer
+final class Column: TreeNode, NonLeafTreeNodeObject {
     fileprivate var _orientation: Orientation
     var orientation: Orientation { _orientation }
 
