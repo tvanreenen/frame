@@ -24,15 +24,6 @@ enum TilingTreeNodeCases {
     case tilingContainer(Column)
 }
 
-enum NonLeafTreeNodeKind: Equatable {
-    case tilingContainer
-    case workspace
-    case macosMinimizedWindowsContainer
-    case macosHiddenAppsWindowsContainer
-    case macosFullscreenWindowsContainer
-    case macosPopupWindowsContainer
-}
-
 protocol NonLeafTreeNodeObject: TreeNode {}
 
 extension TreeNode {
@@ -85,17 +76,6 @@ extension NonLeafTreeNodeObject {
             return .macosPopupWindowsContainer(container)
         } else {
             die("Unknown tree \(self)")
-        }
-    }
-
-    var kind: NonLeafTreeNodeKind {
-        return switch cases {
-            case .tilingContainer: .tilingContainer
-            case .workspace: .workspace
-            case .macosMinimizedWindowsContainer: .macosMinimizedWindowsContainer
-            case .macosFullscreenWindowsContainer: .macosFullscreenWindowsContainer
-            case .macosHiddenAppsWindowsContainer: .macosHiddenAppsWindowsContainer
-            case .macosPopupWindowsContainer: .macosPopupWindowsContainer
         }
     }
 }

@@ -29,34 +29,48 @@ private func _normalizeLayoutReason(workspace: Workspace, windows: [Window]) asy
             case .standard:
                 guard let parent = window.parent else { continue }
                 if isMacosFullscreen {
-                    window.layoutReason = .macos(prevParentKind: parent.kind)
+                    window.layoutReason = .macos(previousPlacement: parent.macOsRecoveryPlacement)
                     window.bind(to: workspace.macOsNativeFullscreenWindowsContainer, adaptiveWeight: WEIGHT_DOESNT_MATTER, index: INDEX_BIND_LAST)
                 } else if isMacosMinimized {
-                    window.layoutReason = .macos(prevParentKind: parent.kind)
+                    window.layoutReason = .macos(previousPlacement: parent.macOsRecoveryPlacement)
                     window.bind(to: macosMinimizedWindowsContainer, adaptiveWeight: 1, index: INDEX_BIND_LAST)
                 } else if isMacosWindowOfHiddenApp {
-                    window.layoutReason = .macos(prevParentKind: parent.kind)
+                    window.layoutReason = .macos(previousPlacement: parent.macOsRecoveryPlacement)
                     window.bind(to: workspace.macOsNativeHiddenAppsWindowsContainer, adaptiveWeight: WEIGHT_DOESNT_MATTER, index: INDEX_BIND_LAST)
                 }
-            case .macos(let prevParentKind):
+            case .macos(let previousPlacement):
                 if !isMacosFullscreen && !isMacosMinimized && !isMacosWindowOfHiddenApp {
-                    try await exitMacOsNativeUnconventionalState(window: window, prevParentKind: prevParentKind, workspace: workspace)
+                    try await exitMacOsNativeUnconventionalState(window: window, previousPlacement: previousPlacement, workspace: workspace)
                 }
         }
     }
 }
 
 @MainActor
-func exitMacOsNativeUnconventionalState(window: Window, prevParentKind: NonLeafTreeNodeKind, workspace: Workspace) async throws {
+func exitMacOsNativeUnconventionalState(window: Window, previousPlacement: PreviousMacOsWindowPlacement, workspace: Workspace) async throws {
     window.layoutReason = .standard
-    switch prevParentKind {
-        case .workspace:
+    switch previousPlacement {
+        case .floating:
             window.bindAsFloatingWindow(to: workspace)
-        case .tilingContainer:
+        case .tiled:
             try await window.relayoutWindow(on: workspace, forceTile: true)
-        case .macosPopupWindowsContainer: // Since the window was minimized/fullscreened it was mistakenly detected as popup. Relayout the window
+        case .reclassify:
             try await window.relayoutWindow(on: workspace)
-        case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer: // wtf case, should never be possible. But If encounter it, let's just re-layout window
-            try await window.relayoutWindow(on: workspace)
+    }
+}
+
+extension NonLeafTreeNodeObject {
+    var macOsRecoveryPlacement: PreviousMacOsWindowPlacement {
+        switch cases {
+            case .workspace:
+                .floating
+            case .tilingContainer:
+                .tiled
+            case .macosPopupWindowsContainer,
+                 .macosMinimizedWindowsContainer,
+                 .macosFullscreenWindowsContainer,
+                 .macosHiddenAppsWindowsContainer:
+                .reclassify
+        }
     }
 }

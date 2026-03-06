@@ -228,7 +228,13 @@ extension Window {
 enum LayoutReason: Equatable {
     case standard
     /// Reason for the cur temp layout is macOS native fullscreen, minimize, or hide
-    case macos(prevParentKind: NonLeafTreeNodeKind)
+    case macos(previousPlacement: PreviousMacOsWindowPlacement)
+}
+
+enum PreviousMacOsWindowPlacement: Equatable {
+    case floating
+    case tiled
+    case reclassify
 }
 
 extension Window {

@@ -69,7 +69,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is MacosFullscreenWindowsContainer)
-        assertPreviousPlacement(window.layoutReason, expected: .tilingContainer)
+        assertPreviousPlacement(window.layoutReason, expected: .tiled)
 
         TestApp.shared.setMacosFullscreen(windowId: 1, false)
         try await normalizeLayoutReason()
@@ -87,7 +87,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is MacosFullscreenWindowsContainer)
-        assertPreviousPlacement(window.layoutReason, expected: .workspace)
+        assertPreviousPlacement(window.layoutReason, expected: .floating)
 
         TestApp.shared.setMacosFullscreen(windowId: 2, false)
         try await normalizeLayoutReason()
@@ -106,7 +106,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is MacosMinimizedWindowsContainer)
-        assertPreviousPlacement(window.layoutReason, expected: .tilingContainer)
+        assertPreviousPlacement(window.layoutReason, expected: .tiled)
 
         TestApp.shared.setMacosMinimized(windowId: 3, false)
         try await normalizeLayoutReason()
@@ -124,7 +124,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is MacosMinimizedWindowsContainer)
-        assertPreviousPlacement(window.layoutReason, expected: .workspace)
+        assertPreviousPlacement(window.layoutReason, expected: .floating)
 
         TestApp.shared.setMacosMinimized(windowId: 4, false)
         try await normalizeLayoutReason()
@@ -134,7 +134,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
     }
 }
 
-private func assertPreviousPlacement(_ layoutReason: LayoutReason, expected: NonLeafTreeNodeKind, file: StaticString = #filePath, line: UInt = #line) {
+private func assertPreviousPlacement(_ layoutReason: LayoutReason, expected: PreviousMacOsWindowPlacement, file: StaticString = #filePath, line: UInt = #line) {
     switch layoutReason {
         case .standard:
             XCTFail("Expected macOS layout reason", file: file, line: line)
