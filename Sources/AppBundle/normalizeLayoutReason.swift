@@ -61,16 +61,8 @@ func exitMacOsNativeUnconventionalState(window: Window, previousPlacement: Previ
 
 extension NonLeafTreeNodeObject {
     var macOsRecoveryPlacement: PreviousMacOsWindowPlacement {
-        switch cases {
-            case .workspace:
-                .floating
-            case .tilingContainer:
-                .tiled
-            case .macosPopupWindowsContainer,
-                 .macosMinimizedWindowsContainer,
-                 .macosFullscreenWindowsContainer,
-                 .macosHiddenAppsWindowsContainer:
-                .reclassify
-        }
+        if self is Workspace { return .floating }
+        if self is Column { return .tiled }
+        return .reclassify
     }
 }

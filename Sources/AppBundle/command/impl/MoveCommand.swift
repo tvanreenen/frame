@@ -12,27 +12,25 @@ struct MoveCommand: Command {
             return io.err(noWindowIsFocused)
         }
         guard let parent = currentWindow.parent else { return false }
-        switch parent.cases {
-            case .tilingContainer(let parent):
-                switch direction.orientation {
-                    case .h: // left/right — push window to adjacent column
-                        return moveWindowBetweenColumns(currentWindow, direction: direction, args, io)
-                    case .v: // up/down — reorder within column
-                        guard parent.orientation == .v else { return true }
-                        let indexOfCurrent = currentWindow.ownIndex.orDie()
-                        let indexOfTarget = indexOfCurrent + direction.focusOffset
-                        guard parent.children.indices.contains(indexOfTarget) else { return true }
-                        let prevBinding = currentWindow.unbindFromParent()
-                        currentWindow.bind(to: parent, adaptiveWeight: prevBinding.adaptiveWeight, index: indexOfTarget)
-                        return true
-                }
-            case .workspace: // floating window
-                return io.err("moving floating windows isn't yet supported")
-            case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer:
-                return io.err(moveOutMacosUnconventionalWindow)
-            case .macosPopupWindowsContainer:
-                return false
+        if let parent = parent as? Column {
+            switch direction.orientation {
+                case .h: // left/right — push window to adjacent column
+                    return moveWindowBetweenColumns(currentWindow, direction: direction, args, io)
+                case .v: // up/down — reorder within column
+                    guard parent.orientation == .v else { return true }
+                    let indexOfCurrent = currentWindow.ownIndex.orDie()
+                    let indexOfTarget = indexOfCurrent + direction.focusOffset
+                    guard parent.children.indices.contains(indexOfTarget) else { return true }
+                    let prevBinding = currentWindow.unbindFromParent()
+                    currentWindow.bind(to: parent, adaptiveWeight: prevBinding.adaptiveWeight, index: indexOfTarget)
+                    return true
+            }
         }
+        if parent is Workspace { return io.err("moving floating windows isn't yet supported") }
+        if parent is MacosMinimizedWindowsContainer || parent is MacosFullscreenWindowsContainer || parent is MacosHiddenAppsWindowsContainer {
+            return io.err(moveOutMacosUnconventionalWindow)
+        }
+        return false
     }
 }
 

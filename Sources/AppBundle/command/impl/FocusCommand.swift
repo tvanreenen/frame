@@ -90,21 +90,19 @@ struct FocusCommand: Command {
 extension TreeNode {
     @MainActor
     func findLeafWindowRecursive(snappedTo direction: CardinalDirection) -> Window? {
-        switch nodeCases {
-            case .workspace(let workspace):
-                return workspace.rootTilingContainer.findLeafWindowRecursive(snappedTo: direction)
-            case .window(let window):
-                return window
-            case .tilingContainer(let container):
-                if direction.orientation == container.orientation {
-                    return (direction.isPositive ? container.children.last : container.children.first)?
-                        .findLeafWindowRecursive(snappedTo: direction)
-                } else {
-                    return mostRecentChild?.findLeafWindowRecursive(snappedTo: direction)
-                }
-            case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer,
-                 .macosPopupWindowsContainer, .macosHiddenAppsWindowsContainer:
-                return nil
+        if let workspace = self as? Workspace {
+            return workspace.rootTilingContainer.findLeafWindowRecursive(snappedTo: direction)
         }
+        if let window = self as? Window {
+            return window
+        }
+        if let container = self as? Column {
+            if direction.orientation == container.orientation {
+                return (direction.isPositive ? container.children.last : container.children.first)?
+                    .findLeafWindowRecursive(snappedTo: direction)
+            }
+            return mostRecentChild?.findLeafWindowRecursive(snappedTo: direction)
+        }
+        return nil
     }
 }

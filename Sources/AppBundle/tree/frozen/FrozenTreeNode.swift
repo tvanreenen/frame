@@ -13,16 +13,13 @@ struct FrozenContainer: Sendable {
 
     @MainActor init(_ container: Column) {
         children = container.children.map {
-            switch $0.nodeCases {
-                case .window(let w): .window(FrozenWindow(w))
-                case .tilingContainer(let c): .container(FrozenContainer(c))
-                case .workspace,
-                     .macosMinimizedWindowsContainer,
-                     .macosHiddenAppsWindowsContainer,
-                     .macosFullscreenWindowsContainer,
-                     .macosPopupWindowsContainer:
-                    illegalChildParentRelation(child: $0, parent: container)
+            if let window = $0 as? Window {
+                return .window(FrozenWindow(window))
             }
+            if let nestedContainer = $0 as? Column {
+                return .container(FrozenContainer(nestedContainer))
+            }
+            illegalChildParentRelation(child: $0, parent: container)
         }
         orientation = container.orientation
         weight = getWeightOrNil(container) ?? 1

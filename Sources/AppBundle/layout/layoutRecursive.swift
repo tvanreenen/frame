@@ -16,35 +16,35 @@ extension TreeNode {
     @MainActor
     fileprivate func layoutRecursive(_ point: CGPoint, width: CGFloat, height: CGFloat, virtual: Rect, _ context: LayoutContext) async throws {
         let physicalRect = Rect(topLeftX: point.x, topLeftY: point.y, width: width, height: height)
-        switch nodeCases {
-            case .workspace(let workspace):
-                lastAppliedLayoutPhysicalRect = physicalRect
+        if let workspace = self as? Workspace {
+            lastAppliedLayoutPhysicalRect = physicalRect
+            lastAppliedLayoutVirtualRect = virtual
+            try await workspace.rootTilingContainer.layoutRecursive(point, width: width, height: height, virtual: virtual, context)
+            for window in workspace.children.filterIsInstance(of: Window.self) {
+                window.lastAppliedLayoutPhysicalRect = nil
+                window.lastAppliedLayoutVirtualRect = nil
+                try await window.layoutFloatingWindow(context)
+            }
+            return
+        }
+        if let window = self as? Window {
+            if window.windowId != currentlyManipulatedWithMouseWindowId {
                 lastAppliedLayoutVirtualRect = virtual
-                try await workspace.rootTilingContainer.layoutRecursive(point, width: width, height: height, virtual: virtual, context)
-                for window in workspace.children.filterIsInstance(of: Window.self) {
-                    window.lastAppliedLayoutPhysicalRect = nil
-                    window.lastAppliedLayoutVirtualRect = nil
-                    try await window.layoutFloatingWindow(context)
+                if window.isFullscreen && window == context.workspace.rootTilingContainer.mostRecentWindowRecursive {
+                    lastAppliedLayoutPhysicalRect = nil
+                    window.layoutFullscreen(context)
+                } else {
+                    lastAppliedLayoutPhysicalRect = physicalRect
+                    window.isFullscreen = false
+                    window.setAxFrame(point, CGSize(width: width, height: height))
                 }
-            case .window(let window):
-                if window.windowId != currentlyManipulatedWithMouseWindowId {
-                    lastAppliedLayoutVirtualRect = virtual
-                    if window.isFullscreen && window == context.workspace.rootTilingContainer.mostRecentWindowRecursive {
-                        lastAppliedLayoutPhysicalRect = nil
-                        window.layoutFullscreen(context)
-                    } else {
-                        lastAppliedLayoutPhysicalRect = physicalRect
-                        window.isFullscreen = false
-                        window.setAxFrame(point, CGSize(width: width, height: height))
-                    }
-                }
-            case .tilingContainer(let container):
-                lastAppliedLayoutPhysicalRect = physicalRect
-                lastAppliedLayoutVirtualRect = virtual
-                try await container.layoutTiles(point, width: width, height: height, virtual: virtual, context)
-            case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer,
-                 .macosPopupWindowsContainer, .macosHiddenAppsWindowsContainer:
-                return // Nothing to do for weirdos
+            }
+            return
+        }
+        if let container = self as? Column {
+            lastAppliedLayoutPhysicalRect = physicalRect
+            lastAppliedLayoutVirtualRect = virtual
+            try await container.layoutTiles(point, width: width, height: height, virtual: virtual, context)
         }
     }
 }

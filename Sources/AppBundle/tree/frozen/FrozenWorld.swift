@@ -13,16 +13,13 @@ func collectAllWindowIds(workspace: Workspace) -> [UInt32] {
 }
 
 func collectAllWindowIdsRecursive(_ node: TreeNode) -> [UInt32] {
-    switch node.nodeCases {
-        case .macosFullscreenWindowsContainer,
-             .macosHiddenAppsWindowsContainer,
-             .macosMinimizedWindowsContainer,
-             .macosPopupWindowsContainer,
-             .workspace: []
-        case .tilingContainer(let c):
-            c.children.reduce(into: [UInt32]()) { partialResult, elem in
-                partialResult += collectAllWindowIdsRecursive(elem)
-            }
-        case .window(let w): [w.windowId]
+    if let window = node as? Window {
+        return [window.windowId]
     }
+    if let container = node as? Column {
+        return container.children.reduce(into: [UInt32]()) { partialResult, elem in
+            partialResult += collectAllWindowIdsRecursive(elem)
+        }
+    }
+    return []
 }
