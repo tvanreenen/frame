@@ -79,6 +79,13 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertFalse(currentSession === isolatedSession)
     }
 
+    func testSessionCallbackContextRoundTrips() {
+        let session = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+
+        XCTAssertTrue(AppSession.fromCallbackContext(session.callbackContext) === session)
+        XCTAssertNil(AppSession.fromCallbackContext(nil as AppSessionCallbackContext?))
+    }
+
     func testRelayoutWindowFromFloatingStillWorks() async throws {
         let workspace = Workspace.get(byName: name)
         let window = TestWindow.new(

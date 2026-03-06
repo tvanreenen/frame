@@ -7,15 +7,17 @@ private var moveWithMouseTask: Task<(), any Error>? = nil
 func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeMutableRawPointer?) {
     let windowId = ax.containingWindowId()
     let notif = notif as String
+    let session = AppSession.fromCallbackContext(data)
     Task { @MainActor in
+        let session = session ?? currentSession
         guard let windowId, let window = Window.get(byId: windowId), try await isManipulatedWithMouse(window) else {
-            scheduleRefreshSession(.ax(notif))
+            session.scheduleRefreshSession(.ax(notif))
             return
         }
         moveWithMouseTask?.cancel()
         moveWithMouseTask = Task {
             try checkCancellation()
-            try await runLightSession(.ax(notif)) {
+            try await session.runLightSession(.ax(notif)) {
                 try await moveWithMouse(window)
             }
         }

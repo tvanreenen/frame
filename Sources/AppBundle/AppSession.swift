@@ -2,6 +2,10 @@ import AppKit
 import Common
 import Foundation
 
+struct AppSessionCallbackContext: @unchecked Sendable {
+    let rawValue: UnsafeMutableRawPointer
+}
+
 @MainActor
 final class AppSession {
     var config: Config
@@ -64,5 +68,17 @@ final class AppSession {
         currentSession = self
         defer { currentSession = previousSession }
         return try await body()
+    }
+
+    nonisolated var callbackContext: AppSessionCallbackContext {
+        .init(rawValue: Unmanaged.passUnretained(self).toOpaque())
+    }
+
+    nonisolated static func fromCallbackContext(_ data: UnsafeMutableRawPointer?) -> AppSession? {
+        data.map { Unmanaged<AppSession>.fromOpaque($0).takeUnretainedValue() }
+    }
+
+    nonisolated static func fromCallbackContext(_ data: AppSessionCallbackContext?) -> AppSession? {
+        fromCallbackContext(data?.rawValue)
     }
 }

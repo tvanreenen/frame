@@ -3,7 +3,12 @@ import Common
 import Foundation
 
 @MainActor public func initAppBundle() {
-    Task {
+    initAppBundle(session: currentSession)
+}
+
+@MainActor
+func initAppBundle(session: AppSession) {
+    Task { @MainActor in
         initTerminationHandler()
         isCli = false
         initServerArgs()
@@ -25,11 +30,11 @@ import Foundation
         }
 
         await checkAccessibilityPermissions()
-        startUnixSocketServer()
-        GlobalObserver.initObserver()
+        startUnixSocketServer(session: session)
+        GlobalObserver.initObserver(session: session)
         Workspace.garbageCollectUnusedWorkspaces() // init workspaces
         _ = Workspace.all.first?.focusWorkspace()
-        try await runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
+        try await session.runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
     }
 }
 

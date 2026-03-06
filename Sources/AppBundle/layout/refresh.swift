@@ -189,8 +189,9 @@ func refreshModel() {
 
 func refreshObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeMutableRawPointer?) {
     let notif = notif as String
+    let session = AppSession.fromCallbackContext(data)
     Task { @MainActor in
-        currentSession.scheduleRefreshSession(.ax(notif))
+        (session ?? currentSession).scheduleRefreshSession(.ax(notif))
     }
 }
 
