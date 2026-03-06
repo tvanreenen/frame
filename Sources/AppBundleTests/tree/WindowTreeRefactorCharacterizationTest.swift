@@ -59,6 +59,24 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         XCTAssertTrue(workspace.rootTilingContainer.children.allSatisfy { $0 is Column })
     }
 
+    func testFrozenWorkspaceSnapshot_usesColumnsModel() {
+        let workspace = Workspace.get(byName: name)
+        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 2)
+        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 3)
+        _ = TestWindow.new(id: 11, parent: col1, adaptiveWeight: 4)
+        _ = TestWindow.new(id: 12, parent: col1, adaptiveWeight: 5)
+        _ = TestWindow.new(id: 13, parent: col2, adaptiveWeight: 6)
+
+        let frozen = FrozenWorkspace(workspace)
+
+        assertEquals(frozen.columns.count, 2)
+        assertEquals(frozen.columns[0].windows.map(\.id), [11, 12])
+        assertEquals(frozen.columns[1].windows.map(\.id), [13])
+        assertEquals(frozen.columns.map(\.weight), [2, 3])
+        assertEquals(frozen.columns[0].windows.map(\.weight), [4, 5])
+        assertEquals(frozen.columns[1].windows.map(\.weight), [6])
+    }
+
     func testNormalizeLayoutReason_restoresTiledFullscreenWindowToColumn() async throws {
         let workspace = Workspace.get(byName: name)
         let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
