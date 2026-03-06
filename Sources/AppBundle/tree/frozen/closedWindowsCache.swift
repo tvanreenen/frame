@@ -70,10 +70,10 @@ struct FrozenWorkspace: Sendable {
         for frozenWindow in frozenWorkspace.macosUnconventionalWindows { // Will get fixed by normalizations
             Window.get(byId: frozenWindow.id)?.bindAsFloatingWindow(to: workspace)
         }
-        let prevRoot = workspace.rootTilingContainer // Save prevRoot into a variable to avoid it being garbage collected earlier than needed
-        let potentialOrphans = prevRoot.allLeafWindowsRecursive
-        prevRoot.unbindFromParent()
-        restoreTreeRecursive(frozenContainer: frozenWorkspace.rootTilingNode, parent: workspace, index: INDEX_BIND_LAST)
+        let root = workspace.rootTilingContainer
+        let potentialOrphans = root.allLeafWindowsRecursive
+        clearChildren(of: root)
+        restoreChildren(of: frozenWorkspace.rootTilingNode, into: root)
         for window in (potentialOrphans - workspace.rootTilingContainer.allLeafWindowsRecursive) {
             try await window.relayoutWindow(on: workspace, forceTile: true)
         }
@@ -89,6 +89,28 @@ struct FrozenWorkspace: Sendable {
 
 @discardableResult
 @MainActor
+private func restoreChildren(of frozenContainer: FrozenContainer, into parent: NonLeafTreeNodeObject) -> Bool {
+    for (index, child) in frozenContainer.children.enumerated() {
+        switch child {
+            case .window(let w):
+                guard let window = Window.get(byId: w.id) else { return false }
+                window.bind(to: parent, adaptiveWeight: w.weight, index: index)
+            case .container(let c):
+                if !restoreTreeRecursive(frozenContainer: c, parent: parent, index: index) { return false }
+        }
+    }
+    return true
+}
+
+@MainActor
+private func clearChildren(of parent: NonLeafTreeNodeObject) {
+    for child in Array(parent.children) {
+        child.unbindFromParent()
+    }
+}
+
+@discardableResult
+@MainActor
 private func restoreTreeRecursive(frozenContainer: FrozenContainer, parent: NonLeafTreeNodeObject, index: Int) -> Bool {
     let container = Column(
         parent: parent,
@@ -97,18 +119,7 @@ private func restoreTreeRecursive(frozenContainer: FrozenContainer, parent: NonL
         index: index,
     )
 
-    for (index, child) in frozenContainer.children.enumerated() {
-        switch child {
-            case .window(let w):
-                // Stop the loop if can't find the window, because otherwise all the subsequent windows will have incorrect index
-                guard let window = Window.get(byId: w.id) else { return false }
-                window.bind(to: container, adaptiveWeight: w.weight, index: index)
-            case .container(let c):
-                // There is no reason to continue
-                if !restoreTreeRecursive(frozenContainer: c, parent: container, index: index) { return false }
-        }
-    }
-    return true
+    return restoreChildren(of: frozenContainer, into: container)
 }
 
 // Consider the following case:

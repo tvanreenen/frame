@@ -7,10 +7,17 @@ final class TreeNodeTest: XCTestCase {
 
     func testChildParentCyclicReferenceMemoryLeak() {
         let workspace = Workspace.get(byName: name) // Don't cache root node
-        let window = TestWindow.new(id: 1, parent: workspace.rootTilingContainer)
+        weak var column: Column?
+        let window: Window
+        do {
+            let createdColumn = workspace.addColumn(after: nil)
+            column = createdColumn
+            window = TestWindow.new(id: 1, parent: createdColumn)
 
-        XCTAssertTrue(window.parent != nil)
-        workspace.rootTilingContainer.unbindFromParent()
+            XCTAssertTrue(window.parent != nil)
+            createdColumn.unbindFromParent()
+        }
+        XCTAssertNil(column)
         XCTAssertTrue(window.parent == nil)
     }
 
@@ -40,15 +47,15 @@ final class TreeNodeTest: XCTestCase {
         // Root container is never unbound even when empty
         XCTAssertNotEqual(root, nil)
         XCTAssertTrue(root!.isEffectivelyEmpty)
+        XCTAssertTrue(root === workspace.rootTilingContainer)
     }
 
-    func testNormalizeContainers_rootBecomesHTiles() {
+    func testRootTilingContainerIsStructurallyHorizontal() {
         let workspace = Workspace.get(byName: name)
-        // Force the root to v-orientation (shouldn't happen in normal use but must be handled)
-        workspace.rootTilingContainer.setOrientation(.v)
-        assertEquals(workspace.rootTilingContainer.orientation, .v)
+        let root = workspace.rootTilingContainer
         workspace.normalizeContainers()
-        assertEquals(workspace.rootTilingContainer.orientation, .h)
+        XCTAssertTrue(root === workspace.rootTilingContainer)
+        assertEquals(root.orientation, .h)
     }
 
     func testNormalizeContainers_columnBecomesVTiles() {

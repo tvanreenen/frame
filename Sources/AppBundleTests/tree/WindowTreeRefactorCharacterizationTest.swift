@@ -28,6 +28,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
 
     func testRestoreClosedWindowsCache_restoresColumnsStructure() async throws {
         let workspace = Workspace.get(byName: name)
+        let root = workspace.rootTilingContainer
         let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         _ = TestWindow.new(id: 1, parent: col1).focusWindow()
@@ -38,9 +39,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         cacheClosedWindowIfNeeded()
 
         for workspace in Workspace.all {
-            for child in Array(workspace.children) {
-                child.unbindFromParent()
-            }
+            clearWorkspaceChildrenForTests(workspace)
         }
         Window.resetForTests()
         TestApp.shared.resetState()
@@ -52,6 +51,7 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
 
         let didRestore = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: restoredWindow)
         XCTAssertTrue(didRestore)
+        XCTAssertTrue(workspace.rootTilingContainer === root)
         assertEquals(workspace.columns.count, 2)
         assertEquals(workspace.columns[0].children.compactMap { ($0 as? Window)?.windowId }, [1, 2])
         assertEquals(workspace.columns[1].children.compactMap { ($0 as? Window)?.windowId }, [3])

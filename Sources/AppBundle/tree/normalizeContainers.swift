@@ -1,3 +1,5 @@
+import Common
+
 extension Workspace {
     /// Enforce the depth-2 columns invariant:
     ///   Workspace → Column(h,tiles) → [Column(v,tiles) → [Window, ...]]
@@ -12,14 +14,10 @@ extension Workspace {
 extension Workspace {
     @MainActor private func normalizeColumnsStructure() {
         let root = rootTilingContainer
-        normalizeColumnsRoot(root)
+        check(root.orientation == .h)
         normalizeLegacyColumnsUnderRoot(root)
         removeEmptyColumns(from: root)
         adoptUnexpectedRootLevelWindows(from: root)
-    }
-
-    @MainActor private func normalizeColumnsRoot(_ root: Column) {
-        if root.orientation != .h { root.setOrientation(.h) }
     }
 
     @MainActor private func normalizeLegacyColumnsUnderRoot(_ root: Column) {
