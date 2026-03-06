@@ -21,6 +21,16 @@ final class WindowArchitectureTest: XCTestCase {
         assertEquals(offenders.sorted(), [])
     }
 
+    func testMacAppNoLongerOwnsStaticRuntimeRegistries() throws {
+        let file = projectRoot.appending(path: "Sources/AppBundle/tree/MacApp.swift")
+        let content = try String(contentsOf: file)
+
+        XCTAssertFalse(content.contains("static var allAppsMap"))
+        XCTAssertFalse(content.contains("static var wipPids"))
+        XCTAssertFalse(content.contains("static func getOrRegister("))
+        XCTAssertFalse(content.contains("static func refreshAllAndGetAliveWindowIds("))
+    }
+
     func testWindowHasNoNotImplementedStubs() throws {
         let file = projectRoot.appending(path: "Sources/AppBundle/tree/Window.swift")
         let content = try String(contentsOf: file)
