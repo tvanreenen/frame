@@ -38,48 +38,100 @@ struct FrozenFocus: AeroAny, Equatable, Sendable {
     let monitorId: Int // 0-based
 
     @MainActor var live: LiveFocus { // Important: don't access focus.monitorId here. monitorId is not part of the focus. Always prefer workspace
-        let window: Window? = windowId.flatMap { Window.get(byId: $0) }
-        let workspace = Workspace.get(byName: workspaceName)
-
-        let wsFocus = workspace.toLiveFocus()
-        let wdFocus = window?.toLiveFocusOrNil() ?? wsFocus
-
-        return wsFocus.workspace != wdFocus.workspace
-            ? wsFocus // If window and workspace become separated prefer workspace
-            : wdFocus
+        currentSession.liveFocus(for: self)
     }
 }
 
 @MainActor
-private var _focus: FrozenFocus {
-    get { currentSession.initializedFocus() }
-    set { currentSession.focusState = newValue }
+extension AppSession {
+    var focus: LiveFocus { initializedFocus().live }
+
+    func liveFocus(for frozenFocus: FrozenFocus) -> LiveFocus {
+        let window: Window? = frozenFocus.windowId.flatMap { Window.get(byId: $0) }
+        let workspace = workspace(byName: frozenFocus.workspaceName)
+
+        let workspaceFocus = workspace.toLiveFocus()
+        let windowFocus = window?.toLiveFocusOrNil() ?? workspaceFocus
+
+        return workspaceFocus.workspace != windowFocus.workspace
+            ? workspaceFocus
+            : windowFocus
+    }
+
+    @discardableResult
+    func setFocus(to newFocus: LiveFocus) -> Bool {
+        if initializedFocus() == newFocus.frozen { return true }
+        let oldFocus = focus
+        if oldFocus.workspace != newFocus.workspace {
+            oldFocus.windowOrNil?.markAsMostRecentChild()
+        }
+
+        focusState = newFocus.frozen
+        let status = newFocus.workspace.workspaceMonitor.setActiveWorkspace(newFocus.workspace)
+
+        newFocus.windowOrNil?.markAsMostRecentChild()
+        return status
+    }
+
+    var prevFocusedWorkspace: Workspace? {
+        prevFocusedWorkspaceName.map { workspace(byName: $0) }
+    }
+
+    func checkFocusCallbacks() {
+        if refreshSessionEvent?.isStartup == true {
+            return
+        }
+        let focus = focus
+        let frozenFocus = focus.frozen
+        var hasFocusedMonitorChanged = false
+        var newFocusedWorkspace: String? = nil
+        if frozenFocus.workspaceName != initializedLastKnownFocus().workspaceName {
+            newFocusedWorkspace = frozenFocus.workspaceName
+            prevFocusedWorkspaceName = initializedLastKnownFocus().workspaceName
+            prevFocusedWorkspaceDate = .now
+        }
+        if frozenFocus.monitorId != initializedLastKnownFocus().monitorId {
+            hasFocusedMonitorChanged = true
+        }
+        lastKnownFocus = frozenFocus
+
+        if focusCallbacksRecursionGuard { return }
+        focusCallbacksRecursionGuard = true
+        defer { focusCallbacksRecursionGuard = false }
+        if hasFocusedMonitorChanged {
+            followFocusedMonitorWithMouseIfNeeded(focus)
+        }
+        if let newFocusedWorkspace {
+            runWorkspaceChangeHook(newFocusedWorkspace)
+        }
+    }
+
+    private func followFocusedMonitorWithMouseIfNeeded(_ focus: LiveFocus) {
+        let rect = focus.workspace.workspaceMonitor.rect
+        if rect.contains(mouseLocation) { return }
+        let event = CGEvent(
+            mouseEventSource: nil,
+            mouseType: .mouseMoved,
+            mouseCursorPosition: rect.center,
+            mouseButton: .left,
+        )
+        event?.post(tap: .cghidEventTap)
+    }
 }
 
 /// Global focus.
 /// Commands must be cautious about accessing this property directly. There are legitimate cases.
 /// But, in general, commands must firstly check --window-id, --workspace, FRAME_WINDOW_ID env and
 /// FRAME_WORKSPACE env before accessing the global focus.
-@MainActor var focus: LiveFocus { _focus.live }
+@MainActor var focus: LiveFocus { currentSession.focus }
 
 @MainActor func setFocus(to newFocus: LiveFocus) -> Bool {
-    if _focus == newFocus.frozen { return true }
-    let oldFocus = focus
-    // Normalize mruWindow when focus away from a workspace
-    if oldFocus.workspace != newFocus.workspace {
-        oldFocus.windowOrNil?.markAsMostRecentChild()
-    }
-
-    _focus = newFocus.frozen
-    let status = newFocus.workspace.workspaceMonitor.setActiveWorkspace(newFocus.workspace)
-
-    newFocus.windowOrNil?.markAsMostRecentChild()
-    return status
+    currentSession.setFocus(to: newFocus)
 }
 extension Window {
     @MainActor func focusWindow() -> Bool {
         if let focus = toLiveFocusOrNil() {
-            return setFocus(to: focus)
+            return currentSession.setFocus(to: focus)
         } else {
             // todo We should also exit-native-hidden/unminimize[/exit-native-fullscreen?] window if we want to fix ID-B6E178F2
             //      and retry to focus the window. Otherwise, it's not possible to focus minimized/hidden windows
@@ -90,7 +142,7 @@ extension Window {
     @MainActor func toLiveFocusOrNil() -> LiveFocus? { visualWorkspace.map { LiveFocus(windowOrNil: self, workspace: $0) } }
 }
 extension Workspace {
-    @MainActor func focusWorkspace() -> Bool { setFocus(to: toLiveFocus()) }
+    @MainActor func focusWorkspace() -> Bool { currentSession.setFocus(to: toLiveFocus()) }
 
     func toLiveFocus() -> LiveFocus {
         // TODO: prefer floating/unconventional windows over an empty columns root when no tiled window is present.
@@ -102,71 +154,13 @@ extension Workspace {
     }
 }
 
-@MainActor
-private var _lastKnownFocus: FrozenFocus {
-    get { currentSession.initializedLastKnownFocus() }
-    set { currentSession.lastKnownFocus = newValue }
-}
-
-// Used to track the previously focused workspace
-@MainActor
-var _prevFocusedWorkspaceName: String? {
-    get { currentSession.prevFocusedWorkspaceName }
-    set {
-        currentSession.prevFocusedWorkspaceName = newValue
-        currentSession.prevFocusedWorkspaceDate = .now
-    }
-}
-@MainActor
-var prevFocusedWorkspaceDate: Date {
+@MainActor var prevFocusedWorkspaceDate: Date {
     get { currentSession.prevFocusedWorkspaceDate }
     set { currentSession.prevFocusedWorkspaceDate = newValue }
 }
-@MainActor var prevFocusedWorkspace: Workspace? { _prevFocusedWorkspaceName.map { Workspace.get(byName: $0) } }
+@MainActor var prevFocusedWorkspace: Workspace? { currentSession.prevFocusedWorkspace }
 
-@MainActor
-private var focusCallbacksRecursionGuard: Bool {
-    get { currentSession.focusCallbacksRecursionGuard }
-    set { currentSession.focusCallbacksRecursionGuard = newValue }
-}
 // Should be called in refreshSession
 @MainActor func checkFocusCallbacks() {
-    if refreshSessionEvent?.isStartup == true {
-        return
-    }
-    let focus = focus
-    let frozenFocus = focus.frozen
-    var hasFocusedMonitorChanged = false
-    var newFocusedWorkspace: String? = nil
-    if frozenFocus.workspaceName != _lastKnownFocus.workspaceName {
-        newFocusedWorkspace = frozenFocus.workspaceName
-        _prevFocusedWorkspaceName = _lastKnownFocus.workspaceName
-    }
-    if frozenFocus.monitorId != _lastKnownFocus.monitorId {
-        hasFocusedMonitorChanged = true
-    }
-    _lastKnownFocus = frozenFocus
-
-    if focusCallbacksRecursionGuard { return }
-    focusCallbacksRecursionGuard = true
-    defer { focusCallbacksRecursionGuard = false }
-    if hasFocusedMonitorChanged {
-        followFocusedMonitorWithMouseIfNeeded(focus)
-    }
-    if let newFocusedWorkspace {
-        runWorkspaceChangeHook(newFocusedWorkspace)
-    }
-}
-
-@MainActor
-private func followFocusedMonitorWithMouseIfNeeded(_ focus: LiveFocus) {
-    let rect = focus.workspace.workspaceMonitor.rect
-    if rect.contains(mouseLocation) { return }
-    let event = CGEvent(
-        mouseEventSource: nil,
-        mouseType: .mouseMoved,
-        mouseCursorPosition: rect.center,
-        mouseButton: .left,
-    )
-    event?.post(tap: .cghidEventTap)
+    currentSession.checkFocusCallbacks()
 }
