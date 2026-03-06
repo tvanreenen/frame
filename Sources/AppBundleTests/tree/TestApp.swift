@@ -77,6 +77,16 @@ final class TestApp: WindowPlatformApp {
         windowTypes[windowId] = type
     }
 
+    @MainActor
+    func setMacosFullscreen(windowId: UInt32, _ isFullscreen: Bool) {
+        macosFullscreen[windowId] = isFullscreen
+    }
+
+    @MainActor
+    func setMacosMinimized(windowId: UInt32, _ isMinimized: Bool) {
+        macosMinimized[windowId] = isMinimized
+    }
+
     @MainActor func getFocusedWindow() async throws -> Window? { focusedWindow }
     @MainActor func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
 
