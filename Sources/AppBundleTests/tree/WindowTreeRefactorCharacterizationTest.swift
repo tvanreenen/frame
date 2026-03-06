@@ -6,19 +6,24 @@ import XCTest
 final class WindowTreeRefactorCharacterizationTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
-    func testMoveWindowToWorkspace_tiledWindowCurrentlyLandsAsRootChildBeforeNormalization() {
+    func testMoveWindowToWorkspace_tiledWindowBindsDirectlyIntoLastTargetColumn() {
         let sourceWorkspace = Workspace.get(byName: "a")
         let sourceColumn = Column.newVTiles(parent: sourceWorkspace.columnsRoot, adaptiveWeight: 1)
         let window = TestWindow.new(id: 1, parent: sourceColumn)
-        let io = CmdIo(stdin: .emptyStdin)
-        let didMove = moveWindowToWorkspace(window, Workspace.get(byName: "b"), io, focusFollowsWindow: false, failIfNoop: false)
-
         let targetWorkspace = Workspace.get(byName: "b")
+        _ = Column.newVTiles(parent: targetWorkspace.columnsRoot, adaptiveWeight: 1).apply {
+            _ = TestWindow.new(id: 2, parent: $0)
+        }
+        let lastTargetColumn = Column.newVTiles(parent: targetWorkspace.columnsRoot, adaptiveWeight: 1).apply {
+            _ = TestWindow.new(id: 3, parent: $0)
+        }
+        let io = CmdIo(stdin: .emptyStdin)
+        let didMove = moveWindowToWorkspace(window, targetWorkspace, io, focusFollowsWindow: false, failIfNoop: false)
+
         XCTAssertTrue(didMove)
-        assertEquals(targetWorkspace.columns.count, 0)
-        assertEquals(targetWorkspace.rootTilingContainer.children.count, 1)
-        XCTAssertTrue(targetWorkspace.rootTilingContainer.children.first is Window)
-        assertEquals((targetWorkspace.rootTilingContainer.children.first as? Window)?.windowId, 1)
+        XCTAssertTrue(window.parent === lastTargetColumn)
+        XCTAssertTrue(targetWorkspace.rootTilingContainer.children.allSatisfy { $0 is Column })
+        assertColumnChildren(targetWorkspace, [[2], [3, 1]])
     }
 
     func testRestoreClosedWindowsCache_restoresColumnsStructure() async throws {
