@@ -86,15 +86,16 @@ final class TreeNodeTest: XCTestCase {
         XCTAssertTrue(col.children.first is Window)
     }
 
-    func testNormalizeContainers_orphanWindowMovedToLastColumn() {
+    func testNormalizeContainers_defensivelyMovesUnexpectedRootWindowToLastColumn() {
         let workspace = Workspace.get(byName: name)
         // Set up: root → col(v) → window(1), root → orphan window(2)
+        // This shape should no longer be produced by normal runtime paths, but normalization still repairs it.
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: col)
-        // Directly bind window to root (orphan — shouldn't happen normally)
+        // Directly bind window to root (defensive repair path only)
         TestWindow.new(id: 2, parent: workspace.columnsRoot)
         workspace.normalizeContainers()
-        // Orphan window(2) should be moved into the last column
+        // The unexpected root-level window should be moved into the last column
         assertEquals(workspace.columns.count, 1)
         assertEquals(col.children.map { ($0 as! Window).windowId }, [1, 2])
     }
