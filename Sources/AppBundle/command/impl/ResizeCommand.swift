@@ -8,9 +8,7 @@ struct ResizeCommand: Command { // todo cover with tests
     func run(_ env: CmdEnv, _ io: CmdIo) -> Bool {
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }
 
-        let candidates = target.windowOrNil?.parentsWithSelf
-            .filter { ($0.parent as? Column)?.layout == .tiles }
-            ?? []
+        let candidates = target.windowOrNil?.parentsWithSelf ?? []
 
         let orientation: Orientation?
         let parent: Column?

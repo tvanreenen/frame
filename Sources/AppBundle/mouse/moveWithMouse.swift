@@ -26,14 +26,12 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
 private func moveWithMouse(_ window: Window) async throws { // todo cover with tests
     resetClosedWindowsCache()
     guard let parent = window.parent else { return }
-    switch parent.cases {
-        case .workspace:
-            try await moveFloatingWindow(window)
-        case .tilingContainer:
-            moveTilingWindow(window)
-        case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer,
-             .macosPopupWindowsContainer, .macosHiddenAppsWindowsContainer:
-            return // Unconventional windows can't be moved with mouse
+    if parent is Workspace {
+        try await moveFloatingWindow(window)
+        return
+    }
+    if parent is Column {
+        moveTilingWindow(window)
     }
 }
 
@@ -52,20 +50,16 @@ private func moveTilingWindow(_ window: Window) {
     window.lastAppliedLayoutPhysicalRect = nil
     let mouseLocation = mouseLocation
     let targetWorkspace = mouseLocation.monitorApproximation.activeWorkspace
-    let swapTarget = mouseLocation.findIn(tree: targetWorkspace.rootTilingContainer, virtual: false)?.takeIf { $0 != window }
+    let swapTarget = mouseLocation.findIn(tree: targetWorkspace.columnsRoot, virtual: false)?.takeIf { $0 != window }
     if targetWorkspace != window.nodeWorkspace { // Move window to a different monitor
-        let index: Int = if let swapTarget, let parent = swapTarget.parent as? Column, let targetRect = swapTarget.lastAppliedLayoutPhysicalRect {
+        let bindingData: BindingData = if let swapTarget, let parent = swapTarget.parent as? Column, let targetRect = swapTarget.lastAppliedLayoutPhysicalRect {
             mouseLocation.getProjection(parent.orientation) >= targetRect.center.getProjection(parent.orientation)
-                ? swapTarget.ownIndex.orDie() + 1
-                : swapTarget.ownIndex.orDie()
+                ? BindingData(parent: parent, adaptiveWeight: WEIGHT_AUTO, index: swapTarget.ownIndex.orDie() + 1)
+                : BindingData(parent: parent, adaptiveWeight: WEIGHT_AUTO, index: swapTarget.ownIndex.orDie())
         } else {
-            0
+            targetWorkspace.transferredTilingWindowBindingData()
         }
-        window.bind(
-            to: swapTarget?.parent ?? targetWorkspace.rootTilingContainer,
-            adaptiveWeight: WEIGHT_AUTO,
-            index: index,
-        )
+        window.bind(to: bindingData.parent, adaptiveWeight: bindingData.adaptiveWeight, index: bindingData.index)
     } else if let swapTarget {
         swapWindows(window, swapTarget)
     }
@@ -100,9 +94,13 @@ extension CGPoint {
             (virtual ? $0.lastAppliedLayoutVirtualRect : $0.lastAppliedLayoutPhysicalRect)?.contains(point) == true
         })
         guard let target else { return nil }
-        return switch target.tilingTreeNodeCasesOrDie() {
-            case .window(let window): window
-            case .tilingContainer(let container): findIn(tree: container, virtual: virtual)
+        return switch target.tilingNodeOrNil {
+            case .window(let window):
+                window
+            case .tilingContainer(let container):
+                findIn(tree: container, virtual: virtual)
+            case nil:
+                illegalChildParentRelation(child: target, parent: target.parent)
         }
     }
 }

@@ -39,42 +39,37 @@ private let adaptiveWeightBeforeResizeWithMouseKey = TreeNodeUserDataKey<CGFloat
 private func resizeWithMouse(_ window: Window) async throws { // todo cover with tests
     resetClosedWindowsCache()
     guard let parent = window.parent else { return }
-    switch parent.cases {
-        case .workspace, .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer,
-             .macosPopupWindowsContainer, .macosHiddenAppsWindowsContainer:
-            return // Nothing to do for floating, or unconventional windows
-        case .tilingContainer:
-            guard let rect = try await window.getAxRect() else { return }
-            guard let lastAppliedLayoutRect = window.lastAppliedLayoutPhysicalRect else { return }
-            let (lParent, lOwnIndex) = window.closestParent(hasChildrenInDirection: .left) ?? (nil, nil)
-            let (dParent, dOwnIndex) = window.closestParent(hasChildrenInDirection: .down) ?? (nil, nil)
-            let (uParent, uOwnIndex) = window.closestParent(hasChildrenInDirection: .up) ?? (nil, nil)
-            let (rParent, rOwnIndex) = window.closestParent(hasChildrenInDirection: .right) ?? (nil, nil)
-            let table: [(CGFloat, Column?, Int?, Int?)] = [
-                (lastAppliedLayoutRect.minX - rect.minX, lParent, 0,                        lOwnIndex),               // Horizontal, to the left of the window
-                (rect.maxY - lastAppliedLayoutRect.maxY, dParent, dOwnIndex.map { $0 + 1 }, dParent?.children.count), // Vertical, to the down of the window
-                (lastAppliedLayoutRect.minY - rect.minY, uParent, 0,                        uOwnIndex),               // Vertical, to the up of the window
-                (rect.maxX - lastAppliedLayoutRect.maxX, rParent, rOwnIndex.map { $0 + 1 }, rParent?.children.count), // Horizontal, to the right of the window
-            ]
-            for (diff, parent, startIndex, pastTheEndIndex) in table {
-                if let parent, let startIndex, let pastTheEndIndex, pastTheEndIndex - startIndex > 0 && abs(diff) > 5 { // 5 pixels should be enough to fight with accumulated floating precision error
-                    let siblingDiff = diff.div(pastTheEndIndex - startIndex).orDie()
-                    let orientation = parent.orientation
+    guard parent is Column else { return } // Nothing to do for floating or unconventional windows
+    guard let rect = try await window.getAxRect() else { return }
+    guard let lastAppliedLayoutRect = window.lastAppliedLayoutPhysicalRect else { return }
+    let (lParent, lOwnIndex) = window.closestParent(hasChildrenInDirection: .left) ?? (nil, nil)
+    let (dParent, dOwnIndex) = window.closestParent(hasChildrenInDirection: .down) ?? (nil, nil)
+    let (uParent, uOwnIndex) = window.closestParent(hasChildrenInDirection: .up) ?? (nil, nil)
+    let (rParent, rOwnIndex) = window.closestParent(hasChildrenInDirection: .right) ?? (nil, nil)
+    let table: [(CGFloat, Column?, Int?, Int?)] = [
+        (lastAppliedLayoutRect.minX - rect.minX, lParent, 0,                        lOwnIndex),               // Horizontal, to the left of the window
+        (rect.maxY - lastAppliedLayoutRect.maxY, dParent, dOwnIndex.map { $0 + 1 }, dParent?.children.count), // Vertical, to the down of the window
+        (lastAppliedLayoutRect.minY - rect.minY, uParent, 0,                        uOwnIndex),               // Vertical, to the up of the window
+        (rect.maxX - lastAppliedLayoutRect.maxX, rParent, rOwnIndex.map { $0 + 1 }, rParent?.children.count), // Horizontal, to the right of the window
+    ]
+    for (diff, parent, startIndex, pastTheEndIndex) in table {
+        if let parent, let startIndex, let pastTheEndIndex, pastTheEndIndex - startIndex > 0 && abs(diff) > 5 { // 5 pixels should be enough to fight with accumulated floating precision error
+            let siblingDiff = diff.div(pastTheEndIndex - startIndex).orDie()
+            let orientation = parent.orientation
 
-                    window.parentsWithSelf.lazy
-                        .prefix(while: { $0 != parent })
-                        .filter {
-                            let parent = $0.parent as? Column
-                            return parent?.orientation == orientation && parent?.layout == .tiles
-                        }
-                        .forEach { $0.setWeight(orientation, $0.getWeightBeforeResize(orientation) + diff) }
-                    for sibling in parent.children[startIndex ..< pastTheEndIndex] {
-                        sibling.setWeight(orientation, sibling.getWeightBeforeResize(orientation) - siblingDiff)
-                    }
+            window.parentsWithSelf.lazy
+                .prefix(while: { $0 != parent })
+                .filter {
+                    let parent = $0.parent as? Column
+                    return parent?.orientation == orientation
                 }
+                .forEach { $0.setWeight(orientation, $0.getWeightBeforeResize(orientation) + diff) }
+            for sibling in parent.children[startIndex ..< pastTheEndIndex] {
+                sibling.setWeight(orientation, sibling.getWeightBeforeResize(orientation) - siblingDiff)
             }
-            currentlyManipulatedWithMouseWindowId = window.windowId
+        }
     }
+    currentlyManipulatedWithMouseWindowId = window.windowId
 }
 
 extension TreeNode {

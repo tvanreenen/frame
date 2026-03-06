@@ -1,33 +1,13 @@
 import AppKit
 import Common
 
-enum FrozenTreeNode: Sendable {
-    case container(FrozenContainer)
-    case window(FrozenWindow)
-}
-
-struct FrozenContainer: Sendable {
-    let children: [FrozenTreeNode]
-    let layout: Layout
-    let orientation: Orientation
+struct FrozenColumn: Sendable {
+    let windows: [FrozenWindow]
     let weight: CGFloat
 
-    @MainActor init(_ container: Column) {
-        children = container.children.map {
-            switch $0.nodeCases {
-                case .window(let w): .window(FrozenWindow(w))
-                case .tilingContainer(let c): .container(FrozenContainer(c))
-                case .workspace,
-                     .macosMinimizedWindowsContainer,
-                     .macosHiddenAppsWindowsContainer,
-                     .macosFullscreenWindowsContainer,
-                     .macosPopupWindowsContainer:
-                    illegalChildParentRelation(child: $0, parent: container)
-            }
-        }
-        layout = container.layout
-        orientation = container.orientation
-        weight = getWeightOrNil(container) ?? 1
+    @MainActor init(_ column: Column) {
+        windows = column.children.compactMap { $0 as? Window }.map(FrozenWindow.init)
+        weight = getWeightOrNil(column) ?? 1
     }
 }
 

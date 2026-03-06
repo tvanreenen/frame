@@ -16,6 +16,40 @@ extension Workspace {
         focus.windowOrNil?.column
     }
 
+    /// Returns the column that should receive a newly tiled window.
+    /// Uses the focused column when available, otherwise creates a new trailing column.
+    @MainActor
+    func targetColumnForNewTilingWindow() -> Column {
+        focusedColumn ?? addColumn(after: nil)
+    }
+
+    /// Binding data for placing a newly tiled window into the columns model.
+    @MainActor
+    func newTilingWindowBindingData(index: Int = INDEX_BIND_LAST) -> BindingData {
+        BindingData(
+            parent: targetColumnForNewTilingWindow(),
+            adaptiveWeight: WEIGHT_AUTO,
+            index: index,
+        )
+    }
+
+    /// Returns the column that should receive a tiled window moved in from elsewhere.
+    /// Matches the existing normalization behavior by appending to the last column when possible.
+    @MainActor
+    func targetColumnForTransferredTilingWindow() -> Column {
+        columns.last ?? addColumn(after: nil)
+    }
+
+    /// Binding data for moving a tiled window into this workspace.
+    @MainActor
+    func transferredTilingWindowBindingData(index: Int = INDEX_BIND_LAST) -> BindingData {
+        BindingData(
+            parent: targetColumnForTransferredTilingWindow(),
+            adaptiveWeight: WEIGHT_AUTO,
+            index: index,
+        )
+    }
+
     /// Adds a new v-tiles column after `afterColumn`. Appends at end if `afterColumn` is nil.
     @MainActor
     @discardableResult

@@ -16,18 +16,22 @@ struct LayoutCommand: Command {
         switch targetDescription {
             case .tiling:
                 guard let parent = window.parent else { return false }
-                switch parent.cases {
-                    case .macosPopupWindowsContainer:
-                        return false
-                    case .macosMinimizedWindowsContainer, .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer:
-                        return io.err("Can't change layout for macOS minimized, fullscreen windows or windows of hidden apps. This behavior is subject to change")
-                    case .tilingContainer:
-                        return true // Nothing to do
-                    case .workspace(let workspace):
-                        window.lastFloatingSize = try await window.getAxSize() ?? window.lastFloatingSize
-                        try await window.relayoutWindow(on: workspace, forceTile: true)
-                        return true
+                if parent is MacosPopupWindowsContainer {
+                    return false
                 }
+                if parent is MacosMinimizedWindowsContainer ||
+                    parent is MacosFullscreenWindowsContainer ||
+                    parent is MacosHiddenAppsWindowsContainer
+                {
+                    return io.err("Can't change layout for macOS minimized, fullscreen windows or windows of hidden apps. This behavior is subject to change")
+                }
+                if parent is Column {
+                    return true // Nothing to do
+                }
+                guard let workspace = parent as? Workspace else { return false }
+                window.lastFloatingSize = try await window.getAxSize() ?? window.lastFloatingSize
+                try await window.relayoutWindow(on: workspace, forceTile: true)
+                return true
             case .floating:
                 let workspace = target.workspace
                 window.bindAsFloatingWindow(to: workspace)

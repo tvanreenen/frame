@@ -181,18 +181,15 @@ final class Window: TreeNode, Hashable {
         if let deadWindowWorkspace, deadWindowWorkspace == focus.workspace ||
             deadWindowWorkspace == prevFocusedWorkspace && prevFocusedWorkspaceDate.distance(to: .now) < 1
         {
-            switch parent.cases {
-                case .tilingContainer, .workspace, .macosHiddenAppsWindowsContainer, .macosFullscreenWindowsContainer:
-                    let deadWindowFocus = deadWindowWorkspace.toLiveFocus()
-                    _ = setFocus(to: deadWindowFocus)
-                    // Guard against "Apple Reminders popup" bug: https://github.com/tvanreenen/frame/issues/201
-                    if focus.windowOrNil?.app.pid != app.pid {
-                        // Force focus to fix macOS annoyance with focused apps without windows.
-                        //   https://github.com/tvanreenen/frame/issues/65
-                        deadWindowFocus.windowOrNil?.nativeFocus()
-                    }
-                case .macosPopupWindowsContainer, .macosMinimizedWindowsContainer:
-                    break // Don't switch back on popup destruction
+            if parent is Column || parent is Workspace || parent is MacosHiddenAppsWindowsContainer || parent is MacosFullscreenWindowsContainer {
+                let deadWindowFocus = deadWindowWorkspace.toLiveFocus()
+                _ = setFocus(to: deadWindowFocus)
+                // Guard against "Apple Reminders popup" bug: https://github.com/tvanreenen/frame/issues/201
+                if focus.windowOrNil?.app.pid != app.pid {
+                    // Force focus to fix macOS annoyance with focused apps without windows.
+                    //   https://github.com/tvanreenen/frame/issues/65
+                    deadWindowFocus.windowOrNil?.nativeFocus()
+                }
             }
         }
     }
@@ -228,7 +225,13 @@ extension Window {
 enum LayoutReason: Equatable {
     case standard
     /// Reason for the cur temp layout is macOS native fullscreen, minimize, or hide
-    case macos(prevParentKind: NonLeafTreeNodeKind)
+    case macos(previousPlacement: PreviousMacOsWindowPlacement)
+}
+
+enum PreviousMacOsWindowPlacement: Equatable {
+    case floating
+    case tiled
+    case reclassify
 }
 
 extension Window {

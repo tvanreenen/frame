@@ -1,104 +1,6 @@
 import Common
 
-enum TreeNodeCases {
-    case window(Window)
-    case tilingContainer(Column)
-    case workspace(Workspace)
-    case macosMinimizedWindowsContainer(MacosMinimizedWindowsContainer)
-    case macosHiddenAppsWindowsContainer(MacosHiddenAppsWindowsContainer)
-    case macosFullscreenWindowsContainer(MacosFullscreenWindowsContainer)
-    case macosPopupWindowsContainer(MacosPopupWindowsContainer)
-}
-
-enum NonLeafTreeNodeCases {
-    case tilingContainer(Column)
-    case workspace(Workspace)
-    case macosMinimizedWindowsContainer(MacosMinimizedWindowsContainer)
-    case macosHiddenAppsWindowsContainer(MacosHiddenAppsWindowsContainer)
-    case macosFullscreenWindowsContainer(MacosFullscreenWindowsContainer)
-    case macosPopupWindowsContainer(MacosPopupWindowsContainer)
-}
-
-enum TilingTreeNodeCases {
-    case window(Window)
-    case tilingContainer(Column)
-}
-
-enum NonLeafTreeNodeKind: Equatable {
-    case tilingContainer
-    case workspace
-    case macosMinimizedWindowsContainer
-    case macosHiddenAppsWindowsContainer
-    case macosFullscreenWindowsContainer
-    case macosPopupWindowsContainer
-}
-
 protocol NonLeafTreeNodeObject: TreeNode {}
-
-extension TreeNode {
-    var nodeCases: TreeNodeCases {
-        if let window = self as? Window {
-            return .window(window)
-        } else if let workspace = self as? Workspace {
-            return .workspace(workspace)
-        } else if let tilingContainer = self as? Column {
-            return .tilingContainer(tilingContainer)
-        } else if let container = self as? MacosHiddenAppsWindowsContainer {
-            return .macosHiddenAppsWindowsContainer(container)
-        } else if let container = self as? MacosMinimizedWindowsContainer {
-            return .macosMinimizedWindowsContainer(container)
-        } else if let container = self as? MacosFullscreenWindowsContainer {
-            return .macosFullscreenWindowsContainer(container)
-        } else if let container = self as? MacosPopupWindowsContainer {
-            return .macosPopupWindowsContainer(container)
-        } else {
-            die("Unknown tree")
-        }
-    }
-
-    func tilingTreeNodeCasesOrDie() -> TilingTreeNodeCases {
-        if let window = self as? Window {
-            return .window(window)
-        } else if let tilingContainer = self as? Column {
-            return .tilingContainer(tilingContainer)
-        } else {
-            illegalChildParentRelation(child: self, parent: parent)
-        }
-    }
-}
-
-extension NonLeafTreeNodeObject {
-    var cases: NonLeafTreeNodeCases {
-        if self is Window {
-            die("Windows are leaf nodes. They can't have children")
-        } else if let workspace = self as? Workspace {
-            return .workspace(workspace)
-        } else if let tilingContainer = self as? Column {
-            return .tilingContainer(tilingContainer)
-        } else if let container = self as? MacosMinimizedWindowsContainer {
-            return .macosMinimizedWindowsContainer(container)
-        } else if let container = self as? MacosHiddenAppsWindowsContainer {
-            return .macosHiddenAppsWindowsContainer(container)
-        } else if let container = self as? MacosFullscreenWindowsContainer {
-            return .macosFullscreenWindowsContainer(container)
-        } else if let container = self as? MacosPopupWindowsContainer {
-            return .macosPopupWindowsContainer(container)
-        } else {
-            die("Unknown tree \(self)")
-        }
-    }
-
-    var kind: NonLeafTreeNodeKind {
-        return switch cases {
-            case .tilingContainer: .tilingContainer
-            case .workspace: .workspace
-            case .macosMinimizedWindowsContainer: .macosMinimizedWindowsContainer
-            case .macosFullscreenWindowsContainer: .macosFullscreenWindowsContainer
-            case .macosHiddenAppsWindowsContainer: .macosHiddenAppsWindowsContainer
-            case .macosPopupWindowsContainer: .macosPopupWindowsContainer
-        }
-    }
-}
 
 enum ChildParentRelation: Equatable {
     case floatingWindow
@@ -108,7 +10,6 @@ enum ChildParentRelation: Equatable {
     case macosPopupWindow
     case tiling(parent: Column)
     case rootTilingContainer
-
     case shimContainerRelation
 }
 
@@ -124,30 +25,50 @@ func illegalChildParentRelation(child: TreeNode, parent: NonLeafTreeNodeObject?)
 }
 
 func getChildParentRelationOrNil(child: TreeNode, parent: NonLeafTreeNodeObject) -> ChildParentRelation? {
-    return switch (child.nodeCases, parent.cases) {
-        case (.workspace, _): nil
-        case (.window, .workspace): .floatingWindow
-
-        case (.window, .macosPopupWindowsContainer): .macosPopupWindow
-        case (_, .macosPopupWindowsContainer): nil
-        case (.macosPopupWindowsContainer, _): nil
-
-        case (.window, .macosMinimizedWindowsContainer): .macosNativeMinimizedWindow
-        case (_, .macosMinimizedWindowsContainer): nil
-        case (.macosMinimizedWindowsContainer, _): nil
-
-        case (.tilingContainer, .tilingContainer(let container)),
-             (.window, .tilingContainer(let container)): .tiling(parent: container)
-        case (.tilingContainer, .workspace): .rootTilingContainer
-
-        case (.macosFullscreenWindowsContainer, .workspace): .shimContainerRelation
-        case (.window, .macosFullscreenWindowsContainer): .macosNativeFullscreenWindow
-        case (.macosFullscreenWindowsContainer, _): nil
-        case (_, .macosFullscreenWindowsContainer): nil
-
-        case (.macosHiddenAppsWindowsContainer, .workspace): .shimContainerRelation
-        case (.window, .macosHiddenAppsWindowsContainer): .macosNativeHiddenAppWindow
-        case (.macosHiddenAppsWindowsContainer, _): nil
-        case (_, .macosHiddenAppsWindowsContainer): nil
+    switch child {
+        case is Workspace:
+            return nil
+        case is Window:
+            switch parent {
+                case let container as Column:
+                    return .tiling(parent: container)
+                case is Workspace:
+                    return .floatingWindow
+                case is MacosPopupWindowsContainer:
+                    return .macosPopupWindow
+                case is MacosMinimizedWindowsContainer:
+                    return .macosNativeMinimizedWindow
+                case is MacosFullscreenWindowsContainer:
+                    return .macosNativeFullscreenWindow
+                case is MacosHiddenAppsWindowsContainer:
+                    return .macosNativeHiddenAppWindow
+                default:
+                    die("Unknown tree \(parent)")
+            }
+        case is Column:
+            switch parent {
+                case let container as Column:
+                    return .tiling(parent: container)
+                case is Workspace:
+                    return .rootTilingContainer
+                case is MacosPopupWindowsContainer,
+                     is MacosMinimizedWindowsContainer,
+                     is MacosFullscreenWindowsContainer,
+                     is MacosHiddenAppsWindowsContainer:
+                    return nil
+                default:
+                    die("Unknown tree \(parent)")
+            }
+        case is MacosFullscreenWindowsContainer, is MacosHiddenAppsWindowsContainer:
+            switch parent {
+                case is Workspace:
+                    return .shimContainerRelation
+                default:
+                    return nil
+            }
+        case is MacosMinimizedWindowsContainer, is MacosPopupWindowsContainer:
+            return nil
+        default:
+            die("Unknown tree \(child)")
     }
 }

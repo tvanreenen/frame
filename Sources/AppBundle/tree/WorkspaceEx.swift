@@ -1,18 +1,6 @@
 import Common
 
 extension Workspace {
-    @MainActor var rootTilingContainer: Column {
-        let containers = children.filterIsInstance(of: Column.self)
-        switch containers.count {
-            case 0:
-                return Column(parent: self, adaptiveWeight: 1, .h, .tiles, index: INDEX_BIND_LAST)
-            case 1:
-                return containers.singleOrNil().orDie()
-            default:
-                die("Workspace must contain zero or one tiling container as its child")
-        }
-    }
-
     var floatingWindows: [Window] {
         children.filterIsInstance(of: Window.self)
     }

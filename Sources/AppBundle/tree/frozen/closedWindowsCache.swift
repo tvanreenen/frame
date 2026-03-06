@@ -24,14 +24,14 @@ struct FrozenMonitor: Sendable {
 struct FrozenWorkspace: Sendable {
     let name: String
     let monitor: FrozenMonitor // todo drop this property, once monitor to workspace assignment migrates to TreeNode
-    let rootTilingNode: FrozenContainer
+    let columns: [FrozenColumn]
     let floatingWindows: [FrozenWindow]
     let macosUnconventionalWindows: [FrozenWindow]
 
     @MainActor init(_ workspace: Workspace) {
         name = workspace.name
         monitor = FrozenMonitor(workspace.workspaceMonitor)
-        rootTilingNode = FrozenContainer(workspace.rootTilingContainer)
+        columns = workspace.columns.map(FrozenColumn.init)
         floatingWindows = workspace.floatingWindows.map(FrozenWindow.init)
         macosUnconventionalWindows =
             workspace.macOsNativeHiddenAppsWindowsContainer.children.map { FrozenWindow($0 as! Window) } +
@@ -70,10 +70,10 @@ struct FrozenWorkspace: Sendable {
         for frozenWindow in frozenWorkspace.macosUnconventionalWindows { // Will get fixed by normalizations
             Window.get(byId: frozenWindow.id)?.bindAsFloatingWindow(to: workspace)
         }
-        let prevRoot = workspace.rootTilingContainer // Save prevRoot into a variable to avoid it being garbage collected earlier than needed
-        let potentialOrphans = prevRoot.allLeafWindowsRecursive
-        prevRoot.unbindFromParent()
-        restoreTreeRecursive(frozenContainer: frozenWorkspace.rootTilingNode, parent: workspace, index: INDEX_BIND_LAST)
+        let root = workspace.rootTilingContainer
+        let potentialOrphans = root.allLeafWindowsRecursive
+        clearChildren(of: root)
+        restoreColumns(frozenWorkspace.columns, into: workspace)
         for window in (potentialOrphans - workspace.rootTilingContainer.allLeafWindowsRecursive) {
             try await window.relayoutWindow(on: workspace, forceTile: true)
         }
@@ -89,27 +89,26 @@ struct FrozenWorkspace: Sendable {
 
 @discardableResult
 @MainActor
-private func restoreTreeRecursive(frozenContainer: FrozenContainer, parent: NonLeafTreeNodeObject, index: Int) -> Bool {
-    let container = Column(
-        parent: parent,
-        adaptiveWeight: frozenContainer.weight,
-        frozenContainer.orientation,
-        frozenContainer.layout,
-        index: index,
-    )
-
-    for (index, child) in frozenContainer.children.enumerated() {
-        switch child {
-            case .window(let w):
-                // Stop the loop if can't find the window, because otherwise all the subsequent windows will have incorrect index
-                guard let window = Window.get(byId: w.id) else { return false }
-                window.bind(to: container, adaptiveWeight: w.weight, index: index)
-            case .container(let c):
-                // There is no reason to continue
-                if !restoreTreeRecursive(frozenContainer: c, parent: container, index: index) { return false }
+private func restoreColumns(_ frozenColumns: [FrozenColumn], into workspace: Workspace) -> Bool {
+    for (columnIndex, frozenColumn) in frozenColumns.enumerated() {
+        let column = Column.newVTiles(
+            parent: workspace.columnsRoot,
+            adaptiveWeight: frozenColumn.weight,
+            index: columnIndex,
+        )
+        for (windowIndex, frozenWindow) in frozenColumn.windows.enumerated() {
+            guard let window = Window.get(byId: frozenWindow.id) else { return false }
+            window.bind(to: column, adaptiveWeight: frozenWindow.weight, index: windowIndex)
         }
     }
     return true
+}
+
+@MainActor
+private func clearChildren(of parent: NonLeafTreeNodeObject) {
+    for child in Array(parent.children) {
+        child.unbindFromParent()
+    }
 }
 
 // Consider the following case:

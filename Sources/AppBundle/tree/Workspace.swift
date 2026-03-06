@@ -33,14 +33,22 @@ private func getStubWorkspace(forPoint point: CGPoint) -> Workspace {
 final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
     let name: String
     nonisolated private let nameLogicalSegments: StringLogicalSegments
+    private var _rootTilingContainer: Column?
     /// `assignedMonitorPoint` must be interpreted only when the workspace is invisible
     fileprivate var assignedMonitorPoint: CGPoint? = nil
+
+    /// Structural backing node for the columns model. Prefer `columnsRoot` at call sites.
+    @MainActor
+    var rootTilingContainer: Column {
+        _rootTilingContainer.orDie("Workspace root tiling container must always exist")
+    }
 
     @MainActor
     private init(_ name: String) {
         self.name = name
         self.nameLogicalSegments = name.toLogicalSegments()
         super.init(parent: NilTreeNode.instance, adaptiveWeight: 0, index: 0)
+        _rootTilingContainer = Column.newHTiles(parent: self, adaptiveWeight: 1, index: INDEX_BIND_LAST)
     }
 
     @MainActor static var all: [Workspace] {

@@ -151,18 +151,20 @@ final class MoveCommandTest: XCTestCase {
 
 extension TreeNode {
     var layoutDescription: LayoutDescription {
-        return switch nodeCases {
-            case .window(let window): .window(window.windowId)
-            case .workspace(let workspace): .workspace(workspace.children.map(\.layoutDescription))
-            case .macosMinimizedWindowsContainer: .macosMinimized
-            case .macosFullscreenWindowsContainer: .macosFullscreen
-            case .macosHiddenAppsWindowsContainer: .macosHiddeAppWindow
-            case .macosPopupWindowsContainer: .macosPopupWindowsContainer
-            case .tilingContainer(let container):
-                container.orientation == .h
-                    ? .h_tiles(container.children.map(\.layoutDescription))
-                    : .v_tiles(container.children.map(\.layoutDescription))
+        if let window = self as? Window {
+            return .window(window.windowId)
         }
+        if let workspace = self as? Workspace {
+            return .workspace(workspace.children.map(\.layoutDescription))
+        }
+        if self is MacosMinimizedWindowsContainer { return .macosMinimized }
+        if self is MacosFullscreenWindowsContainer { return .macosFullscreen }
+        if self is MacosHiddenAppsWindowsContainer { return .macosHiddeAppWindow }
+        if self is MacosPopupWindowsContainer { return .macosPopupWindowsContainer }
+        guard let container = self as? Column else { die("Unknown tree \(self)") }
+        return container.orientation == .h
+            ? .h_tiles(container.children.map(\.layoutDescription))
+            : .v_tiles(container.children.map(\.layoutDescription))
     }
 }
 

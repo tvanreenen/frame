@@ -7,10 +7,17 @@ final class TreeNodeTest: XCTestCase {
 
     func testChildParentCyclicReferenceMemoryLeak() {
         let workspace = Workspace.get(byName: name) // Don't cache root node
-        let window = TestWindow.new(id: 1, parent: workspace.rootTilingContainer)
+        weak var column: Column?
+        let window: Window
+        do {
+            let createdColumn = workspace.addColumn(after: nil)
+            column = createdColumn
+            window = TestWindow.new(id: 1, parent: createdColumn)
 
-        XCTAssertTrue(window.parent != nil)
-        workspace.rootTilingContainer.unbindFromParent()
+            XCTAssertTrue(window.parent != nil)
+            createdColumn.unbindFromParent()
+        }
+        XCTAssertNil(column)
         XCTAssertTrue(window.parent == nil)
     }
 
@@ -18,14 +25,14 @@ final class TreeNodeTest: XCTestCase {
         let workspace = Workspace.get(byName: name)
 
         XCTAssertTrue(workspace.isEffectivelyEmpty)
-        weak var window = TestWindow.new(id: 1, parent: workspace.rootTilingContainer)
+        weak var window = TestWindow.new(id: 1, parent: workspace.columnsRoot)
         XCTAssertNotEqual(window, nil)
         XCTAssertTrue(!workspace.isEffectivelyEmpty)
         window!.unbindFromParent()
         XCTAssertTrue(workspace.isEffectivelyEmpty)
 
         // Don't save to local variable
-        TestWindow.new(id: 2, parent: workspace.rootTilingContainer)
+        TestWindow.new(id: 2, parent: workspace.columnsRoot)
         XCTAssertTrue(!workspace.isEffectivelyEmpty)
     }
 
@@ -33,22 +40,22 @@ final class TreeNodeTest: XCTestCase {
 
     func testNormalizeContainers_dontRemoveRoot() {
         let workspace = Workspace.get(byName: name)
-        weak let root = workspace.rootTilingContainer
+        weak let root = workspace.columnsRoot
         XCTAssertNotEqual(root, nil)
         XCTAssertTrue(root!.isEffectivelyEmpty)
         workspace.normalizeContainers()
         // Root container is never unbound even when empty
         XCTAssertNotEqual(root, nil)
         XCTAssertTrue(root!.isEffectivelyEmpty)
+        XCTAssertTrue(root === workspace.columnsRoot)
     }
 
-    func testNormalizeContainers_rootBecomesHTiles() {
+    func testRootTilingContainerIsStructurallyHorizontal() {
         let workspace = Workspace.get(byName: name)
-        // Force the root to v-orientation (shouldn't happen in normal use but must be handled)
-        workspace.rootTilingContainer.setOrientation(.v)
-        assertEquals(workspace.rootTilingContainer.orientation, .v)
+        let root = workspace.columnsRoot
         workspace.normalizeContainers()
-        assertEquals(workspace.rootTilingContainer.orientation, .h)
+        XCTAssertTrue(root === workspace.columnsRoot)
+        assertEquals(root.orientation, .h)
     }
 
     func testNormalizeContainers_columnBecomesVTiles() {
@@ -86,15 +93,16 @@ final class TreeNodeTest: XCTestCase {
         XCTAssertTrue(col.children.first is Window)
     }
 
-    func testNormalizeContainers_orphanWindowMovedToLastColumn() {
+    func testNormalizeContainers_defensivelyMovesUnexpectedRootWindowToLastColumn() {
         let workspace = Workspace.get(byName: name)
         // Set up: root → col(v) → window(1), root → orphan window(2)
+        // This shape should no longer be produced by normal runtime paths, but normalization still repairs it.
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         TestWindow.new(id: 1, parent: col)
-        // Directly bind window to root (orphan — shouldn't happen normally)
+        // Directly bind window to root (defensive repair path only)
         TestWindow.new(id: 2, parent: workspace.columnsRoot)
         workspace.normalizeContainers()
-        // Orphan window(2) should be moved into the last column
+        // The unexpected root-level window should be moved into the last column
         assertEquals(workspace.columns.count, 1)
         assertEquals(col.children.map { ($0 as! Window).windowId }, [1, 2])
     }

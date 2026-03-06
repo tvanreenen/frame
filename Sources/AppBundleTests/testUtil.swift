@@ -28,9 +28,7 @@ func setUpWorkspacesForTests() {
     runtimeContext.config.persistentWorkspaces = []
 
     for workspace in Workspace.all {
-        for child in workspace.children {
-            child.unbindFromParent()
-        }
+        clearWorkspaceChildrenForTests(workspace)
     }
     check(Workspace.get(byName: "setUpWorkspacesForTests").focusWorkspace())
     Workspace.garbageCollectUnusedWorkspaces()
@@ -41,6 +39,16 @@ func setUpWorkspacesForTests() {
     Window.resetForTests()
     TestApp.shared.resetState()
     appForTests = nil
+}
+
+@MainActor
+func clearWorkspaceChildrenForTests(_ workspace: Workspace) {
+    for child in Array(workspace.columnsRoot.children) {
+        child.unbindFromParent()
+    }
+    for child in Array(workspace.children) where child !== workspace.columnsRoot {
+        child.unbindFromParent()
+    }
 }
 
 extension ParsedCmd {

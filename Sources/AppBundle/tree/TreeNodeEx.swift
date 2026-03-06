@@ -35,14 +35,16 @@ extension TreeNode {
 
     @MainActor
     var nodeMonitor: Monitor? {
-        switch self.nodeCases {
-            case .workspace(let ws): ws.workspaceMonitor
-            case .window: parent?.nodeMonitor
-            case .tilingContainer: parent?.nodeMonitor
-            case .macosFullscreenWindowsContainer: parent?.nodeMonitor
-            case .macosHiddenAppsWindowsContainer: parent?.nodeMonitor
-            case .macosMinimizedWindowsContainer, .macosPopupWindowsContainer: nil
+        if let workspace = self as? Workspace {
+            return workspace.workspaceMonitor
         }
+        if self is Window || self is Column || self is MacosFullscreenWindowsContainer || self is MacosHiddenAppsWindowsContainer {
+            return parent?.nodeMonitor
+        }
+        if self is MacosMinimizedWindowsContainer || self is MacosPopupWindowsContainer {
+            return nil
+        }
+        die("Unknown tree \(self)")
     }
 
     var mostRecentWindowRecursive: Window? {
@@ -83,24 +85,38 @@ extension TreeNode {
         hasChildrenInDirection direction: CardinalDirection,
     ) -> (parent: Column, ownIndex: Int)? {
         let innermostChild = parentsWithSelf.first(where: { (node: TreeNode) -> Bool in
-            return switch node.parent?.cases {
-                // stop searching. We didn't find it, or something went wrong
-                case .workspace, nil, .macosMinimizedWindowsContainer,
-                     .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer, .macosPopupWindowsContainer:
-                    true
-                case .tilingContainer(let parent):
-                    parent.orientation == direction.orientation &&
-                        (node.ownIndex.map { parent.children.indices.contains($0 + direction.focusOffset) } ?? true)
+            guard let parent = node.parent else { return true }
+            if let tilingParent = parent as? Column {
+                return tilingParent.orientation == direction.orientation &&
+                    (node.ownIndex.map { tilingParent.children.indices.contains($0 + direction.focusOffset) } ?? true)
             }
+            return true
         })
         guard let innermostChild else { return nil }
-        switch innermostChild.parent?.cases {
-            case .tilingContainer(let parent):
-                check(parent.orientation == direction.orientation)
-                return innermostChild.ownIndex.map { (parent, $0) }
-            case .workspace, nil, .macosMinimizedWindowsContainer,
-                 .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer, .macosPopupWindowsContainer:
-                return nil
-        }
+        guard let parent = innermostChild.parent as? Column else { return nil }
+        check(parent.orientation == direction.orientation)
+        return innermostChild.ownIndex.map { (parent, $0) }
     }
+
+    var isMacosUnconventionalContainer: Bool {
+        self is MacosMinimizedWindowsContainer ||
+            self is MacosFullscreenWindowsContainer ||
+            self is MacosHiddenAppsWindowsContainer ||
+            self is MacosPopupWindowsContainer
+    }
+
+    var tilingNodeOrNil: TilingTreeNode? {
+        if let window = self as? Window {
+            return .window(window)
+        }
+        if let container = self as? Column {
+            return .tilingContainer(container)
+        }
+        return nil
+    }
+}
+
+enum TilingTreeNode {
+    case window(Window)
+    case tilingContainer(Column)
 }

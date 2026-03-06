@@ -8,7 +8,7 @@ struct BalanceSizesCommand: Command {
 
     func run(_ env: CmdEnv, _ io: CmdIo) -> Bool {
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }
-        balance(target.workspace.rootTilingContainer)
+        balance(target.workspace.columnsRoot)
         return true
     }
 }
