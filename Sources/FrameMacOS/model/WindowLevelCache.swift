@@ -1,4 +1,5 @@
 import CoreGraphics
+import FrameEngine
 import Foundation
 
 @MainActor

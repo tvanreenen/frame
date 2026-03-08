@@ -59,6 +59,23 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertFalse(hooksContent.contains("package var currentlyManipulatedWithMouseWindowId"))
     }
 
+    func testFrameEngineNoLongerOwnsMacosContainerOrWindowLevelTypes() throws {
+        let unconventionalFile = projectRoot.appending(path: "Sources/FrameEngine/tree/UnconventionalWindowsContainer.swift")
+        let abstractAppFile = projectRoot.appending(path: "Sources/FrameEngine/tree/AbstractApp.swift")
+        let macosWindowLevelFile = projectRoot.appending(path: "Sources/FrameMacOS/model/WindowLevelCache.swift")
+        let unconventionalContent = try String(contentsOf: unconventionalFile)
+        let abstractAppContent = try String(contentsOf: abstractAppFile)
+        let macosWindowLevelContent = try String(contentsOf: macosWindowLevelFile)
+
+        XCTAssertFalse(unconventionalContent.contains("MacosFullscreenWindowsContainer"))
+        XCTAssertFalse(unconventionalContent.contains("MacosHiddenAppsWindowsContainer"))
+        XCTAssertFalse(unconventionalContent.contains("MacosMinimizedWindowsContainer"))
+        XCTAssertFalse(unconventionalContent.contains("MacosPopupWindowsContainer"))
+        XCTAssertFalse(abstractAppContent.contains("MacOsWindowLevel"))
+        XCTAssertTrue(macosWindowLevelContent.contains("package enum MacOsWindowLevel"))
+        XCTAssertTrue(macosWindowLevelContent.contains("func getWindowLevel(for windowId: UInt32)"))
+    }
+
     func testEnginePlatformSeamIsSessionOwned() throws {
         let engineHooksFile = projectRoot.appending(path: "Sources/FrameEngine/PlatformHooks.swift")
         let sessionFile = projectRoot.appending(path: "Sources/FrameEngine/AppSession.swift")
@@ -256,12 +273,12 @@ final class WindowArchitectureTest: XCTestCase {
     }
 
     func testPopupNormalizationPathWithoutMacWindowCast() async throws {
-        let popup = TestWindow.new(id: 779, parent: macosPopupWindowsContainer)
+        let popup = TestWindow.new(id: 779, parent: popupWindowsContainer)
         TestApp.shared.setWindowType(windowId: 779, .window)
 
-        XCTAssertTrue(popup.parent is MacosPopupWindowsContainer)
+        XCTAssertTrue(popup.parent is PopupWindowsContainer)
         try await normalizeLayoutReason()
-        XCTAssertFalse(popup.parent is MacosPopupWindowsContainer)
+        XCTAssertFalse(popup.parent is PopupWindowsContainer)
     }
 
     func testWindowClassificationOverrideAppliedOnRegistration() async throws {

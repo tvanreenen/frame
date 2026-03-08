@@ -80,12 +80,12 @@ package final class TestApp: WindowPlatformApp {
     }
 
     @MainActor
-    package func setMacosFullscreen(windowId: UInt32, _ isFullscreen: Bool) {
+    package func setNativeFullscreen(windowId: UInt32, _ isFullscreen: Bool) {
         macosFullscreen[windowId] = isFullscreen
     }
 
     @MainActor
-    package func setMacosMinimized(windowId: UInt32, _ isMinimized: Bool) {
+    package func setNativeMinimized(windowId: UInt32, _ isMinimized: Bool) {
         macosMinimized[windowId] = isMinimized
     }
 
@@ -142,11 +142,11 @@ package final class TestApp: WindowPlatformApp {
         macosMinimized.removeValue(forKey: windowId)
     }
 
-    package func isMacosNativeFullscreen(windowId: UInt32) async throws -> Bool? {
+    package func isNativeFullscreen(windowId: UInt32) async throws -> Bool? {
         macosFullscreen[windowId] ?? false
     }
 
-    package func isMacosNativeMinimized(windowId: UInt32) async throws -> Bool? {
+    package func isNativeMinimized(windowId: UInt32) async throws -> Bool? {
         macosMinimized[windowId] ?? false
     }
 
@@ -158,7 +158,7 @@ package final class TestApp: WindowPlatformApp {
         [:]
     }
 
-    package func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
+    package func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
         windowTypes[windowId] ?? .window
     }
 }

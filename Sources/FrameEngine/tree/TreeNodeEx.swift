@@ -38,10 +38,10 @@ extension TreeNode {
         if let workspace = self as? Workspace {
             return workspace.workspaceMonitor
         }
-        if self is Window || self is Column || self is MacosFullscreenWindowsContainer || self is MacosHiddenAppsWindowsContainer {
+        if self is Window || self is Column || self is NativeFullscreenWindowsContainer || self is HiddenAppWindowsContainer {
             return parent?.nodeMonitor
         }
-        if self is MacosMinimizedWindowsContainer || self is MacosPopupWindowsContainer {
+        if self is NativeMinimizedWindowsContainer || self is PopupWindowsContainer {
             return nil
         }
         die("Unknown tree \(self)")
@@ -98,11 +98,11 @@ extension TreeNode {
         return innermostChild.ownIndex.map { (parent, $0) }
     }
 
-    package var isMacosUnconventionalContainer: Bool {
-        self is MacosMinimizedWindowsContainer ||
-            self is MacosFullscreenWindowsContainer ||
-            self is MacosHiddenAppsWindowsContainer ||
-            self is MacosPopupWindowsContainer
+    package var isUnconventionalContainer: Bool {
+        self is NativeMinimizedWindowsContainer ||
+            self is NativeFullscreenWindowsContainer ||
+            self is HiddenAppWindowsContainer ||
+            self is PopupWindowsContainer
     }
 
     package var tilingNodeOrNil: TilingTreeNode? {

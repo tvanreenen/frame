@@ -27,14 +27,14 @@ struct MoveCommand: Command {
             }
         }
         if parent is Workspace { return io.err("moving floating windows isn't yet supported") }
-        if parent is MacosMinimizedWindowsContainer || parent is MacosFullscreenWindowsContainer || parent is MacosHiddenAppsWindowsContainer {
-            return io.err(moveOutMacosUnconventionalWindow)
+        if parent is NativeMinimizedWindowsContainer || parent is NativeFullscreenWindowsContainer || parent is HiddenAppWindowsContainer {
+            return io.err(moveOutUnconventionalWindow)
         }
         return false
     }
 }
 
-private let moveOutMacosUnconventionalWindow =
+private let moveOutUnconventionalWindow =
     "moving macOS fullscreen, minimized windows and windows of hidden apps isn't yet supported"
 
 @MainActor private func moveWindowBetweenColumns(

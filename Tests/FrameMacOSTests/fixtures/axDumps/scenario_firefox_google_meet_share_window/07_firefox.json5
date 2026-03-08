@@ -57,6 +57,6 @@
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.axWindowId" : 18,
   "Aero.macOS.version" : "Version 15.5 (Build 24F74)",
-  "Aero.treeNodeParent" : "Optional(FrameEngine.MacosPopupWindowsContainer)",
+  "Aero.treeNodeParent" : "Optional(FrameEngine.PopupWindowsContainer)",
   "Aero.workspace" : null
 }
