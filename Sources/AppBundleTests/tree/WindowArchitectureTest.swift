@@ -1,4 +1,6 @@
-@testable import AppBundle
+@testable import FrameEngine
+@testable import FrameMacOS
+@testable import FrameUI
 import Common
 import Foundation
 import XCTest
@@ -8,21 +10,23 @@ final class WindowArchitectureTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
     func testNoMacWindowSpecificCastsRemain() throws {
-        let root = projectRoot.appending(path: "Sources/AppBundle")
         var offenders: [String] = []
-        let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
-        while let file = enumerator?.nextObject() as? URL {
-            guard file.pathExtension == "swift" else { continue }
-            let content = try String(contentsOf: file)
-            if content.contains("as! MacWindow") || content.contains("asMacWindow(") {
-                offenders.append(file.path)
+        for target in ["FrameEngine", "FrameMacOS", "FrameUI", "AppBundle"] {
+            let root = projectRoot.appending(path: "Sources/\(target)")
+            let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
+            while let file = enumerator?.nextObject() as? URL {
+                guard file.pathExtension == "swift" else { continue }
+                let content = try String(contentsOf: file)
+                if content.contains("as! MacWindow") || content.contains("asMacWindow(") {
+                    offenders.append(file.path)
+                }
             }
         }
         assertEquals(offenders.sorted(), [])
     }
 
     func testMacAppNoLongerOwnsStaticRuntimeRegistries() throws {
-        let file = projectRoot.appending(path: "Sources/AppBundle/tree/MacApp.swift")
+        let file = projectRoot.appending(path: "Sources/FrameMacOS/tree/MacApp.swift")
         let content = try String(contentsOf: file)
 
         XCTAssertFalse(content.contains("static var allAppsMap"))
@@ -32,21 +36,26 @@ final class WindowArchitectureTest: XCTestCase {
     }
 
     func testRuntimeCodeUsesSessionUiBoundary() throws {
-        let refreshFile = projectRoot.appending(path: "Sources/AppBundle/layout/refresh.swift")
-        let reloadConfigFile = projectRoot.appending(path: "Sources/AppBundle/command/impl/ReloadConfigCommand.swift")
+        let refreshFile = projectRoot.appending(path: "Sources/FrameEngine/layout/refresh.swift")
+        let reloadConfigFile = projectRoot.appending(path: "Sources/FrameMacOS/command/impl/ReloadConfigCommand.swift")
+        let sessionUiFile = projectRoot.appending(path: "Sources/FrameMacOS/AppSessionUi.swift")
         let refreshContent = try String(contentsOf: refreshFile)
         let reloadConfigContent = try String(contentsOf: reloadConfigFile)
+        let sessionUiContent = try String(contentsOf: sessionUiFile)
 
-        XCTAssertTrue(refreshContent.contains("syncUiState()"))
+        XCTAssertTrue(refreshContent.contains("uiStateSyncHook(self)"))
         XCTAssertFalse(refreshContent.contains("SecureInputPanel.shared.refresh()"))
         XCTAssertFalse(refreshContent.contains("updateTrayText()"))
+        XCTAssertTrue(sessionUiContent.contains("package func syncUiState()"))
+        XCTAssertTrue(sessionUiContent.contains("SecureInputPanel.shared.refresh()"))
+        XCTAssertTrue(sessionUiContent.contains("TrayMenuModel.shared.trayText"))
         XCTAssertTrue(reloadConfigContent.contains("session.clearConfigMessage()"))
         XCTAssertTrue(reloadConfigContent.contains("session.setConfigMessage("))
         XCTAssertFalse(reloadConfigContent.contains("MessageModel.shared.message"))
     }
 
     func testWindowHasNoNotImplementedStubs() throws {
-        let file = projectRoot.appending(path: "Sources/AppBundle/tree/Window.swift")
+        let file = projectRoot.appending(path: "Sources/FrameEngine/tree/Window.swift")
         let content = try String(contentsOf: file)
         XCTAssertFalse(content.contains("die(\"Not implemented\")"))
     }
@@ -150,15 +159,13 @@ final class WindowArchitectureTest: XCTestCase {
     }
 
     func testWindowClassificationOverrideAppliedOnRegistration() async throws {
+        var matcher = WindowClassificationOverrideMatcher()
+        matcher.appId = TestApp.shared.rawAppBundleId
+        var override = WindowClassificationOverride()
+        override.matcher = matcher
+        override.kind = .window
         runtimeContext.config.windowClassificationOverrides = [
-            WindowClassificationOverride(
-                matcher: WindowClassificationOverrideMatcher(
-                    appId: TestApp.shared.rawAppBundleId,
-                    appNameRegexSubstring: nil,
-                    windowTitleRegexSubstring: nil,
-                ),
-                kind: .window,
-            ),
+            override,
         ]
         TestApp.shared.setWindowType(windowId: 781, .popup)
 

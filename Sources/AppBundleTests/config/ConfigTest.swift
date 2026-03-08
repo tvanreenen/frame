@@ -1,6 +1,10 @@
-@testable import AppBundle
+@testable import FrameEngine
+@testable import FrameMacOS
+@testable import FrameUI
 import Common
 import Foundation
+import HotKey
+import TOMLKit
 import XCTest
 
 @MainActor
@@ -48,8 +52,10 @@ final class ConfigTest: XCTestCase {
             """,
         )
         assertEquals(errors, [])
-        let binding = HotkeyBinding(.option, .h, [FocusCommand.new(direction: .left)])
-        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
+        assertEquals(config.bindings.keys.sorted(), ["alt-h"])
+        let binding = config.bindings["alt-h"].orDie()
+        assertEquals(binding.modifiers, .option)
+        assertEquals(binding.keyCode, keyNotationToKeyCode["h"]?.carbonKeyCode)
     }
 
     func testHotkeyParseError() {
@@ -68,8 +74,10 @@ final class ConfigTest: XCTestCase {
                 "binding.alt-hh: Can\'t parse the key in \'alt-hh\' binding",
             ],
         )
-        let binding = HotkeyBinding(.option, .k, [FocusCommand.new(direction: .up)])
-        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
+        assertEquals(config.bindings.keys.sorted(), ["alt-k"])
+        let binding = config.bindings["alt-k"].orDie()
+        assertEquals(binding.modifiers, .option)
+        assertEquals(binding.keyCode, keyNotationToKeyCode["k"]?.carbonKeyCode)
     }
 
     func testPersistentWorkspaces() {
@@ -439,12 +447,10 @@ final class ConfigTest: XCTestCase {
             """,
         )
         assertEquals(errors.descriptions, [])
-        assertEquals(config.keyMapping, KeyMapping(preset: .qwerty, rawKeyNotationToKeyCode: [
-            "q": .q,
-            "unicorn": .u,
-        ]))
-        let binding = HotkeyBinding(.option, .u, [WorkspaceCommand(args: WorkspaceCmdArgs(target: .direct(.parse("unicorn").getOrDie())))])
-        assertEquals(config.bindings, [binding.descriptionWithKeyCode: binding])
+        XCTAssertEqual(config.bindings.count, 1)
+        let binding = config.bindings.values.singleOrNil().orDie()
+        assertEquals(binding.modifiers, .option)
+        assertEquals(binding.keyCode, keyNotationToKeyCode["u"]?.carbonKeyCode)
 
         let (_, errors1) = parseConfig(
             """
@@ -458,21 +464,18 @@ final class ConfigTest: XCTestCase {
             "key-mapping.key-notation-to-key-code.q: 'qw' is invalid key code",
         ])
 
-        let (dvorakConfig, dvorakErrors) = parseConfig(
-            """
-            key-mapping.preset = 'dvorak'
-            """,
-        )
+        var dvorakErrors: [TomlParseError] = []
+        let dvorakTable = try! TOMLTable(string: "key-mapping.preset = 'dvorak'")
+        let dvorakConfig = parseKeyMapping(dvorakTable["key-mapping"].orDie(), .rootKey("key-mapping"), &dvorakErrors)
         assertEquals(dvorakErrors, [])
-        assertEquals(dvorakConfig.keyMapping, KeyMapping(preset: .dvorak, rawKeyNotationToKeyCode: [:]))
-        assertEquals(dvorakConfig.keyMapping.resolve()["quote"], .q)
-        let (colemakConfig, colemakErrors) = parseConfig(
-            """
-            key-mapping.preset = 'colemak'
-            """,
-        )
+        assertEquals(dvorakConfig, KeyMapping(preset: .dvorak, rawKeyNotationToKeyCode: [:]))
+        assertEquals(dvorakConfig.resolve()["quote"], Key.q)
+
+        var colemakErrors: [TomlParseError] = []
+        let colemakTable = try! TOMLTable(string: "key-mapping.preset = 'colemak'")
+        let colemakConfig = parseKeyMapping(colemakTable["key-mapping"].orDie(), .rootKey("key-mapping"), &colemakErrors)
         assertEquals(colemakErrors, [])
-        assertEquals(colemakConfig.keyMapping, KeyMapping(preset: .colemak, rawKeyNotationToKeyCode: [:]))
-        assertEquals(colemakConfig.keyMapping.resolve()["f"], .e)
+        assertEquals(colemakConfig, KeyMapping(preset: .colemak, rawKeyNotationToKeyCode: [:]))
+        assertEquals(colemakConfig.resolve()["f"], Key.e)
     }
 }

@@ -1,4 +1,6 @@
-@testable import AppBundle
+@testable import FrameEngine
+@testable import FrameMacOS
+@testable import FrameUI
 import AppKit
 
 enum TestWindow {
