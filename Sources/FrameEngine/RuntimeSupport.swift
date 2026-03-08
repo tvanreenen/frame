@@ -1,10 +1,10 @@
-import AppKit
 import Common
+import CoreGraphics
 import Foundation
 import os
 
 package let signposter = OSSignposter(subsystem: appBundleId, category: .pointsOfInterest)
-package let myPid = NSRunningApplication.current.processIdentifier
+package let myPid = ProcessInfo.processInfo.processIdentifier
 package let lockScreenAppBundleId = "com.apple.loginwindow"
 
 package func - (a: CGPoint, b: CGPoint) -> CGPoint {
@@ -40,6 +40,7 @@ extension CGPoint {
         sqrt((x - point.x).squared + (y - point.y).squared)
     }
 
+    @MainActor
     package var monitorApproximation: Monitor {
         let monitors = monitors
         return monitors.first(where: { $0.rect.contains(self) })

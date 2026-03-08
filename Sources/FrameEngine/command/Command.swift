@@ -1,4 +1,3 @@
-import AppKit
 import Common
 
 package protocol Command: AeroAny, Equatable, Sendable {

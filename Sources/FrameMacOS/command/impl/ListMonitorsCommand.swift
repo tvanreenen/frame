@@ -33,6 +33,7 @@ struct ListMonitorsCommand: Command {
 private struct ListMonitorsTextRow {
     let columns: [String]
 
+    @MainActor
     init(_ monitor: Monitor) {
         columns = [
             monitor.monitorId.map { "\($0 + 1)" } ?? "NULL-MONITOR-ID",
@@ -50,6 +51,7 @@ private struct ListMonitorsJsonRow: Encodable {
         case monitorName = "monitor-name"
     }
 
+    @MainActor
     init(_ monitor: Monitor) {
         monitorId = monitor.monitorId.map { $0 + 1 }
         monitorName = monitor.name

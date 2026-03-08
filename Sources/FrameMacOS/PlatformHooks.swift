@@ -4,6 +4,12 @@ import FrameEngine
 @MainActor
 func configureFrameMacOSPlatformServices(for session: AppSession) {
     session.platformServices = PlatformServices(
+        mainMonitor: {
+            mainMonitor()
+        },
+        monitors: {
+            monitors()
+        },
         nativeFocusedWindow: {
             try await getNativeFocusedWindow(session: session)
         },

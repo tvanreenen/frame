@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 package class TreeNode: Equatable, AeroAny {
     private var _children: [TreeNode] = []

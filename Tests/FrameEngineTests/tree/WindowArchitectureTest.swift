@@ -76,6 +76,44 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(macosWindowLevelContent.contains("func getWindowLevel(for windowId: UInt32)"))
     }
 
+    func testFrameEngineNoLongerImportsAppKit() throws {
+        let root = projectRoot.appending(path: "Sources/FrameEngine")
+        let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
+        var offenders: [String] = []
+        while let file = enumerator?.nextObject() as? URL {
+            guard file.pathExtension == "swift" else { continue }
+            let content = try String(contentsOf: file)
+            if content.contains("import AppKit") {
+                offenders.append(file.path)
+            }
+        }
+        assertEquals(offenders.sorted(), [])
+    }
+
+    func testConfigModelNoLongerUsesAppKitModifierFlags() throws {
+        let configModelFile = projectRoot.appending(path: "Sources/FrameEngine/ConfigModel.swift")
+        let configModelContent = try String(contentsOf: configModelFile)
+
+        XCTAssertFalse(configModelContent.contains("NSEvent.ModifierFlags"))
+        XCTAssertTrue(configModelContent.contains("struct KeyModifiers"))
+        XCTAssertTrue(configModelContent.contains("struct HotkeyBinding"))
+    }
+
+    func testFrameMacOSOwnsScreenDiscovery() throws {
+        let engineMonitorFile = projectRoot.appending(path: "Sources/FrameEngine/model/Monitor.swift")
+        let macosMonitorFile = projectRoot.appending(path: "Sources/FrameMacOS/model/PlatformMonitor.swift")
+        let engineMonitorContent = try String(contentsOf: engineMonitorFile)
+        let macosMonitorContent = try String(contentsOf: macosMonitorFile)
+
+        XCTAssertFalse(engineMonitorContent.contains("NSScreen"))
+        XCTAssertFalse(engineMonitorContent.contains("monitorAppKitNsScreenScreensId"))
+        XCTAssertTrue(engineMonitorContent.contains("var systemMonitorIndex: Int"))
+        XCTAssertTrue(macosMonitorContent.contains("import AppKit"))
+        XCTAssertTrue(macosMonitorContent.contains("NSScreen"))
+        XCTAssertTrue(macosMonitorContent.contains("func mainMonitor() -> any Monitor"))
+        XCTAssertTrue(macosMonitorContent.contains("func monitors() -> [any Monitor]"))
+    }
+
     func testEnginePlatformSeamIsSessionOwned() throws {
         let engineHooksFile = projectRoot.appending(path: "Sources/FrameEngine/PlatformHooks.swift")
         let sessionFile = projectRoot.appending(path: "Sources/FrameEngine/AppSession.swift")

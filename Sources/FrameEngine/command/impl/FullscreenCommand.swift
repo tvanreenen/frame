@@ -1,4 +1,3 @@
-import AppKit
 import Common
 
 struct FullscreenCommand: Command {

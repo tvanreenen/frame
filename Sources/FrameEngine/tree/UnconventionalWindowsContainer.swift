@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 final class NativeFullscreenWindowsContainer: NonLeafTreeNode {
     @available(*, unavailable)

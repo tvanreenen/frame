@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 package protocol AbstractApp: AnyObject, Hashable, AeroAny {
     var pid: Int32 { get }

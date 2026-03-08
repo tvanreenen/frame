@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 struct FrozenColumn: Sendable {
     let windows: [FrozenWindow]

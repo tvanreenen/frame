@@ -1,6 +1,7 @@
 import Common
 
 extension MonitorDescription {
+    @MainActor
     func resolveMonitor(sortedMonitors: [Monitor]) -> Monitor? {
         return switch self {
             case .sequenceNumber(let number): sortedMonitors.getOrNil(atIndex: number - 1)

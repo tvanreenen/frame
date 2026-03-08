@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 
 /// First line of defence against lock screen
 ///

@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 package enum Json: Encodable, Equatable {
     // vector
