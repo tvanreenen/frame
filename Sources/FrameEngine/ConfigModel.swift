@@ -105,27 +105,27 @@ package struct Gaps: ConvenienceCopyable, Equatable, Sendable {
     }
 }
 
-package struct ResolvedGaps {
-    package let inner: Inner
-    package let outer: Outer
+struct ResolvedGaps {
+    let inner: Inner
+    let outer: Outer
 
-    package struct Inner {
-        package let vertical: Int
-        package let horizontal: Int
+    struct Inner {
+        let vertical: Int
+        let horizontal: Int
 
-        package func get(_ orientation: Orientation) -> Int {
+        func get(_ orientation: Orientation) -> Int {
             orientation == .h ? horizontal : vertical
         }
     }
 
-    package struct Outer {
-        package let left: Int
-        package let bottom: Int
-        package let top: Int
-        package let right: Int
+    struct Outer {
+        let left: Int
+        let bottom: Int
+        let top: Int
+        let right: Int
     }
 
-    package init(gaps: Gaps, monitor: any Monitor) {
+    init(gaps: Gaps, monitor: any Monitor) {
         inner = .init(
             vertical: gaps.inner.vertical.getValue(for: monitor),
             horizontal: gaps.inner.horizontal.getValue(for: monitor),

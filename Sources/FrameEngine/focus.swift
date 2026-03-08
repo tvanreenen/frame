@@ -2,12 +2,12 @@ import AppKit
 import Common
 import Foundation
 
-package enum EffectiveLeaf {
+enum EffectiveLeaf {
     case window(Window)
     case emptyWorkspace(Workspace)
 }
 extension LiveFocus {
-    package var asLeaf: EffectiveLeaf {
+    var asLeaf: EffectiveLeaf {
         if let windowOrNil { .window(windowOrNil) } else { .emptyWorkspace(workspace) }
     }
 }
