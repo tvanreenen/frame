@@ -45,7 +45,7 @@ func terminateApp() {
 }
 
 @MainActor
-package func menuBarMetadata() -> MenuBarMetadata {
+public func menuBarMetadata() -> MenuBarMetadata {
     MenuBarMetadata(
         repositoryUrl: repositoryUrl,
         version: appVersionForDisplay,
@@ -54,7 +54,7 @@ package func menuBarMetadata() -> MenuBarMetadata {
 }
 
 @MainActor
-package func quitFromMenuBar() async throws {
+public func quitFromMenuBar() async throws {
     defer { terminateApp() }
     try await terminationHandler.beforeTermination()
 }
