@@ -15,6 +15,16 @@ brew tap tvanreenen/tap
 brew install --cask frame
 ```
 
+## App and CLI
+
+Frame installs both a menu bar app and a CLI:
+
+- `Frame.app` runs in the background, manages your windows, and handles key bindings
+- `frame` is the command-line client for querying state, running actions, and scripting Frame
+
+Most people will interact with Frame through key bindings and the menu bar app. The CLI is there when you want automation, shell integration, or quick inspection from the terminal.
+On first launch, open `Frame.app` and grant Accessibility access if macOS prompts for it.
+
 ## Quick Start
 
 Learn the core defaults:
@@ -28,7 +38,7 @@ Learn the core defaults:
 
 These are intentionally layered: keep direction/number keys the same, add modifiers for stronger variants (focus -> move/resize, workspace -> move-to-workspace).
 
-### Version Command
+### Verify Install
 
 ```bash
 frame --version
@@ -46,14 +56,13 @@ frame doctor
 
 ## Configuration
 
-Frame runs without a user config file on first launch (it uses the built-in defaults).
-If you want to customize settings, copy the default config to your home directory:
+Frame works without a user config file on first launch. Create `~/.frame.toml` only if you want to customize the defaults:
 
 ```bash
 cp docs/config-examples/default-config.toml ~/.frame.toml
 ```
 
-### Basic Config Ideas
+### Common Customizations
 
 Startup behavior example (`~/.frame.toml`):
 
@@ -107,7 +116,12 @@ outer.right = 8
 
 By default, workspaces are monitor-agnostic. You only need monitor config if you want fixed workspace placement.
 
-`workspace-to-monitor-force-assignment` supports `main`, `secondary`, numeric monitor order (`1`, `2`, ...), and regex on monitor names.
+`workspace-to-monitor-force-assignment` supports:
+
+- `main`
+- `secondary`
+- numeric monitor order (`1`, `2`, ...)
+- regex on monitor names
 
 On a single monitor, you get all workspaces `1-0` without any monitor-assignment config.
 The dual-monitor mapping below only takes effect when a second monitor is present.
@@ -150,24 +164,6 @@ Example:
 workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger frame_workspace_change FOCUSED_WORKSPACE=$FRAME_FOCUSED_WORKSPACE']
 ```
 
-### Config Errors and Recovery
-
-- Config parsing is strict: unknown keys, type mismatches, and invalid values fail validation.
-- On startup, if config validation fails, Frame shows a config error and falls back to the built-in default config so it can still run.
-- Validate your file directly:
-
-```bash
-frame doctor
-```
-
-- After fixing your config, apply it with:
-
-```bash
-frame reload-config
-```
-
-- Error output is grouped by section and includes stable `CFG###` codes to make failures easier to identify and fix.
-
 ### Window Classification Overrides (Optional)
 
 If Frame misclassifies a specific app window as `popup`/`dialog`/`window`, you can force a kind with first-match-wins rules:
@@ -187,3 +183,23 @@ kind = "popup"
 ```
 
 Matcher fields are optional per rule (`app-id`, `app-name-regex-substring`, `window-title-regex-substring`), but each rule must define at least one matcher and a `kind`.
+
+## Troubleshooting
+
+### Config Errors and Recovery
+
+- Config parsing is strict: unknown keys, type mismatches, and invalid values fail validation.
+- On startup, if config validation fails, Frame shows a config error and falls back to the built-in default config so it can still run.
+- Validate your file directly:
+
+```bash
+frame doctor
+```
+
+- After fixing your config, apply it with:
+
+```bash
+frame reload-config
+```
+
+- Error output is grouped by section and includes stable `CFG###` codes to make failures easier to identify and fix.
