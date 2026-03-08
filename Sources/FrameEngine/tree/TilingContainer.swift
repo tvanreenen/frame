@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 package final class Column: NonLeafTreeNode {
     fileprivate var _orientation: Orientation

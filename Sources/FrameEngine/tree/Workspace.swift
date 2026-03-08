@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 extension AppSession {
     var allWorkspaces: [Workspace] {

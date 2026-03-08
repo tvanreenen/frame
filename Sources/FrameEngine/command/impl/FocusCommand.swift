@@ -1,4 +1,3 @@
-import AppKit
 import Common
 
 struct FocusCommand: Command {

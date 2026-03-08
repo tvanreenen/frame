@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 struct ResizeCommand: Command { // todo cover with tests
     let args: ResizeCmdArgs

@@ -1,5 +1,6 @@
 import AppKit
 import Common
+import FrameEngine
 import HotKey
 
 private let minus = "minus"
@@ -245,21 +246,30 @@ private let colemakMap: [String: Key] = keyNotationToKeyCode + [
     slash: .slash,
 ]
 
-let modifiersMap: [String: NSEvent.ModifierFlags] = [
+let modifiersMap: [String: KeyModifiers] = [
     "shift": .shift,
-    "alt": .option,
-    "ctrl": .control,
-    "cmd": .command,
+    "alt": .alt,
+    "ctrl": .ctrl,
+    "cmd": .cmd,
 ]
 
-extension NSEvent.ModifierFlags {
+extension KeyModifiers {
     func toString() -> String {
         var result: [String] = []
-        if contains(.option) { result.append("alt") }
-        if contains(.control) { result.append("ctrl") }
-        if contains(.command) { result.append("cmd") }
+        if contains(.alt) { result.append("alt") }
+        if contains(.ctrl) { result.append("ctrl") }
+        if contains(.cmd) { result.append("cmd") }
         if contains(.shift) { result.append("shift") }
         return result.joined(separator: "-")
+    }
+
+    var carbonFlags: UInt32 {
+        var result: NSEvent.ModifierFlags = []
+        if contains(.alt) { result.insert(.option) }
+        if contains(.ctrl) { result.insert(.control) }
+        if contains(.cmd) { result.insert(.command) }
+        if contains(.shift) { result.insert(.shift) }
+        return result.carbonFlags
     }
 }
 

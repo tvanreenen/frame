@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 package struct Rect: ConvenienceCopyable, AeroAny {
     package var topLeftX: CGFloat
@@ -22,14 +22,6 @@ package struct Rect: ConvenienceCopyable, AeroAny {
         self.topLeftY = topLeftY
         self._width = width
         self._height = height
-    }
-}
-
-extension CGRect {
-    package func monitorFrameNormalized() -> Rect {
-        let mainMonitorHeight: CGFloat = mainMonitor.height
-        let rect = toRect()
-        return rect.copy(\.topLeftY, mainMonitorHeight - rect.topLeftY)
     }
 }
 

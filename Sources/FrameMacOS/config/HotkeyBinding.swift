@@ -6,7 +6,7 @@ import HotKey
 import TOMLKit
 
 private struct HotkeyId: Equatable, Hashable {
-    let modifiers: NSEvent.ModifierFlags
+    let modifiers: KeyModifiers
     let keyCode: UInt32
 
     static func == (lhs: HotkeyId, rhs: HotkeyId) -> Bool {
@@ -86,17 +86,17 @@ func parseBindings(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace, _ er
     return result
 }
 
-func parseBinding(_ raw: String, _ backtrace: TomlBacktrace, _ mapping: [String: Key]) -> ParsedToml<(NSEvent.ModifierFlags, Key)> {
+func parseBinding(_ raw: String, _ backtrace: TomlBacktrace, _ mapping: [String: Key]) -> ParsedToml<(KeyModifiers, Key)> {
     let rawKeys = raw.split(separator: "-")
-    let modifiers: ParsedToml<NSEvent.ModifierFlags> = rawKeys.dropLast()
+    let modifiers: ParsedToml<KeyModifiers> = rawKeys.dropLast()
         .mapAllOrFailure {
             modifiersMap[String($0)].orFailure(.semantic(backtrace, "Can't parse modifiers in '\(raw)' binding"))
         }
-        .map { NSEvent.ModifierFlags($0) }
+        .map { $0.reduce(into: KeyModifiers()) { $0.formUnion($1) } }
     let key: ParsedToml<Key> = rawKeys.last.flatMap { mapping[String($0)] }
         .orFailure(.semantic(backtrace, "Can't parse the key in '\(raw)' binding"))
-    return modifiers.flatMap { modifiers -> ParsedToml<(NSEvent.ModifierFlags, Key)> in
-        key.flatMap { key -> ParsedToml<(NSEvent.ModifierFlags, Key)> in
+    return modifiers.flatMap { modifiers -> ParsedToml<(KeyModifiers, Key)> in
+        key.flatMap { key -> ParsedToml<(KeyModifiers, Key)> in
             .success((modifiers, key))
         }
     }

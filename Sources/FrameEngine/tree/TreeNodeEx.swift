@@ -1,5 +1,5 @@
-import AppKit
 import Common
+import Foundation
 
 extension TreeNode {
     private func visit(node: TreeNode, result: inout [Window]) {

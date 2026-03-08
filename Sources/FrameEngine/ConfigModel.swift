@@ -1,14 +1,31 @@
-import AppKit
 import Common
 import Foundation
 
+package struct KeyModifiers: OptionSet, Equatable, Sendable {
+    package let rawValue: UInt8
+
+    package init(rawValue: UInt8) {
+        self.rawValue = rawValue
+    }
+
+    package static let shift = KeyModifiers(rawValue: 1 << 0)
+    package static let alt = KeyModifiers(rawValue: 1 << 1)
+    package static let ctrl = KeyModifiers(rawValue: 1 << 2)
+    package static let cmd = KeyModifiers(rawValue: 1 << 3)
+
+    // Compatibility aliases for existing config tests and call sites.
+    package static let option = alt
+    package static let control = ctrl
+    package static let command = cmd
+}
+
 package struct HotkeyBinding: Equatable, Sendable {
-    package let modifiers: NSEvent.ModifierFlags
+    package let modifiers: KeyModifiers
     package let keyCode: UInt32
     package let commands: [any Command]
     package let descriptionWithKeyCode: String
 
-    package init(modifiers: NSEvent.ModifierFlags, keyCode: UInt32, descriptionWithKeyCode: String, commands: [any Command]) {
+    package init(modifiers: KeyModifiers, keyCode: UInt32, descriptionWithKeyCode: String, commands: [any Command]) {
         self.modifiers = modifiers
         self.keyCode = keyCode
         self.commands = commands
@@ -40,6 +57,7 @@ package enum DynamicConfigValue<Value: Equatable>: Equatable {
 extension DynamicConfigValue: Sendable where Value: Sendable {}
 
 extension DynamicConfigValue {
+    @MainActor
     package func getValue(for monitor: any Monitor) -> Value {
         switch self {
             case .constant(let value):
@@ -125,6 +143,7 @@ struct ResolvedGaps {
         let right: Int
     }
 
+    @MainActor
     init(gaps: Gaps, monitor: any Monitor) {
         inner = .init(
             vertical: gaps.inner.vertical.getValue(for: monitor),
