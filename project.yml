@@ -22,7 +22,9 @@ targets:
       - "docs/config-examples/default-config.toml"
     dependencies:
       - package: FramePackage
-        product: AppBundle
+        product: FrameMacOS
+      - package: FramePackage
+        product: FrameUI
     # https://developer.apple.com/documentation/xcode/build-settings-reference
     settings:
       base:

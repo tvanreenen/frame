@@ -16,8 +16,6 @@ let package = Package(
         .library(name: "FrameEngine", targets: ["FrameEngine"]),
         .library(name: "FrameMacOS", targets: ["FrameMacOS"]),
         .library(name: "FrameUI", targets: ["FrameUI"]),
-        // We only need to expose this as a product for xcode
-        .library(name: "AppBundle", targets: ["AppBundle"]),
     ],
     dependencies: [
         .package(url: "https://github.com/LebJe/TOMLKit.git", exact: "0.5.5"),
@@ -66,21 +64,11 @@ let package = Package(
                 .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
             ],
         ),
-        .target(
-            name: "AppBundle",
-            dependencies: [
-                .target(name: "FrameEngine"),
-                .target(name: "FrameMacOS"),
-                .target(name: "FrameUI"),
-            ],
-            swiftSettings: [
-                .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-            ],
-        ),
         .executableTarget(
             name: "FrameApp",
             dependencies: [
-                .target(name: "AppBundle"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
             ],
         ),
         .executableTarget(
@@ -128,16 +116,6 @@ let package = Package(
             name: "FrameUITests",
             dependencies: [
                 .target(name: "FrameUI"),
-            ],
-        ),
-        .testTarget(
-            name: "AppBundleTests",
-            dependencies: [
-                .target(name: "AppBundle"),
-            ],
-            path: "Sources/AppBundleTests",
-            exclude: [
-                "fixtures",
             ],
         ),
     ],

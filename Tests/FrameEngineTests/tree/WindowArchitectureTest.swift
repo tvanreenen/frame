@@ -12,7 +12,7 @@ final class WindowArchitectureTest: XCTestCase {
 
     func testNoMacWindowSpecificCastsRemain() throws {
         var offenders: [String] = []
-        for target in ["FrameEngine", "FrameMacOS", "FrameUI", "AppBundle"] {
+        for target in ["FrameEngine", "FrameMacOS", "FrameUI"] {
             let root = projectRoot.appending(path: "Sources/\(target)")
             let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
             while let file = enumerator?.nextObject() as? URL {
