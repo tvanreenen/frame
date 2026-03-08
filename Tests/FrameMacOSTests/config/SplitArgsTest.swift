@@ -3,6 +3,7 @@
 @testable import FrameUI
 import Common
 import XCTest
+import FrameTestSupport
 
 final class SplitArgsTest: XCTestCase {
     func testSplit() {

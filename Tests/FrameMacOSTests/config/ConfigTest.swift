@@ -6,6 +6,7 @@ import Foundation
 import HotKey
 import TOMLKit
 import XCTest
+import FrameTestSupport
 
 @MainActor
 final class ConfigTest: XCTestCase {

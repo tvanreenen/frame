@@ -89,12 +89,25 @@ let package = Package(
                 .target(name: "Common"),
             ],
         ),
+        .target(
+            name: "FrameTestSupport",
+            dependencies: [
+                .target(name: "FrameEngine"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
+                .target(name: "Common"),
+                .product(name: "HotKey", package: "HotKey"),
+                .product(name: "TOMLKit", package: "TOMLKit"),
+            ],
+            path: "Tests/FrameTestSupport",
+        ),
         .testTarget(
             name: "FrameEngineTests",
             dependencies: [
                 .target(name: "FrameEngine"),
                 .target(name: "FrameMacOS"),
                 .target(name: "FrameUI"),
+                .target(name: "FrameTestSupport"),
                 .target(name: "Common"),
                 .product(name: "HotKey", package: "HotKey"),
             ],
@@ -105,6 +118,7 @@ let package = Package(
                 .target(name: "FrameEngine"),
                 .target(name: "FrameMacOS"),
                 .target(name: "FrameUI"),
+                .target(name: "FrameTestSupport"),
                 .target(name: "Common"),
                 .product(name: "HotKey", package: "HotKey"),
                 .product(name: "TOMLKit", package: "TOMLKit"),

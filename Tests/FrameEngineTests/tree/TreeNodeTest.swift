@@ -2,6 +2,7 @@
 @testable import FrameMacOS
 @testable import FrameUI
 import XCTest
+import FrameTestSupport
 
 @MainActor
 final class TreeNodeTest: XCTestCase {

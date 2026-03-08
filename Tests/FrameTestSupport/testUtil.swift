@@ -1,12 +1,12 @@
-@testable import FrameEngine
-@testable import FrameMacOS
-@testable import FrameUI
+import FrameEngine
+import FrameMacOS
+import FrameUI
 import Common
 import Foundation
 import HotKey
 import XCTest
 
-let projectRoot: URL = {
+package let projectRoot: URL = {
     var url = URL(filePath: #filePath).absoluteURL
     check(FileManager.default.fileExists(atPath: url.path))
     while !FileManager.default.fileExists(atPath: url.appending(component: ".git").path) {
@@ -16,7 +16,7 @@ let projectRoot: URL = {
 }()
 
 @MainActor
-func setUpWorkspacesForTests() {
+package func setUpWorkspacesForTests() {
     currentSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
 
     // Don't create any bindings and workspaces for tests
@@ -38,7 +38,7 @@ func setUpWorkspacesForTests() {
 }
 
 @MainActor
-func clearWorkspaceChildrenForTests(_ workspace: Workspace) {
+package func clearWorkspaceChildrenForTests(_ workspace: Workspace) {
     for child in Array(workspace.columnsRoot.children) {
         child.unbindFromParent()
     }
@@ -47,7 +47,7 @@ func clearWorkspaceChildrenForTests(_ workspace: Workspace) {
     }
 }
 
-extension ParsedCmd {
+package extension ParsedCmd {
     var errorOrNil: String? {
         if case .failure(let e) = self {
             return e
@@ -67,7 +67,7 @@ extension ParsedCmd {
     }
 }
 
-func testParseCommandFail(_ command: String, msg expected: String) {
+package func testParseCommandFail(_ command: String, msg expected: String) {
     let parsed = parseCommand(command)
     switch parsed {
         case .cmd(let command): XCTFail("\(command) isn't supposed to be parcelable")
@@ -76,7 +76,7 @@ func testParseCommandFail(_ command: String, msg expected: String) {
     }
 }
 
-extension WorkspaceCmdArgs {
+package extension WorkspaceCmdArgs {
     init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
         self = WorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(target)
@@ -84,7 +84,7 @@ extension WorkspaceCmdArgs {
     }
 }
 
-extension MoveNodeToWorkspaceCmdArgs {
+package extension MoveNodeToWorkspaceCmdArgs {
     init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
         self = MoveNodeToWorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(target)

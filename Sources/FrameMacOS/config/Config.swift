@@ -12,7 +12,7 @@ func getDefaultConfigUrlFromProject() -> URL {
     return projectRoot.appending(component: "docs/config-examples/default-config.toml")
 }
 
-var defaultConfigUrl: URL {
+package var defaultConfigUrl: URL {
     if isUnitTest {
         return getDefaultConfigUrlFromProject()
     } else {
@@ -21,7 +21,7 @@ var defaultConfigUrl: URL {
             ?? getDefaultConfigUrlFromProject()
     }
 }
-@MainActor let defaultConfig: Config = {
+@MainActor package let defaultConfig: Config = {
     let parsedConfig = parseConfig(Result { try String(contentsOf: defaultConfigUrl, encoding: .utf8) }.getOrDie())
     if !parsedConfig.errors.isEmpty {
         die("Can't parse default config: \(parsedConfig.errors)")

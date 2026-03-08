@@ -30,11 +30,11 @@ func readConfig(forceConfigUrl: URL? = nil) -> Result<(Config, URL), String> {
     }
 }
 
-enum TomlParseError: Error, CustomStringConvertible, Equatable {
+package enum TomlParseError: Error, CustomStringConvertible, Equatable {
     case semantic(_ backtrace: TomlBacktrace, _ message: String)
     case syntax(_ message: String)
 
-    var description: String {
+    package var description: String {
         return switch self {
             case .semantic(let backtrace, let message): backtrace.isEmptyRoot ? message : "\(backtrace): \(message)"
             case .syntax(let message): message
@@ -315,14 +315,14 @@ func parseBool(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> Parse
     raw.bool.orFailure(expectedActualTypeError(expected: .bool, actual: raw.type, backtrace))
 }
 
-indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
+package indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
     case emptyRoot
     case rootKey(String)
     case key(String)
     case index(Int)
     case pair(TomlBacktrace, TomlBacktrace)
 
-    var description: String {
+    package var description: String {
         return switch self {
             case .emptyRoot: "<root>"
             case .rootKey(let value): value

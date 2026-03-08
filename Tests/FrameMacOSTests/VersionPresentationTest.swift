@@ -1,5 +1,6 @@
 import Common
 import XCTest
+import FrameTestSupport
 
 final class VersionPresentationTest: XCTestCase {
     func testDoctorOutputWhenDaemonIsNotRunning() {

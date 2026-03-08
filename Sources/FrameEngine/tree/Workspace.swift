@@ -180,7 +180,7 @@ package final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Compar
     }
 
     @MainActor
-    var description: String {
+    package var description: String {
         let description = [
             ("name", name),
             ("isVisible", String(isVisible)),
@@ -219,7 +219,7 @@ extension Monitor {
     }
 
     @MainActor
-    func setActiveWorkspace(_ workspace: Workspace) -> Bool {
+    package func setActiveWorkspace(_ workspace: Workspace) -> Bool {
         rect.topLeftCorner.setActiveWorkspace(workspace)
     }
 }

@@ -4,6 +4,7 @@
 import Common
 import Foundation
 import XCTest
+import FrameTestSupport
 
 @MainActor
 final class WindowArchitectureTest: XCTestCase {

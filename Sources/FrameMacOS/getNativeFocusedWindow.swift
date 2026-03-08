@@ -3,7 +3,7 @@ import Common
 import FrameEngine
 
 @MainActor
-var appForTests: (any AbstractApp)? = nil
+package var appForTests: (any AbstractApp)? = nil
 
 @MainActor
 private func focusedApp() async throws -> (any AbstractApp)? {

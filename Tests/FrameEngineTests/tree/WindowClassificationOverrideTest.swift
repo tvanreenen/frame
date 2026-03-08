@@ -4,6 +4,7 @@
 import AppKit
 import Common
 import XCTest
+import FrameTestSupport
 
 @MainActor
 final class WindowClassificationOverrideTest: XCTestCase {

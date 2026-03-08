@@ -1,9 +1,9 @@
-@testable import FrameEngine
-@testable import FrameMacOS
-@testable import FrameUI
+import FrameEngine
+import FrameMacOS
+import FrameUI
 import AppKit
 
-extension Column {
+package extension Column {
     @MainActor
     static func newHTiles(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat) -> Column {
         newHTiles(parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)

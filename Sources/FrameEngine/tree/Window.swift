@@ -17,7 +17,7 @@ package final class Window: TreeNode, Hashable {
     @MainActor package static var allWindows: [Window] { Array(runtimeContext.windowsById.values) }
 
     @MainActor
-    init(
+    package init(
         id: UInt32,
         _ app: any WindowPlatformApp,
         lastFloatingSize: CGSize?,
@@ -66,12 +66,12 @@ package final class Window: TreeNode, Hashable {
     }
 
     @MainActor
-    static func registerForTests(_ window: Window) {
+    package static func registerForTests(_ window: Window) {
         allWindowsMap[window.windowId] = window
     }
 
     @MainActor
-    static func resetForTests() {
+    package static func resetForTests() {
         allWindowsMap = [:]
     }
 
