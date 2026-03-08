@@ -111,6 +111,9 @@ let package = Package(
                 .product(name: "HotKey", package: "HotKey"),
                 .product(name: "TOMLKit", package: "TOMLKit"),
             ],
+            exclude: [
+                "fixtures",
+            ],
         ),
         .testTarget(
             name: "FrameUITests",

@@ -7,7 +7,7 @@ import FrameTestSupport
 
 final class AxWindowKindTest: XCTestCase {
     func test() throws {
-        try checkAxDumpsRecursive(projectRoot.appending(path: "Sources/AppBundleTests/fixtures/axDumps"))
+        try checkAxDumpsRecursive(projectRoot.appending(path: "Tests/FrameMacOSTests/fixtures/axDumps"))
     }
 }
 
