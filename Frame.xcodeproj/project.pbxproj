@@ -8,9 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		0436F3BBB84BF032B21E31B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E72841B11098ACD13B6D1A42 /* Assets.xcassets */; };
+		09C0962349FD18EBA296C0D6 /* FrameUI in Frameworks */ = {isa = PBXBuildFile; productRef = AA79F01B20DF7AF51E686E18 /* FrameUI */; };
 		2BCB1587D2EEA893E87961D5 /* default-config.toml in Resources */ = {isa = PBXBuildFile; fileRef = 61163F00174A7B26557BD6AC /* default-config.toml */; };
 		2F04313E03506CF2EFBD5DBA /* FrameApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FD3CE73C9EAA012BEE4456 /* FrameApp.swift */; };
-		EEC10B8B26F7193D8ADF7DC9 /* AppBundle in Frameworks */ = {isa = PBXBuildFile; productRef = F00F529612725DC0E3E2FE85 /* AppBundle */; };
+		EEC10B8B26F7193D8ADF7DC9 /* FrameMacOS in Frameworks */ = {isa = PBXBuildFile; productRef = A43112700603B992D6CB7217 /* FrameMacOS */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,7 +19,7 @@
 		11FD3CE73C9EAA012BEE4456 /* FrameApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameApp.swift; sourceTree = "<group>"; };
 		48B9204A06B8308AEF487BCD /* Frame.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Frame.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		61163F00174A7B26557BD6AC /* default-config.toml */ = {isa = PBXFileReference; path = "default-config.toml"; sourceTree = "<group>"; };
-		BF3FD5C7EF3E06CE2F709588 /* simple-wm */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "simple-wm"; path = .; sourceTree = SOURCE_ROOT; };
+		C395E2AA7EAC9F1F222DC463 /* frame */ = {isa = PBXFileReference; lastKnownFileType = folder; name = frame; path = .; sourceTree = SOURCE_ROOT; };
 		E72841B11098ACD13B6D1A42 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -27,7 +28,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EEC10B8B26F7193D8ADF7DC9 /* AppBundle in Frameworks */,
+				EEC10B8B26F7193D8ADF7DC9 /* FrameMacOS in Frameworks */,
+				09C0962349FD18EBA296C0D6 /* FrameUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,7 +76,7 @@
 		6F87B1E0DBB6BE43D1F14ED6 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				BF3FD5C7EF3E06CE2F709588 /* simple-wm */,
+				C395E2AA7EAC9F1F222DC463 /* frame */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -105,7 +107,8 @@
 			);
 			name = Frame;
 			packageProductDependencies = (
-				F00F529612725DC0E3E2FE85 /* AppBundle */,
+				A43112700603B992D6CB7217 /* FrameMacOS */,
+				AA79F01B20DF7AF51E686E18 /* FrameUI */,
 			);
 			productName = Frame;
 			productReference = 48B9204A06B8308AEF487BCD /* Frame.app */;
@@ -226,7 +229,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = resources/frame.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development: Timothy Charles Van Reenen (R5M9NW4XL6)";
+				CODE_SIGN_IDENTITY = "${XCODEGEN_FRAME_CODE_SIGN_IDENTITY}";
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -235,7 +238,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.0.0-dev";
+				MARKETING_VERSION = "${XCODEGEN_FRAME_VERSION}";
 				PRODUCT_BUNDLE_IDENTIFIER = com.frame.app.debug;
 				PRODUCT_NAME = "Frame-Debug";
 				SDKROOT = macosx;
@@ -248,7 +251,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = resources/frame.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development: Timothy Charles Van Reenen (R5M9NW4XL6)";
+				CODE_SIGN_IDENTITY = "${XCODEGEN_FRAME_CODE_SIGN_IDENTITY}";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -258,7 +261,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.0.0-dev";
+				MARKETING_VERSION = "${XCODEGEN_FRAME_VERSION}";
 				PRODUCT_BUNDLE_IDENTIFIER = com.frame.app;
 				PRODUCT_NAME = Frame;
 				SDKROOT = macosx;
@@ -360,9 +363,13 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		F00F529612725DC0E3E2FE85 /* AppBundle */ = {
+		A43112700603B992D6CB7217 /* FrameMacOS */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = AppBundle;
+			productName = FrameMacOS;
+		};
+		AA79F01B20DF7AF51E686E18 /* FrameUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FrameUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

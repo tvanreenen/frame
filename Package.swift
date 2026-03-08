@@ -13,8 +13,9 @@ let package = Package(
         .executable(name: "frame", targets: ["Cli"]),
         // Don't use this build for release, use xcode instead
         .executable(name: "FrameApp", targets: ["FrameApp"]),
-        // We only need to expose this as a product for xcode
-        .library(name: "AppBundle", targets: ["AppBundle"]),
+        .library(name: "FrameEngine", targets: ["FrameEngine"]),
+        .library(name: "FrameMacOS", targets: ["FrameMacOS"]),
+        .library(name: "FrameUI", targets: ["FrameUI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/LebJe/TOMLKit.git", exact: "0.5.5"),
@@ -34,10 +35,28 @@ let package = Package(
             dependencies: [],
         ),
         .target(
-            name: "AppBundle",
+            name: "FrameEngine",
+            dependencies: [
+                .target(name: "Common"),
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+            ],
+        ),
+        .target(
+            name: "FrameUI",
+            dependencies: [
+                .target(name: "FrameEngine"),
+                .target(name: "Common"),
+            ],
+        ),
+        .target(
+            name: "FrameMacOS",
             dependencies: [
                 .product(name: "HotKey", package: "HotKey"),
                 .product(name: "TOMLKit", package: "TOMLKit"),
+                .target(name: "FrameEngine"),
+                .target(name: "FrameUI"),
                 .target(name: "Common"),
                 .target(name: "PrivateApi"),
             ],
@@ -48,7 +67,8 @@ let package = Package(
         .executableTarget(
             name: "FrameApp",
             dependencies: [
-                .target(name: "AppBundle"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
             ],
         ),
         .executableTarget(
@@ -57,13 +77,48 @@ let package = Package(
                 .target(name: "Common"),
             ],
         ),
-        .testTarget(
-            name: "AppBundleTests",
+        .target(
+            name: "FrameTestSupport",
             dependencies: [
-                .target(name: "AppBundle"),
+                .target(name: "FrameEngine"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
+                .target(name: "Common"),
+                .product(name: "HotKey", package: "HotKey"),
+                .product(name: "TOMLKit", package: "TOMLKit"),
+            ],
+            path: "Tests/FrameTestSupport",
+        ),
+        .testTarget(
+            name: "FrameEngineTests",
+            dependencies: [
+                .target(name: "FrameEngine"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
+                .target(name: "FrameTestSupport"),
+                .target(name: "Common"),
+                .product(name: "HotKey", package: "HotKey"),
+            ],
+        ),
+        .testTarget(
+            name: "FrameMacOSTests",
+            dependencies: [
+                .target(name: "FrameEngine"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
+                .target(name: "FrameTestSupport"),
+                .target(name: "Common"),
+                .product(name: "HotKey", package: "HotKey"),
+                .product(name: "TOMLKit", package: "TOMLKit"),
             ],
             exclude: [
                 "fixtures",
+            ],
+        ),
+        .testTarget(
+            name: "FrameUITests",
+            dependencies: [
+                .target(name: "FrameUI"),
             ],
         ),
     ],

@@ -1,4 +1,5 @@
-import AppBundle
+import FrameMacOS
+import FrameUI
 import SwiftUI
 
 // This file is shared between SPM and xcode project
@@ -10,11 +11,11 @@ struct FrameApp: App {
     @Environment(\.openWindow) var openWindow: OpenWindowAction
 
     init() {
-        initAppBundle()
+        initFrameAppRuntime()
     }
 
     var body: some Scene {
-        menuBar(viewModel: viewModel)
+        menuBar(viewModel: viewModel, metadata: menuBarMetadata(), onQuit: quitFromMenuBar)
         getMessageWindow(messageModel: messageModel)
             .onChange(of: messageModel.message) { message in
                 if message != nil {

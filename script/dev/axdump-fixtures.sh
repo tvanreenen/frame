@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-fixtures_dir="Sources/AppBundleTests/fixtures/axDumps"
+fixtures_dir="Tests/FrameMacOSTests/fixtures/axDumps"
 capture_script="./script/dev/capture-axdump.swift"
 module_cache_dir="${TMPDIR:-/tmp}/frame-swift-module-cache"
 
