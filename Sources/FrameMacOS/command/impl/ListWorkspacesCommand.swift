@@ -63,7 +63,7 @@ extension MonitorId {
             case .focused:
                 return [focus.workspace.workspaceMonitor]
             case .mouse:
-                return [mouseLocation.monitorApproximation]
+                return [currentSession.platformServices.mouseLocation().monitorApproximation]
             case .all:
                 return monitors
             case .index(let index):

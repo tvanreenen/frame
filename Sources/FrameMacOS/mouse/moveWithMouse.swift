@@ -49,9 +49,9 @@ private func moveFloatingWindow(_ window: Window) async throws {
 
 @MainActor
 private func moveTilingWindow(_ window: Window) {
-    currentlyManipulatedWithMouseWindowId = window.windowId
+    currentSession.currentlyManipulatedWithMouseWindowId = window.windowId
     window.lastAppliedLayoutPhysicalRect = nil
-    let pointer = mouseLocation
+    let pointer = currentSession.platformServices.mouseLocation()
     let targetWorkspace = pointer.monitorApproximation.activeWorkspace
     let swapTarget = pointer.findIn(tree: targetWorkspace.columnsRoot, virtual: false)?.takeIf { $0 != window }
     if targetWorkspace != window.nodeWorkspace { // Move window to a different monitor

@@ -13,7 +13,7 @@ struct ListMonitorsCommand: Command {
             result = result.filter { (monitor) in (monitor.activeWorkspace == focus.workspace) == focused }
         }
         if let mouse = args.mouse {
-            let mouseWorkspace = mouseLocation.monitorApproximation.activeWorkspace
+            let mouseWorkspace = session.platformServices.mouseLocation().monitorApproximation.activeWorkspace
             result = result.filter { (monitor) in (monitor.activeWorkspace == mouseWorkspace) == mouse }
         }
 

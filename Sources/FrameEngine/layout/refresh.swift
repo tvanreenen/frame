@@ -22,7 +22,7 @@ extension AppSession {
         defer { signposter.endInterval(#function, state) }
         try await $refreshSessionEvent.withValue(event) {
             try await $_isStartup.withValue(event.isStartup) {
-                let nativeFocused = try await nativeFocusedWindowProvider()
+                let nativeFocused = try await platformServices.nativeFocusedWindow()
                 updateFocusCache(nativeFocused)
 
                 if shouldLayoutWorkspaces && optimisticallyPreLayoutWorkspaces { try await layoutWorkspaces() }
@@ -31,7 +31,7 @@ extension AppSession {
                 try await refresh()
                 gcMonitors()
 
-                uiStateSyncHook(self)
+                platformServices.syncUiState(self)
                 try await normalizeLayoutReason()
                 if shouldLayoutWorkspaces { try await layoutWorkspaces() }
             }
@@ -48,7 +48,7 @@ extension AppSession {
         activeRefreshTask = nil
         return try await $refreshSessionEvent.withValue(event) {
             try await $_isStartup.withValue(event.isStartup) {
-                let nativeFocused = try await nativeFocusedWindowProvider()
+                let nativeFocused = try await platformServices.nativeFocusedWindow()
                 updateFocusCache(nativeFocused)
                 let focusBefore = focus.windowOrNil
 
@@ -58,7 +58,7 @@ extension AppSession {
 
                 let focusAfter = focus.windowOrNil
 
-                uiStateSyncHook(self)
+                platformServices.syncUiState(self)
                 try await layoutWorkspaces()
                 if focusBefore != focusAfter {
                     focusAfter?.nativeFocus()
@@ -78,7 +78,7 @@ extension AppSession {
     @MainActor
     private func refresh() async throws {
         // Garbage collect terminated apps and windows before working with all windows
-        let mapping = try await refreshPlatformAppsProvider(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+        let mapping = try await platformServices.refreshPlatformApps(platformServices.frontmostAppBundleId())
         let aliveWindowIds = mapping.flatMap { $0.1 }.toSet()
 
         for window in Window.allWindows {

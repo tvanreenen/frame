@@ -108,7 +108,7 @@ extension AppSession {
 
     private func followFocusedMonitorWithMouseIfNeeded(_ focus: LiveFocus) {
         let rect = focus.workspace.workspaceMonitor.rect
-        if rect.contains(mouseLocation) { return }
+        if rect.contains(currentSession.platformServices.mouseLocation()) { return }
         let event = CGEvent(
             mouseEventSource: nil,
             mouseType: .mouseMoved,

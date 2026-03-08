@@ -27,8 +27,8 @@ func resizedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: Unsaf
 
 @MainActor
 func resetManipulatedWithMouseIfPossible() async throws {
-    if currentlyManipulatedWithMouseWindowId != nil {
-        currentlyManipulatedWithMouseWindowId = nil
+    if currentSession.currentlyManipulatedWithMouseWindowId != nil {
+        currentSession.currentlyManipulatedWithMouseWindowId = nil
         for workspace in Workspace.all {
             workspace.resetResizeWeightBeforeResizeRecursive()
         }
@@ -72,7 +72,7 @@ private func resizeWithMouse(_ window: Window) async throws { // todo cover with
             }
         }
     }
-    currentlyManipulatedWithMouseWindowId = window.windowId
+    currentSession.currentlyManipulatedWithMouseWindowId = window.windowId
 }
 
 extension TreeNode {

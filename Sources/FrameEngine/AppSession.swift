@@ -29,6 +29,10 @@ package final class AppSession {
     package var screenPointToVisibleWorkspace: [CGPoint: Workspace] = [:]
     package var visibleWorkspaceToScreenPoint: [Workspace: CGPoint] = [:]
 
+    // Session-owned seam for platform lookups, refresh, UI sync, and mouse state.
+    package var platformServices: PlatformServices
+    package var currentlyManipulatedWithMouseWindowId: UInt32? = nil
+
     package init(config: Config, configUrl: URL) {
         self.config = config
         self.configUrl = configUrl
@@ -37,6 +41,7 @@ package final class AppSession {
         appsWipByPid = [:]
         appFocusJob = nil
         closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
+        platformServices = PlatformServices()
     }
 
     package func initializedFocus() -> FrozenFocus {

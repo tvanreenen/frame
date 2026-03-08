@@ -7,7 +7,7 @@ struct MoveMouseCommand: Command {
     /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
-        let mouse = mouseLocation
+        let mouse = session.platformServices.mouseLocation()
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }
         switch args.mouseTarget.val {
             case .windowLazyCenter:

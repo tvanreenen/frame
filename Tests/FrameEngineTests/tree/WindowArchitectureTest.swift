@@ -36,6 +36,45 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertFalse(content.contains("static func refreshAllAndGetAliveWindowIds("))
     }
 
+    func testFrameMacOSConfiguresPlatformServicesPerSession() throws {
+        let hooksFile = projectRoot.appending(path: "Sources/FrameMacOS/PlatformHooks.swift")
+        let initFile = projectRoot.appending(path: "Sources/FrameMacOS/initFrameAppRuntime.swift")
+        let hooksContent = try String(contentsOf: hooksFile)
+        let initContent = try String(contentsOf: initFile)
+
+        XCTAssertTrue(hooksContent.contains("func configureFrameMacOSPlatformServices(for session: AppSession)"))
+        XCTAssertTrue(hooksContent.contains("session.platformServices = PlatformServices("))
+        XCTAssertFalse(hooksContent.contains("installFrameMacOSHooks"))
+        XCTAssertTrue(initContent.contains("configureFrameMacOSPlatformServices(for: session)"))
+    }
+
+    func testFrameEngineNoLongerDefinesPlatformHookGlobals() throws {
+        let hooksFile = projectRoot.appending(path: "Sources/FrameEngine/PlatformHooks.swift")
+        let hooksContent = try String(contentsOf: hooksFile)
+
+        XCTAssertFalse(hooksContent.contains("nativeFocusedWindowProvider"))
+        XCTAssertFalse(hooksContent.contains("refreshPlatformAppsProvider"))
+        XCTAssertFalse(hooksContent.contains("uiStateSyncHook"))
+        XCTAssertFalse(hooksContent.contains("package var mouseLocation: CGPoint"))
+        XCTAssertFalse(hooksContent.contains("package var currentlyManipulatedWithMouseWindowId"))
+    }
+
+    func testEnginePlatformSeamIsSessionOwned() throws {
+        let engineHooksFile = projectRoot.appending(path: "Sources/FrameEngine/PlatformHooks.swift")
+        let sessionFile = projectRoot.appending(path: "Sources/FrameEngine/AppSession.swift")
+        let macosHooksFile = projectRoot.appending(path: "Sources/FrameMacOS/PlatformHooks.swift")
+        let refreshFile = projectRoot.appending(path: "Sources/FrameEngine/layout/refresh.swift")
+        let engineHooksContent = try String(contentsOf: engineHooksFile)
+        let sessionContent = try String(contentsOf: sessionFile)
+        let macosHooksContent = try String(contentsOf: macosHooksFile)
+        let refreshContent = try String(contentsOf: refreshFile)
+
+        XCTAssertTrue(engineHooksContent.contains("struct PlatformServices"))
+        XCTAssertTrue(sessionContent.contains("package var platformServices: PlatformServices"))
+        XCTAssertTrue(macosHooksContent.contains("session.platformServices = PlatformServices("))
+        XCTAssertTrue(refreshContent.contains("platformServices.syncUiState(self)"))
+    }
+
     func testRuntimeCodeUsesSessionUiBoundary() throws {
         let refreshFile = projectRoot.appending(path: "Sources/FrameEngine/layout/refresh.swift")
         let reloadConfigFile = projectRoot.appending(path: "Sources/FrameMacOS/command/impl/ReloadConfigCommand.swift")
@@ -44,7 +83,7 @@ final class WindowArchitectureTest: XCTestCase {
         let reloadConfigContent = try String(contentsOf: reloadConfigFile)
         let sessionUiContent = try String(contentsOf: sessionUiFile)
 
-        XCTAssertTrue(refreshContent.contains("uiStateSyncHook(self)"))
+        XCTAssertTrue(refreshContent.contains("platformServices.syncUiState(self)"))
         XCTAssertFalse(refreshContent.contains("SecureInputPanel.shared.refresh()"))
         XCTAssertFalse(refreshContent.contains("updateTrayText()"))
         XCTAssertTrue(sessionUiContent.contains("func syncUiState()"))
@@ -53,6 +92,30 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(reloadConfigContent.contains("session.clearConfigMessage()"))
         XCTAssertTrue(reloadConfigContent.contains("session.setConfigMessage("))
         XCTAssertFalse(reloadConfigContent.contains("MessageModel.shared.message"))
+    }
+
+    func testRefreshUsesSessionPlatformServices() async throws {
+        let previousSession = currentSession
+        let isolatedSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+        var receivedFrontmostBundleId: String?
+        var syncUiStateCalls = 0
+
+        isolatedSession.platformServices.frontmostAppBundleId = { "dev.frame.test-app" }
+        isolatedSession.platformServices.refreshPlatformApps = { frontmostAppBundleId in
+            receivedFrontmostBundleId = frontmostAppBundleId
+            return []
+        }
+        isolatedSession.platformServices.syncUiState = { _ in
+            syncUiStateCalls += 1
+        }
+
+        currentSession = isolatedSession
+        defer { currentSession = previousSession }
+
+        try await isolatedSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
+
+        assertEquals(receivedFrontmostBundleId, "dev.frame.test-app")
+        assertEquals(syncUiStateCalls, 1)
     }
 
     func testWindowHasNoNotImplementedStubs() throws {
@@ -79,6 +142,48 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(Workspace.all.isEmpty)
         XCTAssertNil(Window.get(byId: 788))
         XCTAssertTrue(runtimeContext === currentSession)
+    }
+
+    func testCurrentSessionOwnsPlatformSeamState() {
+        let previousSession = currentSession
+        let isolatedSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+        let point = CGPoint(x: 44, y: 55)
+        isolatedSession.platformServices.mouseLocation = { point }
+        isolatedSession.currentlyManipulatedWithMouseWindowId = 999
+
+        currentSession = isolatedSession
+        defer { currentSession = previousSession }
+
+        assertEquals(currentSession.platformServices.mouseLocation(), point)
+        assertEquals(currentSession.currentlyManipulatedWithMouseWindowId, 999)
+    }
+
+    func testRefreshNoLongerReadsNSWorkspaceDirectly() throws {
+        let refreshFile = projectRoot.appending(path: "Sources/FrameEngine/layout/refresh.swift")
+        let refreshContent = try String(contentsOf: refreshFile)
+
+        XCTAssertFalse(refreshContent.contains("NSWorkspace.shared.frontmostApplication"))
+        XCTAssertFalse(refreshContent.contains("refreshPlatformAppsProvider("))
+        XCTAssertFalse(refreshContent.contains("nativeFocusedWindowProvider()"))
+    }
+
+    func testMouseRuntimeCodeUsesSessionPlatformSeam() throws {
+        let focusFile = projectRoot.appending(path: "Sources/FrameEngine/focus.swift")
+        let layoutFile = projectRoot.appending(path: "Sources/FrameEngine/layout/layoutRecursive.swift")
+        let moveMouseFile = projectRoot.appending(path: "Sources/FrameMacOS/mouse/moveWithMouse.swift")
+        let resizeMouseFile = projectRoot.appending(path: "Sources/FrameMacOS/mouse/resizeWithMouse.swift")
+        let focusContent = try String(contentsOf: focusFile)
+        let layoutContent = try String(contentsOf: layoutFile)
+        let moveMouseContent = try String(contentsOf: moveMouseFile)
+        let resizeMouseContent = try String(contentsOf: resizeMouseFile)
+
+        XCTAssertTrue(focusContent.contains("currentSession.platformServices.mouseLocation()"))
+        XCTAssertTrue(layoutContent.contains("currentSession.currentlyManipulatedWithMouseWindowId"))
+        XCTAssertTrue(moveMouseContent.contains("currentSession.platformServices.mouseLocation()"))
+        XCTAssertTrue(moveMouseContent.contains("currentSession.currentlyManipulatedWithMouseWindowId"))
+        XCTAssertTrue(resizeMouseContent.contains("currentSession.currentlyManipulatedWithMouseWindowId"))
+        XCTAssertFalse(focusContent.contains("rect.contains(mouseLocation)"))
+        XCTAssertFalse(layoutContent.contains("window.windowId != currentlyManipulatedWithMouseWindowId"))
     }
 
     func testRunCmdSeqUsesProvidedSessionAndRestoresCurrentSession() async throws {
