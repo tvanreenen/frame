@@ -56,6 +56,6 @@
   "Aero.axWindowId" : 14148,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "popup",
-  "Aero.treeNodeParent" : "AppBundle.Workspace",
+  "Aero.treeNodeParent" : "FrameEngine.Workspace",
   "Aero.workspace" : "M"
 }

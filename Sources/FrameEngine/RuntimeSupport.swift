@@ -7,14 +7,6 @@ package let signposter = OSSignposter(subsystem: appBundleId, category: .pointsO
 package let myPid = NSRunningApplication.current.processIdentifier
 package let lockScreenAppBundleId = "com.apple.loginwindow"
 
-package func stringType(of some: Any) -> String {
-    (some is Any.Type) ? String(describing: some) : String(describing: type(of: some))
-}
-
-extension String? {
-    package var isNilOrEmpty: Bool { self == nil || self?.isEmpty == true }
-}
-
 package func - (a: CGPoint, b: CGPoint) -> CGPoint {
     CGPoint(x: a.x - b.x, y: a.y - b.y)
 }
@@ -36,12 +28,6 @@ extension CGPoint {
                 distance(to: rect.bottomLeftCorner),
             ]
         return list.minOrDie()
-    }
-
-    package func coerceIn(rect: Rect) -> CGPoint? {
-        guard let xRange = rect.minX.until(incl: rect.maxX - 1) else { return nil }
-        guard let yRange = rect.minY.until(incl: rect.maxY - 1) else { return nil }
-        return CGPoint(x: x.coerceIn(xRange), y: y.coerceIn(yRange))
     }
 
     package func addingXOffset(_ offset: CGFloat) -> CGPoint { CGPoint(x: x + offset, y: y) }
@@ -72,12 +58,6 @@ extension CGFloat {
             case self < range.lowerBound: range.lowerBound
             default: self
         }
-    }
-}
-
-extension CGSize {
-    package func copy(width: Double? = nil, height: Double? = nil) -> CGSize {
-        CGSize(width: width ?? self.width, height: height ?? self.height)
     }
 }
 

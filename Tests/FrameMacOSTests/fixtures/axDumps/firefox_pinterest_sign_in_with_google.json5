@@ -94,7 +94,7 @@
   "Aero.axWindowId" : 14685,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : false, // todo fix?
   "Aero.AxUiElementWindowType" : "window",
-  "Aero.treeNodeParent" : "AppBundle.Workspace",
+  "Aero.treeNodeParent" : "FrameEngine.Workspace",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "W"
 }

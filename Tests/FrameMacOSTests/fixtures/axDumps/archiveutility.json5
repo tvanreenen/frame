@@ -91,6 +91,6 @@
   "Aero.axWindowId" : 16775,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "dialog",
-  "Aero.treeNodeParent" : "Optional(AppBundle.Workspace)",
+  "Aero.treeNodeParent" : "Optional(FrameEngine.Workspace)",
   "Aero.workspace" : "W"
 }

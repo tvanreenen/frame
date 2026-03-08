@@ -105,7 +105,7 @@
   "Aero.AxWritable" : "AXFullScreen, AXPosition, AXSections, AXMain, AXMinimized, AXSize",
   "Aero.axWindowId" : 4751,
   "Aero.macOS.version" : "Version 26.1 (Build 25B78)",
-  "Aero.treeNodeParent" : "Optional(AppBundle.TilingContainer)",
+  "Aero.treeNodeParent" : "Optional(FrameEngine.TilingContainer)",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "M"
 }

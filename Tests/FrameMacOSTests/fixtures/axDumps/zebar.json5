@@ -57,7 +57,7 @@
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.axWindowId" : 10742,
   "Aero.macOS.version" : "Version 26.0 (Build 25A354)",
-  "Aero.treeNodeParent" : "Optional(AppBundle.TilingContainer)",
+  "Aero.treeNodeParent" : "Optional(FrameEngine.TilingContainer)",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "1"
 }

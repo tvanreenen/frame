@@ -13,7 +13,7 @@
     "Aero.AxIgnored" : "AXFrame, AXSize, AXFocused, AXHelp, AXPosition, AXRoleDescription, AXEdited"
   },
   "AXDefaultButton" : null,
-  "AXDocument" : "file:///Users/bobko/a/AeroSpace/Sources/AppBundle/tree/MacWindow.swift",
+  "AXDocument" : "file:///Users/bobko/a/frame/Sources/FrameMacOS/tree/MacApp.swift",
   "AXFocused" : 0,
   "AXFrame" : "<AXValue 0x97812a540> {value = x:0.000000 y:40.000000 w:1800.000000 h:1128.000000 type = kAXValueCGRectType}",
   "AXFullScreen" : 0,
@@ -106,7 +106,7 @@
   "Aero.AxWritable" : "AXFullScreen, AXPosition, AXSections, AXMain, AXMinimized, AXSize",
   "Aero.axWindowId" : 4784,
   "Aero.macOS.version" : "Version 26.1 (Build 25B78)",
-  "Aero.treeNodeParent" : "Optional(AppBundle.TilingContainer)",
+  "Aero.treeNodeParent" : "Optional(FrameEngine.TilingContainer)",
   "Aero.windowLevel" : "normalWindow",
   "Aero.workspace" : "X"
 }

@@ -3,12 +3,12 @@ import Common
 import FrameEngine
 import Foundation
 
-@MainActor public func initAppBundle() {
-    initAppBundle(session: currentSession)
+@MainActor public func initFrameAppRuntime() {
+    initFrameAppRuntime(session: currentSession)
 }
 
 @MainActor
-func initAppBundle(session: AppSession) {
+func initFrameAppRuntime(session: AppSession) {
     Task { @MainActor in
         installFrameMacOSHooks()
         initTerminationHandler()

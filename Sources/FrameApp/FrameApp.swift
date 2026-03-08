@@ -11,7 +11,7 @@ struct FrameApp: App {
     @Environment(\.openWindow) var openWindow: OpenWindowAction
 
     init() {
-        initAppBundle()
+        initFrameAppRuntime()
     }
 
     var body: some Scene {

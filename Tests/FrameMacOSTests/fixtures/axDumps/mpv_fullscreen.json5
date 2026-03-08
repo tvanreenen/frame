@@ -55,6 +55,6 @@
   "Aero.axWindowId" : 14286,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "popup", // todo fix?
-  "Aero.treeNodeParent" : "AppBundle.MacosPopupWindowsContainer",
+  "Aero.treeNodeParent" : "FrameEngine.MacosPopupWindowsContainer",
   "Aero.workspace" : null
 }
