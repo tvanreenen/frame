@@ -76,6 +76,26 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(macosWindowLevelContent.contains("func getWindowLevel(for windowId: UInt32)"))
     }
 
+    func testEngineAppProtocolUsesDomainWindowOperations() throws {
+        let abstractAppFile = projectRoot.appending(path: "Sources/FrameEngine/tree/AbstractApp.swift")
+        let windowFile = projectRoot.appending(path: "Sources/FrameEngine/tree/Window.swift")
+        let abstractAppContent = try String(contentsOf: abstractAppFile)
+        let windowContent = try String(contentsOf: windowFile)
+
+        XCTAssertTrue(abstractAppContent.contains("func getWindowRect(windowId: UInt32)"))
+        XCTAssertTrue(abstractAppContent.contains("func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)"))
+        XCTAssertTrue(abstractAppContent.contains("func getWindowType(windowId: UInt32)"))
+        XCTAssertFalse(abstractAppContent.contains("func getAxRect(windowId: UInt32)"))
+        XCTAssertFalse(abstractAppContent.contains("func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)"))
+        XCTAssertFalse(abstractAppContent.contains("func getAxUiElementWindowType(windowId: UInt32)"))
+        XCTAssertTrue(windowContent.contains("package func getRect() async throws -> Rect?"))
+        XCTAssertTrue(windowContent.contains("package func setFrame(_ topLeft: CGPoint?, _ size: CGSize?)"))
+        XCTAssertTrue(windowContent.contains("package func getResolvedWindowType() async throws -> AxUiElementWindowType"))
+        XCTAssertFalse(windowContent.contains("package func getAxRect() async throws -> Rect?"))
+        XCTAssertFalse(windowContent.contains("package func setAxFrame(_ topLeft: CGPoint?, _ size: CGSize?)"))
+        XCTAssertFalse(windowContent.contains("package func getResolvedAxUiElementWindowType()"))
+    }
+
     func testFrameEngineNoLongerImportsAppKit() throws {
         let root = projectRoot.appending(path: "Sources/FrameEngine")
         let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
@@ -413,14 +433,14 @@ final class WindowArchitectureTest: XCTestCase {
             parent: workspace,
             rect: Rect(topLeftX: 120, topLeftY: 90, width: 500, height: 350),
         )
-        let before = try await window.getAxRect()
+        let before = try await window.getRect()
 
         try await window.hideInCorner(.bottomRightCorner)
         XCTAssertTrue(window.isHiddenInCorner)
         window.unhideFromCorner()
         XCTAssertFalse(window.isHiddenInCorner)
 
-        let after = try await window.getAxRect()
+        let after = try await window.getRect()
         assertEquals(after?.size, before?.size)
         assertEquals(after?.topLeftCorner, before?.topLeftCorner)
     }

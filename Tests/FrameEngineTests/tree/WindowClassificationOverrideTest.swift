@@ -82,19 +82,18 @@ private final class ClassificationTestApp: WindowPlatformApp {
 
     @MainActor func getFocusedWindow() async throws -> Window? { nil }
     @MainActor func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
-    @MainActor func nativeFocus(windowId: UInt32) {}
-    @MainActor func closeAndUnregisterAxWindow(windowId: UInt32) {}
+    @MainActor func closeAndUnregisterWindow(windowId: UInt32) {}
 
-    func getAxRect(windowId: UInt32) async throws -> Rect? { nil }
-    func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? { nil }
-    func getAxSize(windowId: UInt32) async throws -> CGSize? { nil }
-    func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {}
-    func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {}
+    func getWindowRect(windowId: UInt32) async throws -> Rect? { nil }
+    func getWindowTopLeftCorner(windowId: UInt32) async throws -> CGPoint? { nil }
+    func getWindowSize(windowId: UInt32) async throws -> CGSize? { nil }
+    func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {}
+    func setWindowFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {}
     func isNativeFullscreen(windowId: UInt32) async throws -> Bool? { false }
     func isNativeMinimized(windowId: UInt32) async throws -> Bool? { false }
-    func getAxTitle(windowId: UInt32) async throws -> String? { windowTitle }
-    func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
-    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
+    func getWindowTitle(windowId: UInt32) async throws -> String? { windowTitle }
+    func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
+    func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
         heuristicType
     }
 }

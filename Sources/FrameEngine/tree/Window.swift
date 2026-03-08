@@ -39,7 +39,7 @@ package final class Window: TreeNode, Hashable {
     @discardableResult
     package static func getOrRegister(windowId: UInt32, app: any WindowPlatformApp) async throws -> Window {
         if let existing = allWindowsMap[windowId] { return existing }
-        let rect = try await app.getAxRect(windowId: windowId)
+        let rect = try await app.getWindowRect(windowId: windowId)
         let data = try await unbindAndGetBindingDataForNewWindow(
             windowId,
             app,
@@ -76,41 +76,41 @@ package final class Window: TreeNode, Hashable {
     }
 
     @MainActor
-    func closeAxWindow() {
+    func closeWindow() {
         garbageCollect(skipClosedWindowsCache: true)
-        app.closeAndUnregisterAxWindow(windowId: windowId)
+        app.closeAndUnregisterWindow(windowId: windowId)
     }
 
     nonisolated public func hash(into hasher: inout Hasher) {
         hasher.combine(windowId)
     }
 
-    package func getAxTopLeftCorner() async throws -> CGPoint? { try await app.getAxTopLeftCorner(windowId: windowId) }
-    package func getAxSize() async throws -> CGSize? { try await app.getAxSize(windowId: windowId) }
-    package var title: String { get async throws { try await app.getAxTitle(windowId: windowId) ?? "" } }
+    package func getTopLeftCorner() async throws -> CGPoint? { try await app.getWindowTopLeftCorner(windowId: windowId) }
+    package func getSize() async throws -> CGSize? { try await app.getWindowSize(windowId: windowId) }
+    package var title: String { get async throws { try await app.getWindowTitle(windowId: windowId) ?? "" } }
     package var isNativeFullscreen: Bool { get async throws { try await app.isNativeFullscreen(windowId: windowId) == true } }
     package var isNativeMinimized: Bool { get async throws { try await app.isNativeMinimized(windowId: windowId) == true } } // todo replace with enum NativeWindowState { normal, fullscreen, invisible }
     package var isHiddenInCorner: Bool { prevUnhiddenProportionalPositionInsideWorkspaceRect != nil }
     @MainActor
     package func nativeFocus() { currentSession.platformServices.nativeFocusWindow(app, windowId) }
-    package func getAxRect() async throws -> Rect? { try await app.getAxRect(windowId: windowId) }
-    package func getCenter() async throws -> CGPoint? { try await getAxRect()?.center }
+    package func getRect() async throws -> Rect? { try await app.getWindowRect(windowId: windowId) }
+    package func getCenter() async throws -> CGPoint? { try await getRect()?.center }
 
-    package func setAxFrameBlocking(_ topLeft: CGPoint?, _ size: CGSize?) async throws {
-        try await app.setAxFrameBlocking(windowId: windowId, topLeft: topLeft, size: size)
+    package func setFrameBlocking(_ topLeft: CGPoint?, _ size: CGSize?) async throws {
+        try await app.setWindowFrameBlocking(windowId: windowId, topLeft: topLeft, size: size)
     }
 
-    package func setAxFrame(_ topLeft: CGPoint?, _ size: CGSize?) {
-        app.setAxFrame(windowId: windowId, topLeft: topLeft, size: size)
+    package func setFrame(_ topLeft: CGPoint?, _ size: CGSize?) {
+        app.setWindowFrame(windowId: windowId, topLeft: topLeft, size: size)
     }
 
     @MainActor
-    package func getResolvedAxUiElementWindowType() async throws -> AxUiElementWindowType {
+    package func getResolvedWindowType() async throws -> AxUiElementWindowType {
         try await Window.resolveWindowType(windowId: windowId, app: app)
     }
 
-    package func dumpAxInfo() async throws -> [String: Json] {
-        try await app.dumpWindowAxInfo(windowId: windowId)
+    package func dumpWindowInfo() async throws -> [String: Json] {
+        try await app.dumpWindowInfo(windowId: windowId)
     }
 
     @MainActor
@@ -119,7 +119,7 @@ package final class Window: TreeNode, Hashable {
         // Don't accidentally override prevUnhiddenProportionalPositionInsideWorkspaceRect in case of subsequent
         // hideInCorner calls
         if !isHiddenInCorner {
-            guard let windowRect = try await getAxRect() else { return }
+            guard let windowRect = try await getRect() else { return }
             let topLeftCorner = windowRect.topLeftCorner
             let monitorRect = windowRect.center.monitorApproximation.rect // Similar to layoutFloatingWindow. Non idempotent
             let absolutePoint = topLeftCorner - monitorRect.topLeftCorner
@@ -129,7 +129,7 @@ package final class Window: TreeNode, Hashable {
         let p: CGPoint
         switch corner {
             case .bottomLeftCorner:
-                guard let s = try await getAxSize() else { fallthrough }
+                guard let s = try await getSize() else { fallthrough }
                 // Zoom will jump off if you do one pixel offset https://github.com/tvanreenen/frame/issues/527
                 // todo this ad hoc won't be necessary once I implement optimization suggested by Zalim
                 let onePixelOffset = app.rawAppBundleId == KnownBundleId.zoom.rawValue ? .zero : CGPoint(x: 1, y: -1)
@@ -140,7 +140,7 @@ package final class Window: TreeNode, Hashable {
                 let onePixelOffset = app.rawAppBundleId == KnownBundleId.zoom.rawValue ? .zero : CGPoint(x: 1, y: 1)
                 p = nodeMonitor.visibleRect.bottomRightCorner - onePixelOffset
         }
-        setAxFrame(p, nil)
+        setFrame(p, nil)
     }
 
     @MainActor
@@ -158,7 +158,7 @@ package final class Window: TreeNode, Hashable {
                     x: workspaceRect.width * prevUnhiddenProportionalPositionInsideWorkspaceRect.x,
                     y: workspaceRect.height * prevUnhiddenProportionalPositionInsideWorkspaceRect.y,
                 )
-                setAxFrame(workspaceRect.topLeftCorner + pointInsideWorkspace, nil)
+                setFrame(workspaceRect.topLeftCorner + pointInsideWorkspace, nil)
             case .nativeFullscreenWindow, .hiddenAppWindow, .nativeMinimizedWindow,
                  .popupWindow, .tiling, .rootTilingContainer, .shimContainerRelation:
                 break
@@ -201,7 +201,7 @@ extension Window {
         windowId: UInt32,
         app: any WindowPlatformApp,
     ) async throws -> AxUiElementWindowType {
-        let heuristicType = try await app.getAxUiElementWindowType(windowId: windowId)
+        let heuristicType = try await app.getWindowType(windowId: windowId)
         let overrides = runtimeContext.config.windowClassificationOverrides
         guard !overrides.isEmpty else { return heuristicType }
 
@@ -211,7 +211,7 @@ extension Window {
 
         for override in overrides {
             if override.matcher.windowTitleRegexSubstring != nil, cachedTitle == nil {
-                cachedTitle = try await app.getAxTitle(windowId: windowId) ?? ""
+                cachedTitle = try await app.getWindowTitle(windowId: windowId) ?? ""
             }
             if override.matcher.matches(appBundleId: appBundleId, appName: appName, windowTitle: cachedTitle) {
                 return override.resolvedKind

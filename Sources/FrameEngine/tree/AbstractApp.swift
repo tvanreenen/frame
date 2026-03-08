@@ -31,18 +31,18 @@ package protocol WindowPlatformApp: AbstractApp {
     var isHidden: Bool { get }
     @MainActor func setLastNativeFocusedWindowId(_ windowId: UInt32?)
 
-    func getAxRect(windowId: UInt32) async throws -> Rect?
-    func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint?
-    func getAxSize(windowId: UInt32) async throws -> CGSize?
+    func getWindowRect(windowId: UInt32) async throws -> Rect?
+    func getWindowTopLeftCorner(windowId: UInt32) async throws -> CGPoint?
+    func getWindowSize(windowId: UInt32) async throws -> CGSize?
 
-    func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)
-    func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws
-    @MainActor func closeAndUnregisterAxWindow(windowId: UInt32)
+    func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)
+    func setWindowFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws
+    @MainActor func closeAndUnregisterWindow(windowId: UInt32)
 
     func isNativeFullscreen(windowId: UInt32) async throws -> Bool?
     func isNativeMinimized(windowId: UInt32) async throws -> Bool?
-    func getAxTitle(windowId: UInt32) async throws -> String?
-    func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json]
+    func getWindowTitle(windowId: UInt32) async throws -> String?
+    func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json]
 
-    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType
+    func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType
 }

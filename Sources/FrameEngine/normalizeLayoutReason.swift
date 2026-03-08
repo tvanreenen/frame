@@ -12,7 +12,7 @@ func normalizeLayoutReason() async throws {
 private func validateStillPopups() async throws {
     for node in popupWindowsContainer.children {
         guard let popup = node as? Window else { continue }
-        if try await popup.getResolvedAxUiElementWindowType() != .popup {
+        if try await popup.getResolvedWindowType() != .popup {
             try await popup.relayoutWindow(on: focus.workspace)
         }
     }

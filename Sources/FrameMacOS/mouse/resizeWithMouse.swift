@@ -43,7 +43,7 @@ private func resizeWithMouse(_ window: Window) async throws { // todo cover with
     resetClosedWindowsCache()
     guard let parent = window.parent else { return }
     guard parent is Column else { return } // Nothing to do for floating or unconventional windows
-    guard let rect = try await window.getAxRect() else { return }
+    guard let rect = try await window.getRect() else { return }
     guard let lastAppliedLayoutRect = window.lastAppliedLayoutPhysicalRect else { return }
     let (lParent, lOwnIndex) = window.closestParent(hasChildrenInDirection: .left) ?? (nil, nil)
     let (dParent, dOwnIndex) = window.closestParent(hasChildrenInDirection: .down) ?? (nil, nil)

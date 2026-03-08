@@ -92,19 +92,19 @@ package final class TestApp: WindowPlatformApp {
     @MainActor package func getFocusedWindow() async throws -> Window? { focusedWindow }
     @MainActor package func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
 
-    package func getAxRect(windowId: UInt32) async throws -> Rect? {
+    package func getWindowRect(windowId: UInt32) async throws -> Rect? {
         windowRects[windowId]
     }
 
-    package func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
+    package func getWindowTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
         windowRects[windowId]?.topLeftCorner
     }
 
-    package func getAxSize(windowId: UInt32) async throws -> CGSize? {
+    package func getWindowSize(windowId: UInt32) async throws -> CGSize? {
         windowRects[windowId]?.size
     }
 
-    package func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
+    package func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
         let existing = windowRects[windowId]
         let resolvedTopLeft = topLeft ?? existing?.topLeftCorner
         let resolvedSize = size ?? existing?.size
@@ -117,18 +117,12 @@ package final class TestApp: WindowPlatformApp {
         )
     }
 
-    package func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
-        setAxFrame(windowId: windowId, topLeft: topLeft, size: size)
+    package func setWindowFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
+        setWindowFrame(windowId: windowId, topLeft: topLeft, size: size)
     }
 
     @MainActor
-    package func nativeFocus(windowId: UInt32) {
-        appForTests = self
-        focusedWindow = Window.get(byId: windowId)
-    }
-
-    @MainActor
-    package func closeAndUnregisterAxWindow(windowId: UInt32) {
+    package func closeAndUnregisterWindow(windowId: UInt32) {
         Window.allWindowsMap[windowId]?.unbindFromParent()
         Window.allWindowsMap.removeValue(forKey: windowId)
         windows.removeAll { $0.windowId == windowId }
@@ -150,15 +144,15 @@ package final class TestApp: WindowPlatformApp {
         macosMinimized[windowId] ?? false
     }
 
-    package func getAxTitle(windowId: UInt32) async throws -> String? {
+    package func getWindowTitle(windowId: UInt32) async throws -> String? {
         windowTitles[windowId] ?? ""
     }
 
-    package func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] {
+    package func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] {
         [:]
     }
 
-    package func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
+    package func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
         windowTypes[windowId] ?? .window
     }
 }

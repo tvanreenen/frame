@@ -36,7 +36,7 @@ extension TreeNode {
                 } else {
                     lastAppliedLayoutPhysicalRect = physicalRect
                     window.isFullscreen = false
-                    window.setAxFrame(point, CGSize(width: width, height: height))
+                    window.setFrame(point, CGSize(width: width, height: height))
                 }
             }
             return
@@ -65,12 +65,12 @@ extension Window {
     fileprivate func layoutFloatingWindow(_ context: LayoutContext) async throws {
         let workspace = context.workspace
         let currentMonitor = try await getCenter()?.monitorApproximation // Probably not idempotent
-        if let currentMonitor, let windowTopLeftCorner = try await getAxTopLeftCorner(), workspace != currentMonitor.activeWorkspace {
+        if let currentMonitor, let windowTopLeftCorner = try await getTopLeftCorner(), workspace != currentMonitor.activeWorkspace {
             let xProportion = (windowTopLeftCorner.x - currentMonitor.visibleRect.topLeftX) / currentMonitor.visibleRect.width
             let yProportion = (windowTopLeftCorner.y - currentMonitor.visibleRect.topLeftY) / currentMonitor.visibleRect.height
 
             let moveTo = workspace.workspaceMonitor
-            setAxFrame(CGPoint(
+            setFrame(CGPoint(
                 x: moveTo.visibleRect.topLeftX + xProportion * moveTo.visibleRect.width,
                 y: moveTo.visibleRect.topLeftY + yProportion * moveTo.visibleRect.height,
             ), nil)
@@ -86,7 +86,7 @@ extension Window {
         let monitorRect = noOuterGapsInFullscreen
             ? context.workspace.workspaceMonitor.visibleRect
             : context.workspace.workspaceMonitor.visibleRectPaddedByOuterGaps
-        setAxFrame(monitorRect.topLeftCorner, CGSize(width: monitorRect.width, height: monitorRect.height))
+        setFrame(monitorRect.topLeftCorner, CGSize(width: monitorRect.width, height: monitorRect.height))
     }
 }
 

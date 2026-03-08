@@ -28,13 +28,13 @@ struct LayoutCommand: Command {
                     return true // Nothing to do
                 }
                 guard let workspace = parent as? Workspace else { return false }
-                window.lastFloatingSize = try await window.getAxSize() ?? window.lastFloatingSize
+                window.lastFloatingSize = try await window.getSize() ?? window.lastFloatingSize
                 try await window.relayoutWindow(on: workspace, forceTile: true)
                 return true
             case .floating:
                 let workspace = target.workspace
                 window.bindAsFloatingWindow(to: workspace)
-                if let size = window.lastFloatingSize { window.setAxFrame(nil, size) }
+                if let size = window.lastFloatingSize { window.setFrame(nil, size) }
                 return true
         }
     }

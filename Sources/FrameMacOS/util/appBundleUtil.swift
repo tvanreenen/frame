@@ -35,7 +35,7 @@ private func makeAllWindowsVisibleAndRestoreSize() async throws {
             x: (monitorVisibleRect.width - windowSize.width) / 2,
             y: (monitorVisibleRect.height - windowSize.height) / 2,
         )
-        try await window.setAxFrameBlocking(point, windowSize)
+        try await window.setFrameBlocking(point, windowSize)
     }
 }
 
