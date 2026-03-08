@@ -35,7 +35,7 @@ enum GlobalObserver {
             //  The end of the callback calls refreshSession
             Task { @MainActor in
                 try await resetManipulatedWithMouseIfPossible()
-                let pointer = mouseLocation
+                let pointer = session.platformServices.mouseLocation()
                 let clickedMonitor = pointer.monitorApproximation
                 let currentFocus = session.focus
                 switch true {

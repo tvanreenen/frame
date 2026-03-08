@@ -28,7 +28,7 @@ extension TreeNode {
             return
         }
         if let window = self as? Window {
-            if window.windowId != currentlyManipulatedWithMouseWindowId {
+            if window.windowId != currentSession.currentlyManipulatedWithMouseWindowId {
                 lastAppliedLayoutVirtualRect = virtual
                 if window.isFullscreen && window == context.workspace.columnsRoot.mostRecentWindowRecursive {
                     lastAppliedLayoutPhysicalRect = nil

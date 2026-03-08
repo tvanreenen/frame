@@ -1,20 +1,25 @@
+import AppKit
 import FrameEngine
 
 @MainActor
-private let _frameMacOSHooksInstalled: Void = {
-    nativeFocusedWindowProvider = {
-        try await getNativeFocusedWindow()
-    }
-    refreshPlatformAppsProvider = { frontmostAppBundleId in
-        try await currentSession.refreshAllMacAppsAndGetAliveWindowIds(frontmostAppBundleId: frontmostAppBundleId)
-            .map { ($0.key as any WindowPlatformApp, $0.value) }
-    }
-    uiStateSyncHook = { @MainActor session in
-        session.syncUiState()
-    }
-}()
-
-@MainActor
-func installFrameMacOSHooks() {
-    _ = _frameMacOSHooksInstalled
+func configureFrameMacOSPlatformServices(for session: AppSession) {
+    session.platformServices = PlatformServices(
+        nativeFocusedWindow: {
+            try await getNativeFocusedWindow(session: session)
+        },
+        frontmostAppBundleId: {
+            NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        },
+        refreshPlatformApps: { frontmostAppBundleId in
+            try await session.refreshAllMacAppsAndGetAliveWindowIds(frontmostAppBundleId: frontmostAppBundleId)
+                .map { ($0.key as any WindowPlatformApp, $0.value) }
+        },
+        syncUiState: { session in
+            session.syncUiState()
+        },
+        mouseLocation: {
+            let location = NSEvent.mouseLocation
+            return CGPoint(x: location.x, y: NSScreen.screens.first!.frame.maxY - location.y)
+        },
+    )
 }

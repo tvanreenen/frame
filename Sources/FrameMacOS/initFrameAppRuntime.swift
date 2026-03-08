@@ -10,7 +10,7 @@ import Foundation
 @MainActor
 func initFrameAppRuntime(session: AppSession) {
     Task { @MainActor in
-        installFrameMacOSHooks()
+        configureFrameMacOSPlatformServices(for: session)
         initTerminationHandler()
         isCli = false
         initServerArgs()
