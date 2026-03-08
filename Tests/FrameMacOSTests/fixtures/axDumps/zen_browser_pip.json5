@@ -104,7 +104,7 @@
   "Aero.AxWritable" : "AXFullScreen, AXPosition, AXSections, AXMain, AXSize",
   "Aero.axWindowId" : 2651,
   "Aero.macOS.version" : "Version 26.1 (Build 25B78)",
-  "Aero.treeNodeParent" : "Optional(FrameEngine.MacosPopupWindowsContainer)",
+  "Aero.treeNodeParent" : "Optional(FrameEngine.PopupWindowsContainer)",
   "Aero.windowLevel" : "alwaysOnTopWindow",
   "Aero.workspace" : null
 }

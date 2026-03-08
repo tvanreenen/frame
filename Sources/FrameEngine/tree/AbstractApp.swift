@@ -40,10 +40,10 @@ package protocol WindowPlatformApp: AbstractApp {
     @MainActor func nativeFocus(windowId: UInt32)
     @MainActor func closeAndUnregisterAxWindow(windowId: UInt32)
 
-    func isMacosNativeFullscreen(windowId: UInt32) async throws -> Bool?
-    func isMacosNativeMinimized(windowId: UInt32) async throws -> Bool?
+    func isNativeFullscreen(windowId: UInt32) async throws -> Bool?
+    func isNativeMinimized(windowId: UInt32) async throws -> Bool?
     func getAxTitle(windowId: UInt32) async throws -> String?
     func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json]
 
-    func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType
+    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType
 }

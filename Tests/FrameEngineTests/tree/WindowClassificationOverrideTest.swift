@@ -18,7 +18,7 @@ final class WindowClassificationOverrideTest: XCTestCase {
             heuristicType: .popup,
             windowTitle: "",
         )
-        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app, windowLevel: nil)
+        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app)
         assertEquals(withoutOverride, .popup)
 
         let parsed = parseConfig(
@@ -31,7 +31,7 @@ final class WindowClassificationOverrideTest: XCTestCase {
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
-        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app, windowLevel: nil)
+        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app)
         assertEquals(withOverride, .dialog)
     }
 
@@ -43,7 +43,7 @@ final class WindowClassificationOverrideTest: XCTestCase {
             heuristicType: .popup,
             windowTitle: "",
         )
-        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app, windowLevel: nil)
+        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app)
         assertEquals(withoutOverride, .popup)
 
         let parsed = parseConfig(
@@ -56,7 +56,7 @@ final class WindowClassificationOverrideTest: XCTestCase {
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
-        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app, windowLevel: nil)
+        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app)
         assertEquals(withOverride, .dialog)
     }
 }
@@ -90,11 +90,11 @@ private final class ClassificationTestApp: WindowPlatformApp {
     func getAxSize(windowId: UInt32) async throws -> CGSize? { nil }
     func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {}
     func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {}
-    func isMacosNativeFullscreen(windowId: UInt32) async throws -> Bool? { false }
-    func isMacosNativeMinimized(windowId: UInt32) async throws -> Bool? { false }
+    func isNativeFullscreen(windowId: UInt32) async throws -> Bool? { false }
+    func isNativeMinimized(windowId: UInt32) async throws -> Bool? { false }
     func getAxTitle(windowId: UInt32) async throws -> String? { windowTitle }
     func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
-    func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
+    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
         heuristicType
     }
 }

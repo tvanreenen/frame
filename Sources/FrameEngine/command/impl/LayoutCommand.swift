@@ -16,12 +16,12 @@ struct LayoutCommand: Command {
         switch targetDescription {
             case .tiling:
                 guard let parent = window.parent else { return false }
-                if parent is MacosPopupWindowsContainer {
+                if parent is PopupWindowsContainer {
                     return false
                 }
-                if parent is MacosMinimizedWindowsContainer ||
-                    parent is MacosFullscreenWindowsContainer ||
-                    parent is MacosHiddenAppsWindowsContainer
+                if parent is NativeMinimizedWindowsContainer ||
+                    parent is NativeFullscreenWindowsContainer ||
+                    parent is HiddenAppWindowsContainer
                 {
                     return io.err("Can't change layout for macOS minimized, fullscreen windows or windows of hidden apps. This behavior is subject to change")
                 }

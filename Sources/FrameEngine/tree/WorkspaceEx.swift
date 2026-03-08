@@ -5,21 +5,21 @@ extension Workspace {
         children.filterIsInstance(of: Window.self)
     }
 
-    @MainActor var macOsNativeFullscreenWindowsContainer: MacosFullscreenWindowsContainer {
-        let containers = children.filterIsInstance(of: MacosFullscreenWindowsContainer.self)
+    @MainActor var nativeFullscreenWindowsContainer: NativeFullscreenWindowsContainer {
+        let containers = children.filterIsInstance(of: NativeFullscreenWindowsContainer.self)
         return switch containers.count {
-            case 0: MacosFullscreenWindowsContainer(parent: self)
+            case 0: NativeFullscreenWindowsContainer(parent: self)
             case 1: containers.singleOrNil().orDie()
-            default: dieT("Workspace must contain zero or one MacosFullscreenWindowsContainer")
+            default: dieT("Workspace must contain zero or one NativeFullscreenWindowsContainer")
         }
     }
 
-    @MainActor var macOsNativeHiddenAppsWindowsContainer: MacosHiddenAppsWindowsContainer {
-        let containers = children.filterIsInstance(of: MacosHiddenAppsWindowsContainer.self)
+    @MainActor var hiddenAppWindowsContainer: HiddenAppWindowsContainer {
+        let containers = children.filterIsInstance(of: HiddenAppWindowsContainer.self)
         return switch containers.count {
-            case 0: MacosHiddenAppsWindowsContainer(parent: self)
+            case 0: HiddenAppWindowsContainer(parent: self)
             case 1: containers.singleOrNil().orDie()
-            default: dieT("Workspace must contain zero or one MacosHiddenAppsWindowsContainer")
+            default: dieT("Workspace must contain zero or one HiddenAppWindowsContainer")
         }
     }
 

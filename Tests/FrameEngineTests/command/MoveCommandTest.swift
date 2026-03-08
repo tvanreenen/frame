@@ -160,10 +160,10 @@ extension TreeNode {
         if let workspace = self as? Workspace {
             return .workspace(workspace.children.map(\.layoutDescription))
         }
-        if self is MacosMinimizedWindowsContainer { return .macosMinimized }
-        if self is MacosFullscreenWindowsContainer { return .macosFullscreen }
-        if self is MacosHiddenAppsWindowsContainer { return .macosHiddeAppWindow }
-        if self is MacosPopupWindowsContainer { return .macosPopupWindowsContainer }
+        if self is NativeMinimizedWindowsContainer { return .nativeMinimized }
+        if self is NativeFullscreenWindowsContainer { return .nativeFullscreen }
+        if self is HiddenAppWindowsContainer { return .hiddenAppWindow }
+        if self is PopupWindowsContainer { return .popupWindowsContainer }
         guard let container = self as? Column else { die("Unknown tree \(self)") }
         return container.orientation == .h
             ? .h_tiles(container.children.map(\.layoutDescription))
@@ -176,8 +176,8 @@ enum LayoutDescription: Equatable {
     case h_tiles([LayoutDescription])
     case v_tiles([LayoutDescription])
     case window(UInt32)
-    case macosPopupWindowsContainer
-    case macosMinimized
-    case macosHiddeAppWindow
-    case macosFullscreen
+    case popupWindowsContainer
+    case nativeMinimized
+    case hiddenAppWindow
+    case nativeFullscreen
 }

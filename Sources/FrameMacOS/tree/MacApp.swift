@@ -240,9 +240,12 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func getAxUiElementWindowType(windowId: UInt32, windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
+    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
+        let windowLevel = await MainActor.run {
+            getWindowLevel(for: windowId)
+        }
         return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
-            window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
+            return window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } ?? .window
     }
 
@@ -278,13 +281,13 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func isMacosNativeFullscreen(windowId: UInt32) async throws -> Bool? {
+    func isNativeFullscreen(windowId: UInt32) async throws -> Bool? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.isFullscreenAttr)
         }
     }
 
-    func isMacosNativeMinimized(windowId: UInt32) async throws -> Bool? {
+    func isNativeMinimized(windowId: UInt32) async throws -> Bool? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.minimizedAttr)
         }

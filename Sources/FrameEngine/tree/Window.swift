@@ -88,8 +88,8 @@ package final class Window: TreeNode, Hashable {
     package func getAxTopLeftCorner() async throws -> CGPoint? { try await app.getAxTopLeftCorner(windowId: windowId) }
     package func getAxSize() async throws -> CGSize? { try await app.getAxSize(windowId: windowId) }
     package var title: String { get async throws { try await app.getAxTitle(windowId: windowId) ?? "" } }
-    package var isMacosFullscreen: Bool { get async throws { try await app.isMacosNativeFullscreen(windowId: windowId) == true } }
-    package var isMacosMinimized: Bool { get async throws { try await app.isMacosNativeMinimized(windowId: windowId) == true } } // todo replace with enum MacOsWindowNativeState { normal, fullscreen, invisible }
+    package var isNativeFullscreen: Bool { get async throws { try await app.isNativeFullscreen(windowId: windowId) == true } }
+    package var isNativeMinimized: Bool { get async throws { try await app.isNativeMinimized(windowId: windowId) == true } } // todo replace with enum NativeWindowState { normal, fullscreen, invisible }
     package var isHiddenInCorner: Bool { prevUnhiddenProportionalPositionInsideWorkspaceRect != nil }
     @MainActor
     package func nativeFocus() { app.nativeFocus(windowId: windowId) }
@@ -105,8 +105,8 @@ package final class Window: TreeNode, Hashable {
     }
 
     @MainActor
-    package func getResolvedAxUiElementWindowType(_ windowLevel: MacOsWindowLevel?) async throws -> AxUiElementWindowType {
-        try await Window.resolveWindowType(windowId: windowId, app: app, windowLevel: windowLevel)
+    package func getResolvedAxUiElementWindowType() async throws -> AxUiElementWindowType {
+        try await Window.resolveWindowType(windowId: windowId, app: app)
     }
 
     package func dumpAxInfo() async throws -> [String: Json] {
@@ -159,8 +159,8 @@ package final class Window: TreeNode, Hashable {
                     y: workspaceRect.height * prevUnhiddenProportionalPositionInsideWorkspaceRect.y,
                 )
                 setAxFrame(workspaceRect.topLeftCorner + pointInsideWorkspace, nil)
-            case .macosNativeFullscreenWindow, .macosNativeHiddenAppWindow, .macosNativeMinimizedWindow,
-                 .macosPopupWindow, .tiling, .rootTilingContainer, .shimContainerRelation:
+            case .nativeFullscreenWindow, .hiddenAppWindow, .nativeMinimizedWindow,
+                 .popupWindow, .tiling, .rootTilingContainer, .shimContainerRelation:
                 break
         }
 
@@ -181,7 +181,7 @@ package final class Window: TreeNode, Hashable {
         if let deadWindowWorkspace, deadWindowWorkspace == focus.workspace ||
             deadWindowWorkspace == prevFocusedWorkspace && prevFocusedWorkspaceDate.distance(to: .now) < 1
         {
-            if parent is Column || parent is Workspace || parent is MacosHiddenAppsWindowsContainer || parent is MacosFullscreenWindowsContainer {
+            if parent is Column || parent is Workspace || parent is HiddenAppWindowsContainer || parent is NativeFullscreenWindowsContainer {
                 let deadWindowFocus = deadWindowWorkspace.toLiveFocus()
                 _ = setFocus(to: deadWindowFocus)
                 // Guard against "Apple Reminders popup" bug: https://github.com/tvanreenen/frame/issues/201
@@ -200,9 +200,8 @@ extension Window {
     static func resolveWindowType(
         windowId: UInt32,
         app: any WindowPlatformApp,
-        windowLevel: MacOsWindowLevel?,
     ) async throws -> AxUiElementWindowType {
-        let heuristicType = try await app.getAxUiElementWindowType(windowId: windowId, windowLevel: windowLevel)
+        let heuristicType = try await app.getAxUiElementWindowType(windowId: windowId)
         let overrides = runtimeContext.config.windowClassificationOverrides
         guard !overrides.isEmpty else { return heuristicType }
 
@@ -225,10 +224,10 @@ extension Window {
 package enum LayoutReason: Equatable {
     case standard
     /// Reason for the cur temp layout is macOS native fullscreen, minimize, or hide
-    case macos(previousPlacement: PreviousMacOsWindowPlacement)
+    case platformDisplaced(previousPlacement: PreviousWindowPlacement)
 }
 
-package enum PreviousMacOsWindowPlacement: Equatable {
+package enum PreviousWindowPlacement: Equatable {
     case floating
     case tiled
     case reclassify

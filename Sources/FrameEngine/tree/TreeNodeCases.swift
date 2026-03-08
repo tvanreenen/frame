@@ -4,10 +4,10 @@ package typealias NonLeafTreeNodeObject = NonLeafTreeNode
 
 package enum ChildParentRelation: Equatable {
     case floatingWindow
-    case macosNativeFullscreenWindow
-    case macosNativeHiddenAppWindow
-    case macosNativeMinimizedWindow
-    case macosPopupWindow
+    case nativeFullscreenWindow
+    case hiddenAppWindow
+    case nativeMinimizedWindow
+    case popupWindow
     case tiling(parent: Column)
     case rootTilingContainer
     case shimContainerRelation
@@ -34,14 +34,14 @@ package func getChildParentRelationOrNil(child: TreeNode, parent: NonLeafTreeNod
                     return .tiling(parent: container)
                 case is Workspace:
                     return .floatingWindow
-                case is MacosPopupWindowsContainer:
-                    return .macosPopupWindow
-                case is MacosMinimizedWindowsContainer:
-                    return .macosNativeMinimizedWindow
-                case is MacosFullscreenWindowsContainer:
-                    return .macosNativeFullscreenWindow
-                case is MacosHiddenAppsWindowsContainer:
-                    return .macosNativeHiddenAppWindow
+                case is PopupWindowsContainer:
+                    return .popupWindow
+                case is NativeMinimizedWindowsContainer:
+                    return .nativeMinimizedWindow
+                case is NativeFullscreenWindowsContainer:
+                    return .nativeFullscreenWindow
+                case is HiddenAppWindowsContainer:
+                    return .hiddenAppWindow
                 default:
                     die("Unknown tree \(parent)")
             }
@@ -51,22 +51,22 @@ package func getChildParentRelationOrNil(child: TreeNode, parent: NonLeafTreeNod
                     return .tiling(parent: container)
                 case is Workspace:
                     return .rootTilingContainer
-                case is MacosPopupWindowsContainer,
-                     is MacosMinimizedWindowsContainer,
-                     is MacosFullscreenWindowsContainer,
-                     is MacosHiddenAppsWindowsContainer:
+                case is PopupWindowsContainer,
+                     is NativeMinimizedWindowsContainer,
+                     is NativeFullscreenWindowsContainer,
+                     is HiddenAppWindowsContainer:
                     return nil
                 default:
                     die("Unknown tree \(parent)")
             }
-        case is MacosFullscreenWindowsContainer, is MacosHiddenAppsWindowsContainer:
+        case is NativeFullscreenWindowsContainer, is HiddenAppWindowsContainer:
             switch parent {
                 case is Workspace:
                     return .shimContainerRelation
                 default:
                     return nil
             }
-        case is MacosMinimizedWindowsContainer, is MacosPopupWindowsContainer:
+        case is NativeMinimizedWindowsContainer, is PopupWindowsContainer:
             return nil
         default:
             die("Unknown tree \(child)")

@@ -86,13 +86,13 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         let window = TestWindow.new(id: 1, parent: column)
         _ = window.focusWindow()
 
-        TestApp.shared.setMacosFullscreen(windowId: 1, true)
+        TestApp.shared.setNativeFullscreen(windowId: 1, true)
         try await normalizeLayoutReason()
 
-        XCTAssertTrue(window.parent is MacosFullscreenWindowsContainer)
+        XCTAssertTrue(window.parent is NativeFullscreenWindowsContainer)
         assertPreviousPlacement(window.layoutReason, expected: .tiled)
 
-        TestApp.shared.setMacosFullscreen(windowId: 1, false)
+        TestApp.shared.setNativeFullscreen(windowId: 1, false)
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is Column)
@@ -104,13 +104,13 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         let window = TestWindow.new(id: 2, parent: workspace)
         _ = window.focusWindow()
 
-        TestApp.shared.setMacosFullscreen(windowId: 2, true)
+        TestApp.shared.setNativeFullscreen(windowId: 2, true)
         try await normalizeLayoutReason()
 
-        XCTAssertTrue(window.parent is MacosFullscreenWindowsContainer)
+        XCTAssertTrue(window.parent is NativeFullscreenWindowsContainer)
         assertPreviousPlacement(window.layoutReason, expected: .floating)
 
-        TestApp.shared.setMacosFullscreen(windowId: 2, false)
+        TestApp.shared.setNativeFullscreen(windowId: 2, false)
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is Workspace)
@@ -123,13 +123,13 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         let window = TestWindow.new(id: 3, parent: column)
         _ = window.focusWindow()
 
-        TestApp.shared.setMacosMinimized(windowId: 3, true)
+        TestApp.shared.setNativeMinimized(windowId: 3, true)
         try await normalizeLayoutReason()
 
-        XCTAssertTrue(window.parent is MacosMinimizedWindowsContainer)
+        XCTAssertTrue(window.parent is NativeMinimizedWindowsContainer)
         assertPreviousPlacement(window.layoutReason, expected: .tiled)
 
-        TestApp.shared.setMacosMinimized(windowId: 3, false)
+        TestApp.shared.setNativeMinimized(windowId: 3, false)
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is Column)
@@ -141,13 +141,13 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         let window = TestWindow.new(id: 4, parent: workspace)
         _ = window.focusWindow()
 
-        TestApp.shared.setMacosMinimized(windowId: 4, true)
+        TestApp.shared.setNativeMinimized(windowId: 4, true)
         try await normalizeLayoutReason()
 
-        XCTAssertTrue(window.parent is MacosMinimizedWindowsContainer)
+        XCTAssertTrue(window.parent is NativeMinimizedWindowsContainer)
         assertPreviousPlacement(window.layoutReason, expected: .floating)
 
-        TestApp.shared.setMacosMinimized(windowId: 4, false)
+        TestApp.shared.setNativeMinimized(windowId: 4, false)
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is Workspace)
@@ -155,11 +155,11 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
     }
 }
 
-private func assertPreviousPlacement(_ layoutReason: LayoutReason, expected: PreviousMacOsWindowPlacement, file: StaticString = #filePath, line: UInt = #line) {
+private func assertPreviousPlacement(_ layoutReason: LayoutReason, expected: PreviousWindowPlacement, file: StaticString = #filePath, line: UInt = #line) {
     switch layoutReason {
         case .standard:
-            XCTFail("Expected macOS layout reason", file: file, line: line)
-        case .macos(let actual):
+            XCTFail("Expected platform-displaced layout reason", file: file, line: line)
+        case .platformDisplaced(let actual):
             assertEquals(actual, expected)
     }
 }
