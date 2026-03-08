@@ -27,5 +27,17 @@ func configureFrameMacOSPlatformServices(for session: AppSession) {
             let location = NSEvent.mouseLocation
             return CGPoint(x: location.x, y: NSScreen.screens.first!.frame.maxY - location.y)
         },
+        followFocusedMonitorWithMouse: { target in
+            let event = CGEvent(
+                mouseEventSource: nil,
+                mouseType: .mouseMoved,
+                mouseCursorPosition: target,
+                mouseButton: .left,
+            )
+            event?.post(tap: .cghidEventTap)
+        },
+        nativeFocusWindow: { app, windowId in
+            (app as? MacApp)?.focusWindowNatively(windowId: windowId)
+        }
     )
 }

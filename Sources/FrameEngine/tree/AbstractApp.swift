@@ -37,7 +37,6 @@ package protocol WindowPlatformApp: AbstractApp {
 
     func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)
     func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws
-    @MainActor func nativeFocus(windowId: UInt32)
     @MainActor func closeAndUnregisterAxWindow(windowId: UInt32)
 
     func isNativeFullscreen(windowId: UInt32) async throws -> Bool?

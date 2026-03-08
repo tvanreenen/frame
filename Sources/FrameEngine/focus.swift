@@ -1,4 +1,3 @@
-import ApplicationServices
 import Common
 import Foundation
 
@@ -109,13 +108,7 @@ extension AppSession {
     private func followFocusedMonitorWithMouseIfNeeded(_ focus: LiveFocus) {
         let rect = focus.workspace.workspaceMonitor.rect
         if rect.contains(currentSession.platformServices.mouseLocation()) { return }
-        let event = CGEvent(
-            mouseEventSource: nil,
-            mouseType: .mouseMoved,
-            mouseCursorPosition: rect.center,
-            mouseButton: .left,
-        )
-        event?.post(tap: .cghidEventTap)
+        currentSession.platformServices.followFocusedMonitorWithMouse(rect.center)
     }
 }
 

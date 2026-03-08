@@ -233,12 +233,42 @@ final class WindowArchitectureTest: XCTestCase {
         let resizeMouseContent = try String(contentsOf: resizeMouseFile)
 
         XCTAssertTrue(focusContent.contains("currentSession.platformServices.mouseLocation()"))
+        XCTAssertTrue(focusContent.contains("currentSession.platformServices.followFocusedMonitorWithMouse("))
         XCTAssertTrue(layoutContent.contains("currentSession.currentlyManipulatedWithMouseWindowId"))
         XCTAssertTrue(moveMouseContent.contains("currentSession.platformServices.mouseLocation()"))
         XCTAssertTrue(moveMouseContent.contains("currentSession.currentlyManipulatedWithMouseWindowId"))
         XCTAssertTrue(resizeMouseContent.contains("currentSession.currentlyManipulatedWithMouseWindowId"))
         XCTAssertFalse(focusContent.contains("rect.contains(mouseLocation)"))
         XCTAssertFalse(layoutContent.contains("window.windowId != currentlyManipulatedWithMouseWindowId"))
+        XCTAssertFalse(focusContent.contains("CGEvent("))
+        XCTAssertFalse(focusContent.contains(".post(tap:"))
+    }
+
+    func testRefreshObserverCallbackLivesInFrameMacOS() throws {
+        let engineRefreshFile = projectRoot.appending(path: "Sources/FrameEngine/layout/refresh.swift")
+        let macosRefreshObserverFile = projectRoot.appending(path: "Sources/FrameMacOS/RefreshObserver.swift")
+        let engineRefreshContent = try String(contentsOf: engineRefreshFile)
+        let macosRefreshObserverContent = try String(contentsOf: macosRefreshObserverFile)
+
+        XCTAssertFalse(engineRefreshContent.contains("func refreshObs("))
+        XCTAssertTrue(macosRefreshObserverContent.contains("func refreshObs("))
+        XCTAssertTrue(macosRefreshObserverContent.contains("scheduleRefreshSession(.ax(notif))"))
+    }
+
+    func testNativeFocusRunsThroughSessionPlatformServices() throws {
+        let windowFile = projectRoot.appending(path: "Sources/FrameEngine/tree/Window.swift")
+        let hooksFile = projectRoot.appending(path: "Sources/FrameEngine/PlatformHooks.swift")
+        let macosHooksFile = projectRoot.appending(path: "Sources/FrameMacOS/PlatformHooks.swift")
+        let abstractAppFile = projectRoot.appending(path: "Sources/FrameEngine/tree/AbstractApp.swift")
+        let windowContent = try String(contentsOf: windowFile)
+        let hooksContent = try String(contentsOf: hooksFile)
+        let macosHooksContent = try String(contentsOf: macosHooksFile)
+        let abstractAppContent = try String(contentsOf: abstractAppFile)
+
+        XCTAssertTrue(windowContent.contains("currentSession.platformServices.nativeFocusWindow(app, windowId)"))
+        XCTAssertTrue(hooksContent.contains("package var nativeFocusWindow:"))
+        XCTAssertTrue(macosHooksContent.contains("nativeFocusWindow: { app, windowId in"))
+        XCTAssertFalse(abstractAppContent.contains("func nativeFocus(windowId: UInt32)"))
     }
 
     func testRunCmdSeqUsesProvidedSessionAndRestoresCurrentSession() async throws {
@@ -278,6 +308,36 @@ final class WindowArchitectureTest: XCTestCase {
 
         XCTAssertTrue(AppSession.fromCallbackContext(session.callbackContext) === session)
         XCTAssertNil(AppSession.fromCallbackContext(nil as AppSessionCallbackContext?))
+    }
+
+    func testStubPlatformServicesObserveNativeFocusAndFollowMouseRequests() {
+        let previousSession = currentSession
+        let isolatedSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+        var followedPoint: CGPoint?
+        var focusedWindowId: UInt32?
+
+        isolatedSession.platformServices.mouseLocation = { CGPoint(x: -100, y: -100) }
+        isolatedSession.platformServices.followFocusedMonitorWithMouse = { target in
+            followedPoint = target
+        }
+        isolatedSession.platformServices.nativeFocusWindow = { _, windowId in
+            focusedWindowId = windowId
+        }
+
+        currentSession = isolatedSession
+        defer { currentSession = previousSession }
+
+        let workspace = Workspace.get(byName: name)
+        let window = TestWindow.new(id: 790, parent: workspace.columnsRoot)
+
+        isolatedSession.focusState = FrozenFocus(windowId: nil, workspaceName: workspace.name, monitorId: 0)
+        isolatedSession.lastKnownFocus = FrozenFocus(windowId: nil, workspaceName: workspace.name, monitorId: 1)
+
+        isolatedSession.checkFocusCallbacks()
+        window.nativeFocus()
+
+        assertEquals(followedPoint, workspace.workspaceMonitor.rect.center)
+        assertEquals(focusedWindowId, window.windowId)
     }
 
     func testRelayoutWindowFromFloatingStillWorks() async throws {
