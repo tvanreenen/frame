@@ -28,10 +28,9 @@ final class TreeNodeTest: XCTestCase {
         let workspace = Workspace.get(byName: name)
 
         XCTAssertTrue(workspace.isEffectivelyEmpty)
-        weak var window = TestWindow.new(id: 1, parent: workspace.columnsRoot)
-        XCTAssertNotEqual(window, nil)
+        let window = TestWindow.new(id: 1, parent: workspace.columnsRoot)
         XCTAssertTrue(!workspace.isEffectivelyEmpty)
-        window!.unbindFromParent()
+        window.unbindFromParent()
         XCTAssertTrue(workspace.isEffectivelyEmpty)
 
         // Don't save to local variable

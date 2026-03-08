@@ -16,7 +16,7 @@ final class MoveCommandTest: XCTestCase {
         let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col1)
-        let w2 = TestWindow.new(id: 2, parent: col2)
+        _ = TestWindow.new(id: 2, parent: col2)
         assertEquals(w1.focusWindow(), true)
 
         try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .right)).run(.defaultEnv, .emptyStdin)
@@ -90,7 +90,7 @@ final class MoveCommandTest: XCTestCase {
         let workspace = Workspace.get(byName: name)
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
-        let w2 = TestWindow.new(id: 2, parent: col)
+        _ = TestWindow.new(id: 2, parent: col)
         assertEquals(w1.focusWindow(), true)
 
         try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .down)).run(.defaultEnv, .emptyStdin)
@@ -101,7 +101,7 @@ final class MoveCommandTest: XCTestCase {
     func testMove_upWithinColumn() async throws {
         let workspace = Workspace.get(byName: name)
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let w1 = TestWindow.new(id: 1, parent: col)
+        _ = TestWindow.new(id: 1, parent: col)
         let w2 = TestWindow.new(id: 2, parent: col)
         assertEquals(w2.focusWindow(), true)
 
@@ -113,7 +113,7 @@ final class MoveCommandTest: XCTestCase {
     func testMove_downAtBottomOfColumn_stops() async throws {
         let workspace = Workspace.get(byName: name)
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let w1 = TestWindow.new(id: 1, parent: col)
+        _ = TestWindow.new(id: 1, parent: col)
         let w2 = TestWindow.new(id: 2, parent: col)
         assertEquals(w2.focusWindow(), true)
 
@@ -127,7 +127,7 @@ final class MoveCommandTest: XCTestCase {
         let workspace = Workspace.get(byName: name)
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
-        let w2 = TestWindow.new(id: 2, parent: col)
+        _ = TestWindow.new(id: 2, parent: col)
         assertEquals(w1.focusWindow(), true)
 
         let result = try await MoveCommand(args: MoveCmdArgs(rawArgs: [], .up)).run(.defaultEnv, .emptyStdin)
