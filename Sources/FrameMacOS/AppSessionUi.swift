@@ -5,7 +5,7 @@ import FrameUI
 
 extension AppSession {
     @MainActor
-    package func syncUiState() {
+    func syncUiState() {
         SecureInputPanel.shared.configure(
             SecureInputPanelDependencies(
                 hasBindings: { !self.config.bindings.isEmpty },

@@ -47,7 +47,7 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertTrue(refreshContent.contains("uiStateSyncHook(self)"))
         XCTAssertFalse(refreshContent.contains("SecureInputPanel.shared.refresh()"))
         XCTAssertFalse(refreshContent.contains("updateTrayText()"))
-        XCTAssertTrue(sessionUiContent.contains("package func syncUiState()"))
+        XCTAssertTrue(sessionUiContent.contains("func syncUiState()"))
         XCTAssertTrue(sessionUiContent.contains("SecureInputPanel.shared.refresh()"))
         XCTAssertTrue(sessionUiContent.contains("TrayMenuModel.shared.trayText"))
         XCTAssertTrue(reloadConfigContent.contains("session.clearConfigMessage()"))

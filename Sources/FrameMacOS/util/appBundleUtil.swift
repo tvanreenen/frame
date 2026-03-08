@@ -40,7 +40,7 @@ private func makeAllWindowsVisibleAndRestoreSize() async throws {
 }
 
 @MainActor
-package func terminateApp() {
+func terminateApp() {
     NSApplication.shared.terminate(nil)
 }
 
