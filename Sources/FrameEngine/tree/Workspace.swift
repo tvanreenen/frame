@@ -138,7 +138,7 @@ extension AppSession {
     currentSession.getStubWorkspace(for: monitor)
 }
 
-package final class Workspace: TreeNode, NonLeafTreeNodeObject, Hashable, Comparable {
+package final class Workspace: NonLeafTreeNode, Hashable, Comparable {
     package let name: String
     nonisolated private let nameLogicalSegments: StringLogicalSegments
     private var _rootTilingContainer: Column?

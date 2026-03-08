@@ -59,7 +59,7 @@ func exitMacOsNativeUnconventionalState(window: Window, previousPlacement: Previ
     }
 }
 
-extension NonLeafTreeNodeObject {
+extension NonLeafTreeNode {
     var macOsRecoveryPlacement: PreviousMacOsWindowPlacement {
         if self is Workspace { return .floating }
         if self is Column { return .tiled }

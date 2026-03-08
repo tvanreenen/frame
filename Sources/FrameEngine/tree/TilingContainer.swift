@@ -1,7 +1,7 @@
 import AppKit
 import Common
 
-package final class Column: TreeNode, NonLeafTreeNodeObject {
+package final class Column: NonLeafTreeNode {
     fileprivate var _orientation: Orientation
     package var orientation: Orientation { _orientation }
 

@@ -156,7 +156,23 @@ package struct BindingData {
     }
 }
 
-final class NilTreeNode: TreeNode, NonLeafTreeNodeObject {
+package class NonLeafTreeNode: TreeNode {
+    @MainActor
+    override package init(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, index: Int) {
+        super.init(parent: parent, adaptiveWeight: adaptiveWeight, index: index)
+    }
+
+    override fileprivate init() {
+        super.init()
+    }
+}
+
+final class NilTreeNode: NonLeafTreeNode {
+    @available(*, unavailable)
+    override init(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, index: Int) {
+        fatalError("Use NilTreeNode.instance")
+    }
+
     override private init() {
         super.init()
     }

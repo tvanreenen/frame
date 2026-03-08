@@ -1,6 +1,6 @@
 import Common
 
-package protocol NonLeafTreeNodeObject: TreeNode {}
+package typealias NonLeafTreeNodeObject = NonLeafTreeNode
 
 package enum ChildParentRelation: Equatable {
     case floatingWindow
