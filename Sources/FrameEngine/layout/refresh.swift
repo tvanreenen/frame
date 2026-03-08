@@ -1,5 +1,5 @@
-import ApplicationServices
 import Common
+import Foundation
 
 extension AppSession {
     @MainActor package func scheduleRefreshSession(
@@ -175,14 +175,6 @@ extension AppSession {
 
 @MainActor package func refreshModel() {
     currentSession.refreshModel()
-}
-
-package func refreshObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeMutableRawPointer?) {
-    let notif = notif as String
-    let session = AppSession.fromCallbackContext(data)
-    Task { @MainActor in
-        (session ?? currentSession).scheduleRefreshSession(.ax(notif))
-    }
 }
 
 package enum OptimalHideCorner {

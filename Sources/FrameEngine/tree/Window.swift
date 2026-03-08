@@ -92,7 +92,7 @@ package final class Window: TreeNode, Hashable {
     package var isNativeMinimized: Bool { get async throws { try await app.isNativeMinimized(windowId: windowId) == true } } // todo replace with enum NativeWindowState { normal, fullscreen, invisible }
     package var isHiddenInCorner: Bool { prevUnhiddenProportionalPositionInsideWorkspaceRect != nil }
     @MainActor
-    package func nativeFocus() { app.nativeFocus(windowId: windowId) }
+    package func nativeFocus() { currentSession.platformServices.nativeFocusWindow(app, windowId) }
     package func getAxRect() async throws -> Rect? { try await app.getAxRect(windowId: windowId) }
     package func getCenter() async throws -> CGPoint? { try await getAxRect()?.center }
 

@@ -183,7 +183,7 @@ final class MacApp: WindowPlatformApp {
         AppSession.fromCallbackContext(observerContext).orDie("MacApp must belong to a live AppSession")
     }
 
-    @MainActor func nativeFocus(windowId: UInt32) {
+    @MainActor func focusWindowNatively(windowId: UInt32) {
         owningSession.appFocusJob?.cancel()
         // Performance optimization. If possible avoid doing AX requests
         // (important for apps which are slow at responding even such basic AX requests. E.g. Godot)

@@ -14,6 +14,8 @@ package struct PlatformServices {
     package var refreshPlatformApps: @MainActor @Sendable (_ frontmostAppBundleId: String?) async throws -> PlatformAppWindowMapping
     package var syncUiState: @MainActor @Sendable (_ session: AppSession) -> Void
     package var mouseLocation: @MainActor @Sendable () -> CGPoint
+    package var followFocusedMonitorWithMouse: @MainActor @Sendable (_ target: CGPoint) -> Void
+    package var nativeFocusWindow: @MainActor @Sendable (_ app: any WindowPlatformApp, _ windowId: UInt32) -> Void
 
     package init(
         mainMonitor: @escaping @MainActor @Sendable () -> any Monitor = { defaultTestMonitor },
@@ -22,7 +24,9 @@ package struct PlatformServices {
         frontmostAppBundleId: @escaping @MainActor @Sendable () -> String? = { nil },
         refreshPlatformApps: @escaping @MainActor @Sendable (_ frontmostAppBundleId: String?) async throws -> PlatformAppWindowMapping = { _ in [] },
         syncUiState: @escaping @MainActor @Sendable (_ session: AppSession) -> Void = { _ in },
-        mouseLocation: @escaping @MainActor @Sendable () -> CGPoint = { .zero }
+        mouseLocation: @escaping @MainActor @Sendable () -> CGPoint = { .zero },
+        followFocusedMonitorWithMouse: @escaping @MainActor @Sendable (_ target: CGPoint) -> Void = { _ in },
+        nativeFocusWindow: @escaping @MainActor @Sendable (_ app: any WindowPlatformApp, _ windowId: UInt32) -> Void = { _, _ in }
     ) {
         self.mainMonitor = mainMonitor
         self.monitors = monitors
@@ -31,6 +35,8 @@ package struct PlatformServices {
         self.refreshPlatformApps = refreshPlatformApps
         self.syncUiState = syncUiState
         self.mouseLocation = mouseLocation
+        self.followFocusedMonitorWithMouse = followFocusedMonitorWithMouse
+        self.nativeFocusWindow = nativeFocusWindow
     }
 }
 
