@@ -1,4 +1,5 @@
 @testable import AppBundle
+import Common
 import Foundation
 import XCTest
 
@@ -20,6 +21,30 @@ final class WindowArchitectureTest: XCTestCase {
         assertEquals(offenders.sorted(), [])
     }
 
+    func testMacAppNoLongerOwnsStaticRuntimeRegistries() throws {
+        let file = projectRoot.appending(path: "Sources/AppBundle/tree/MacApp.swift")
+        let content = try String(contentsOf: file)
+
+        XCTAssertFalse(content.contains("static var allAppsMap"))
+        XCTAssertFalse(content.contains("static var wipPids"))
+        XCTAssertFalse(content.contains("static func getOrRegister("))
+        XCTAssertFalse(content.contains("static func refreshAllAndGetAliveWindowIds("))
+    }
+
+    func testRuntimeCodeUsesSessionUiBoundary() throws {
+        let refreshFile = projectRoot.appending(path: "Sources/AppBundle/layout/refresh.swift")
+        let reloadConfigFile = projectRoot.appending(path: "Sources/AppBundle/command/impl/ReloadConfigCommand.swift")
+        let refreshContent = try String(contentsOf: refreshFile)
+        let reloadConfigContent = try String(contentsOf: reloadConfigFile)
+
+        XCTAssertTrue(refreshContent.contains("syncUiState()"))
+        XCTAssertFalse(refreshContent.contains("SecureInputPanel.shared.refresh()"))
+        XCTAssertFalse(refreshContent.contains("updateTrayText()"))
+        XCTAssertTrue(reloadConfigContent.contains("session.clearConfigMessage()"))
+        XCTAssertTrue(reloadConfigContent.contains("session.setConfigMessage("))
+        XCTAssertFalse(reloadConfigContent.contains("MessageModel.shared.message"))
+    }
+
     func testWindowHasNoNotImplementedStubs() throws {
         let file = projectRoot.appending(path: "Sources/AppBundle/tree/Window.swift")
         let content = try String(contentsOf: file)
@@ -30,6 +55,59 @@ final class WindowArchitectureTest: XCTestCase {
         let workspace = Workspace.get(byName: name)
         let window = TestWindow.new(id: 777, parent: workspace.columnsRoot)
         assertEquals(Window.get(byId: 777), window)
+    }
+
+    func testCurrentSessionOwnsRuntimeRegistries() {
+        let workspace = Workspace.get(byName: name)
+        _ = TestWindow.new(id: 788, parent: workspace.columnsRoot)
+
+        XCTAssertFalse(Workspace.all.isEmpty)
+        XCTAssertNotNil(Window.get(byId: 788))
+
+        currentSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+
+        XCTAssertTrue(Workspace.all.isEmpty)
+        XCTAssertNil(Window.get(byId: 788))
+        XCTAssertTrue(runtimeContext === currentSession)
+    }
+
+    func testRunCmdSeqUsesProvidedSessionAndRestoresCurrentSession() async throws {
+        struct SessionProbeCommand: Command {
+            typealias T = AddColumnCmdArgs
+            let args = AddColumnCmdArgs(rawArgs: [])
+            let expectedSession: AppSession
+            let previousSession: AppSession
+
+            @MainActor
+            func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
+                XCTAssertTrue(session === expectedSession)
+                XCTAssertTrue(currentSession === expectedSession)
+                XCTAssertFalse(currentSession === previousSession)
+                return true
+            }
+
+            var shouldResetClosedWindowsCache: Bool { false }
+        }
+
+        let previousSession = currentSession
+        let isolatedSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+        let commands: [any Command] = [SessionProbeCommand(
+            expectedSession: isolatedSession,
+            previousSession: previousSession,
+        )]
+
+        let result = try await commands.runCmdSeq(in: isolatedSession, .defaultEnv, .emptyStdin)
+
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertTrue(currentSession === previousSession)
+        XCTAssertFalse(currentSession === isolatedSession)
+    }
+
+    func testSessionCallbackContextRoundTrips() {
+        let session = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
+
+        XCTAssertTrue(AppSession.fromCallbackContext(session.callbackContext) === session)
+        XCTAssertNil(AppSession.fromCallbackContext(nil as AppSessionCallbackContext?))
     }
 
     func testRelayoutWindowFromFloatingStillWorks() async throws {

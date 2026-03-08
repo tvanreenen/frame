@@ -40,14 +40,14 @@ extension HotKey {
     }
 }
 
-@MainActor func syncHotKeys() {
+@MainActor func syncHotKeys(session: AppSession = currentSession) {
     resetHotKeys()
-    for binding in runtimeContext.config.bindings.values {
+    for binding in session.config.bindings.values {
         let hotkeyId = HotkeyId(modifiers: binding.modifiers, keyCode: binding.keyCode)
         hotkeys[hotkeyId] = HotKey(key: binding.keyCode, modifiers: binding.modifiers, keyDownHandler: {
             Task {
-                try await runLightSession(.hotkeyBinding) {
-                    _ = try await binding.commands.runCmdSeq(.defaultEnv, .emptyStdin)
+                try await session.runLightSession(.hotkeyBinding) {
+                    _ = try await binding.commands.runCmdSeq(in: session, .defaultEnv, .emptyStdin)
                 }
             }
         })

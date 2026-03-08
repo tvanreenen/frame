@@ -5,8 +5,8 @@ struct ListAppsCommand: Command {
     let args: ListAppsCmdArgs
     /*conforms*/ var shouldResetClosedWindowsCache = false
 
-    func run(_ env: CmdEnv, _ io: CmdIo) -> Bool {
-        var result = Array(MacApp.allAppsMap.values)
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
+        var result = session.registeredMacApps
         if let hidden = args.macosHidden {
             result = result.filter { $0.nsApp.isHidden == hidden }
         }

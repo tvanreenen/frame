@@ -2,7 +2,12 @@ import AppKit
 import Common
 import Network
 
+@MainActor
 func startUnixSocketServer() {
+    startUnixSocketServer(session: currentSession)
+}
+
+func startUnixSocketServer(session: AppSession) {
     try? FileManager.default.removeItem(atPath: socketPath)
     let params = NWParameters.tcp
     params.requiredLocalEndpoint = .unix(path: socketPath)
@@ -11,7 +16,7 @@ func startUnixSocketServer() {
         Task {
             defer { connection.cancel() }
             connection.start(queue: .global())
-            await newConnection(connection)
+            await newConnection(session: session, connection)
         }
     }
     listener.start(queue: .global())
@@ -19,7 +24,7 @@ func startUnixSocketServer() {
 
 private let serverVersionAndHash = appVersionForDisplay
 
-private func newConnection(_ connection: NWConnection) async { // todo add exit codes
+private func newConnection(session: AppSession, _ connection: NWConnection) async { // todo add exit codes
     func answerToClient(exitCode: Int32, stdout: String = "", stderr: String = "") async {
         let ans = ServerAnswer(exitCode: exitCode, stdout: stdout, stderr: stderr, serverVersionAndHash: serverVersionAndHash)
         await answerToClient(ans)
@@ -55,12 +60,12 @@ private func newConnection(_ connection: NWConnection) async { // todo add exit 
                 continue
             case .cmd(let command):
                 let _answer: Result<ServerAnswer, Error> = await Result {
-                    try await runLightSession(.socketServer) { () throws in
+                    try await session.runLightSession(.socketServer) { () throws in
                         let env = CmdEnv.init(
                             windowId: request.windowId,
                             workspaceName: request.workspace,
                         )
-                        let cmdResult = try await command.run(env, CmdStdin(request.stdin))
+                        let cmdResult = try await [command].runCmdSeq(in: session, env, CmdStdin(request.stdin))
                         return ServerAnswer(
                             exitCode: cmdResult.exitCode,
                             stdout: cmdResult.stdout.joined(separator: "\n"),

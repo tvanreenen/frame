@@ -1,6 +1,103 @@
 import AppKit
 import Common
 
+extension AppSession {
+    var registeredMacApps: [MacApp] {
+        Array(appsByPid.values)
+    }
+
+    @discardableResult
+    func getOrRegisterMacApp(_ nsApp: NSRunningApplication) async throws -> MacApp? {
+        // Don't perceive any of the lock screen windows as real windows
+        // Otherwise, false positive ax notifications might trigger that lead to gcWindows
+        if nsApp.bundleIdentifier == lockScreenAppBundleId { return nil }
+        let pid = nsApp.processIdentifier
+        // AX requests crash if you send them to yourself
+        if pid == myPid { return nil }
+
+        while true {
+            if let existing = appsByPid[pid] { return existing }
+            try checkCancellation()
+            if let wip = appsWipByPid[pid] {
+                try await wip.await()
+                continue
+            }
+            let wip = AwaitableOneTimeBroadcastLatch()
+            appsWipByPid[pid] = wip
+            let observerContext = callbackContext
+
+            let thread = Thread {
+                $axTaskLocalAppThreadToken.withValue(AxAppThreadToken(pid: pid, idForDebug: nsApp.idForDebug)) {
+                    let axApp = AXUIElementCreateApplication(nsApp.processIdentifier)
+                    let handlers: HandlerToNotifKeyMapping = [
+                        (refreshObs, [kAXWindowCreatedNotification, kAXFocusedWindowChangedNotification]),
+                    ]
+                    let job = RunLoopJob()
+                    let subscriptions = (try? AxSubscription.bulkSubscribe(
+                        nsApp,
+                        axApp,
+                        job,
+                        handlers,
+                        observerContext: observerContext,
+                    )) ?? []
+                    let isGood = !subscriptions.isEmpty
+                    let app = isGood ? MacApp(nsApp, axApp, subscriptions, observerContext, Thread.current) : nil
+                    Task { @MainActor in
+                        self.appsByPid[pid] = app
+                        await wip.signal()
+                        self.appsWipByPid[pid] = nil
+                    }
+                    if isGood {
+                        CFRunLoopRun()
+                    }
+                }
+            }
+            thread.name = "AxAppThread \(nsApp.idForDebug)"
+            thread.start()
+        }
+    }
+
+    func refreshAllMacAppsAndGetAliveWindowIds(frontmostAppBundleId: String?) async throws -> [MacApp: [UInt32]] {
+        for (_, app) in appsByPid { // gc dead apps
+            try checkCancellation()
+            if app.nsApp.isTerminated {
+                await app.destroy()
+            }
+        }
+        return try await withThrowingTaskGroup(of: (pid_t, [UInt32]).self, returning: [MacApp: [UInt32]].self) { group in
+            func refreshTheApp(_ nsApp: NSRunningApplication) {
+                group.addTask { @Sendable @MainActor in
+                    guard let app = try await self.getOrRegisterMacApp(nsApp) else { return (nsApp.processIdentifier, []) }
+                    return (nsApp.processIdentifier, try await app.refreshAndGetAliveWindowIds(frontmostAppBundleId: frontmostAppBundleId))
+                }
+            }
+            // Register new apps
+            for nsApp in NSWorkspace.shared.runningApplications {
+                try checkCancellation()
+                if nsApp.activationPolicy == .regular {
+                    refreshTheApp(nsApp)
+                }
+            }
+            for (_, app) in appsByPid {
+                try checkCancellation()
+                // "About this Mac" window, TouchID, and a lot of other utility windows
+                // We don't monitor them actively as we do for regular apps, but if a window of one of those utility
+                // apps got focused it will end up in allAppsMap
+                if app.nsApp.activationPolicy != .regular {
+                    refreshTheApp(app.nsApp)
+                }
+            }
+            var result: [MacApp: [UInt32]] = [:]
+            for try await (pid, windowIds) in group {
+                if let app = appsByPid[pid] {
+                    result[app] = windowIds
+                }
+            }
+            return result
+        }
+    }
+}
+
 // Potential alternative implementation
 // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0392-custom-actor-executors.md
 // (only available since macOS 14)
@@ -11,33 +108,25 @@ final class MacApp: WindowPlatformApp {
     let nsApp: NSRunningApplication
     private let axApp: ThreadGuardedValue<AXUIElement>
     private let appAxSubscriptions: ThreadGuardedValue<[AxSubscription]> // keep subscriptions in memory
+    private let observerContext: AppSessionCallbackContext
     private let windows: ThreadGuardedValue<[UInt32: AxWindow]> = .init([:])
     private var windowsCount = 0
     public var lastNativeFocusedWindowId: UInt32? = nil
     private var thread: Thread?
     private var setFrameJobs: [UInt32: RunLoopJob] = [:]
-    @MainActor private static var focusJob: RunLoopJob? {
-        get { runtimeContext.appFocusJob }
-        set { runtimeContext.appFocusJob = newValue }
-    }
 
     /*conforms*/ var name: String? { nsApp.localizedName }
     /*conforms*/ var execPath: String? { nsApp.executableURL?.path }
     /*conforms*/ var bundlePath: String? { nsApp.bundleURL?.path }
     /*conforms*/ var isHidden: Bool { nsApp.isHidden }
 
-    // todo think if it's possible to integrate this global mutable state to https://github.com/tvanreenen/frame/issues/1215
-    //      and make deinitialization automatic in deinit
-    @MainActor static var allAppsMap: [pid_t: MacApp] {
-        get { runtimeContext.appsByPid }
-        set { runtimeContext.appsByPid = newValue }
-    }
-    @MainActor private static var wipPids: [pid_t: AwaitableOneTimeBroadcastLatch] {
-        get { runtimeContext.appsWipByPid }
-        set { runtimeContext.appsWipByPid = newValue }
-    }
-
-    private init(_ nsApp: NSRunningApplication, _ axApp: AXUIElement, _ axSubscriptions: [AxSubscription], _ thread: Thread) {
+    fileprivate init(
+        _ nsApp: NSRunningApplication,
+        _ axApp: AXUIElement,
+        _ axSubscriptions: [AxSubscription],
+        _ observerContext: AppSessionCallbackContext,
+        _ thread: Thread,
+    ) {
         self.nsApp = nsApp
         self.axApp = .init(axApp)
         self.pid = nsApp.processIdentifier
@@ -45,52 +134,8 @@ final class MacApp: WindowPlatformApp {
         self.appId = nsApp.bundleIdentifier.flatMap { KnownBundleId.init(rawValue: $0) }
         assert(!axSubscriptions.isEmpty)
         self.appAxSubscriptions = .init(axSubscriptions)
+        self.observerContext = observerContext
         self.thread = thread
-    }
-
-    @MainActor
-    @discardableResult
-    static func getOrRegister(_ nsApp: NSRunningApplication) async throws -> MacApp? {
-        // Don't perceive any of the lock screen windows as real windows
-        // Otherwise, false positive ax notifications might trigger that lead to gcWindows
-        if nsApp.bundleIdentifier == lockScreenAppBundleId { return nil }
-        let pid = nsApp.processIdentifier
-        // AX requests crash if you send them to yourself
-        if pid == myPid { return nil }
-
-        while true {
-            if let existing = allAppsMap[pid] { return existing }
-            try checkCancellation()
-            if let wip = wipPids[pid] {
-                try await wip.await()
-                continue
-            }
-            let wip = AwaitableOneTimeBroadcastLatch()
-            wipPids[pid] = wip
-
-            let thread = Thread {
-                $axTaskLocalAppThreadToken.withValue(AxAppThreadToken(pid: pid, idForDebug: nsApp.idForDebug)) {
-                    let axApp = AXUIElementCreateApplication(nsApp.processIdentifier)
-                    let handlers: HandlerToNotifKeyMapping = [
-                        (refreshObs, [kAXWindowCreatedNotification, kAXFocusedWindowChangedNotification]),
-                    ]
-                    let job = RunLoopJob()
-                    let subscriptions = (try? AxSubscription.bulkSubscribe(nsApp, axApp, job, handlers)) ?? []
-                    let isGood = !subscriptions.isEmpty
-                    let app = isGood ? MacApp(nsApp, axApp, subscriptions, Thread.current) : nil
-                    Task { @MainActor in
-                        allAppsMap[pid] = app
-                        await wip.signal()
-                        wipPids[pid] = nil
-                    }
-                    if isGood {
-                        CFRunLoopRun()
-                    }
-                }
-            }
-            thread.name = "AxAppThread \(nsApp.idForDebug)"
-            thread.start()
-        }
     }
 
     @MainActor
@@ -112,9 +157,9 @@ final class MacApp: WindowPlatformApp {
 
     // todo merge together with detectNewWindows
     func getFocusedWindow() async throws -> Window? {
-        let windowId = try await thread?.runInLoop { [nsApp, axApp, windows] job in
+        let windowId = try await thread?.runInLoop { [nsApp, axApp, windows, observerContext] job in
             try axApp.threadGuarded.get(Ax.focusedWindowAttr)
-                .flatMap { try windows.threadGuarded.getOrRegisterAxWindow(windowId: $0.windowId, $0.ax.cast, nsApp, job) }?
+                .flatMap { try windows.threadGuarded.getOrRegisterAxWindow(windowId: $0.windowId, $0.ax.cast, nsApp, observerContext, job) }?
                 .windowId
         }
         guard let windowId else { return nil }
@@ -126,8 +171,13 @@ final class MacApp: WindowPlatformApp {
         lastNativeFocusedWindowId = windowId
     }
 
+    @MainActor
+    private var owningSession: AppSession {
+        AppSession.fromCallbackContext(observerContext).orDie("MacApp must belong to a live AppSession")
+    }
+
     @MainActor func nativeFocus(windowId: UInt32) {
-        MacApp.focusJob?.cancel()
+        owningSession.appFocusJob?.cancel()
         // Performance optimization. If possible avoid doing AX requests
         // (important for apps which are slow at responding even such basic AX requests. E.g. Godot)
         // Beware of the macOS bug: https://github.com/tvanreenen/frame/issues/101
@@ -136,7 +186,7 @@ final class MacApp: WindowPlatformApp {
         {
             nsApp.activate(options: .activateIgnoringOtherApps)
         } else {
-            MacApp.focusJob = withWindowAsync(windowId) { [nsApp] window, job in
+            owningSession.appFocusJob = withWindowAsync(windowId) { [nsApp] window, job in
                 // Raise firstly to make sure that by the time we activate the app, the window would be already on top
                 window.set(Ax.isMainAttr, true)
                 AXUIElementPerformAction(window, kAXRaiseAction as CFString)
@@ -233,54 +283,13 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    @MainActor
-    static func refreshAllAndGetAliveWindowIds(frontmostAppBundleId: String?) async throws -> [MacApp: [UInt32]] {
-        for (_, app) in MacApp.allAppsMap { // gc dead apps
-            try checkCancellation()
-            if app.nsApp.isTerminated {
-                await app.destroy()
-            }
-        }
-        return try await withThrowingTaskGroup(of: (pid_t, [UInt32]).self, returning: [MacApp: [UInt32]].self) { group in
-            func refreshTheApp(_ nsApp: NSRunningApplication) {
-                group.addTask { @Sendable @MainActor in
-                    guard let app = try await MacApp.getOrRegister(nsApp) else { return (nsApp.processIdentifier, []) }
-                    return (nsApp.processIdentifier, try await app.refreshAndGetAliveWindowIds(frontmostAppBundleId: frontmostAppBundleId))
-                }
-            }
-            // Register new apps
-            for nsApp in NSWorkspace.shared.runningApplications {
-                try checkCancellation()
-                if nsApp.activationPolicy == .regular {
-                    refreshTheApp(nsApp)
-                }
-            }
-            for (_, app) in MacApp.allAppsMap {
-                try checkCancellation()
-                // "About this Mac" window, TouchID, and a lot of other utility windows
-                // We don't monitor them actively as we do for regular apps, but if a window of one of those utility
-                // apps got focused it will end up in allAppsMap
-                if app.nsApp.activationPolicy != .regular {
-                    refreshTheApp(app.nsApp)
-                }
-            }
-            var result: [MacApp: [UInt32]] = [:]
-            for try await (pid, windowIds) in group {
-                if let app = MacApp.allAppsMap[pid] {
-                    result[app] = windowIds
-                }
-            }
-            return result
-        }
-    }
-
-    private func refreshAndGetAliveWindowIds(frontmostAppBundleId: String?) async throws -> [UInt32] {
+    fileprivate func refreshAndGetAliveWindowIds(frontmostAppBundleId: String?) async throws -> [UInt32] {
         if nsApp.isTerminated {
             await destroy()
             return []
         }
         guard let thread else { return [] }
-        let (alive, dead) = try await thread.runInLoop { [nsApp, windows, axApp] (job) -> ([UInt32], [UInt32]) in
+        let (alive, dead) = try await thread.runInLoop { [nsApp, windows, axApp, observerContext] (job) -> ([UInt32], [UInt32]) in
             var alive: [UInt32: AxWindow] = windows.threadGuarded
             var dead = [UInt32: AxWindow]()
             // Second line of defence against lock screen. See the first line of defence: closedWindowsCache
@@ -294,7 +303,7 @@ final class MacApp: WindowPlatformApp {
 
             for (id, window) in axApp.threadGuarded.get(Ax.windowsAttr) ?? [] {
                 try job.checkCancellation()
-                try alive.getOrRegisterAxWindow(windowId: id, window, nsApp, job)
+                try alive.getOrRegisterAxWindow(windowId: id, window, nsApp, observerContext, job)
             }
 
             windows.threadGuarded = alive
@@ -307,8 +316,11 @@ final class MacApp: WindowPlatformApp {
         return alive
     }
 
-    private func destroy() async {
-        _ = await Task { @MainActor [pid] in _ = MacApp.allAppsMap.removeValue(forKey: pid) }.result
+    fileprivate func destroy() async {
+        _ = await Task { @MainActor [pid, observerContext] in
+            let session = AppSession.fromCallbackContext(observerContext)
+            _ = session?.appsByPid.removeValue(forKey: pid)
+        }.result
         for (_, job) in setFrameJobs {
             job.cancel()
         }
@@ -349,27 +361,45 @@ private final class AxWindow {
         self.axSubscriptions = axSubscriptions
     }
 
-    static func new(windowId: UInt32, _ ax: AXUIElement, _ nsApp: NSRunningApplication, _ job: RunLoopJob) throws -> AxWindow? {
+    static func new(
+        windowId: UInt32,
+        _ ax: AXUIElement,
+        _ nsApp: NSRunningApplication,
+        _ observerContext: AppSessionCallbackContext,
+        _ job: RunLoopJob,
+    ) throws -> AxWindow? {
         let handlers: HandlerToNotifKeyMapping = [
             (refreshObs, [kAXUIElementDestroyedNotification, kAXWindowDeminiaturizedNotification, kAXWindowMiniaturizedNotification]),
             (movedObs, [kAXMovedNotification]),
             (resizedObs, [kAXResizedNotification]),
         ]
-        let subscriptions = try AxSubscription.bulkSubscribe(nsApp, ax, job, handlers)
+        let subscriptions = try AxSubscription.bulkSubscribe(
+            nsApp,
+            ax,
+            job,
+            handlers,
+            observerContext: observerContext,
+        )
         return !subscriptions.isEmpty ? AxWindow(windowId: windowId, ax, subscriptions) : nil
     }
 }
 
 extension [UInt32: AxWindow] {
     @discardableResult
-    fileprivate mutating func getOrRegisterAxWindow(windowId id: UInt32, _ axWindow: AXUIElement, _ nsApp: NSRunningApplication, _ job: RunLoopJob) throws -> AxWindow? {
+    fileprivate mutating func getOrRegisterAxWindow(
+        windowId id: UInt32,
+        _ axWindow: AXUIElement,
+        _ nsApp: NSRunningApplication,
+        _ observerContext: AppSessionCallbackContext,
+        _ job: RunLoopJob,
+    ) throws -> AxWindow? {
         if let existing = self[id] { return existing }
         // Delay new window detection if mouse is down
         // It helps with apps that allow dragging their tabs out to create new windows
         // https://github.com/tvanreenen/frame/issues/1001
         if isLeftMouseButtonDown { return nil }
 
-        if let window = try AxWindow.new(windowId: id, axWindow, nsApp, job) {
+        if let window = try AxWindow.new(windowId: id, axWindow, nsApp, observerContext, job) {
             self[id] = window
             return window
         } else {

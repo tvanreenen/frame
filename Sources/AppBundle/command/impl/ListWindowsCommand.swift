@@ -5,7 +5,7 @@ struct ListWindowsCommand: Command {
     let args: ListWindowsCmdArgs
     /*conforms*/ var shouldResetClosedWindowsCache = false
 
-    func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         let focus = focus
         var windows: [Window] = []
 

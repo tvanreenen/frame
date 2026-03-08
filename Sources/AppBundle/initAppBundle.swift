@@ -3,7 +3,12 @@ import Common
 import Foundation
 
 @MainActor public func initAppBundle() {
-    Task {
+    initAppBundle(session: currentSession)
+}
+
+@MainActor
+func initAppBundle(session: AppSession) {
+    Task { @MainActor in
         initTerminationHandler()
         isCli = false
         initServerArgs()
@@ -11,10 +16,10 @@ import Foundation
             interceptTermination(SIGINT)
             interceptTermination(SIGKILL)
         }
-        if try await !reloadConfig() {
+        if try await !reloadConfig(session: session) {
             var out = ""
             check(
-                try await reloadConfig(forceConfigUrl: defaultConfigUrl, stdout: &out),
+                try await reloadConfig(session: session, forceConfigUrl: defaultConfigUrl, stdout: &out),
                 """
                 Can't load default config. Your installation is probably corrupted.
                 Please don't modify '\(defaultConfigUrl)'
@@ -25,11 +30,11 @@ import Foundation
         }
 
         await checkAccessibilityPermissions()
-        startUnixSocketServer()
-        GlobalObserver.initObserver()
+        startUnixSocketServer(session: session)
+        GlobalObserver.initObserver(session: session)
         Workspace.garbageCollectUnusedWorkspaces() // init workspaces
         _ = Workspace.all.first?.focusWorkspace()
-        try await runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
+        try await session.runRefreshSessionBlocking(.startup, layoutWorkspaces: false)
     }
 }
 

@@ -5,7 +5,7 @@ struct ListWorkspacesCommand: Command {
     let args: ListWorkspacesCmdArgs
     /*conforms*/ var shouldResetClosedWindowsCache = false
 
-    func run(_ env: CmdEnv, _ io: CmdIo) -> Bool {
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
         var result: [Workspace] = Workspace.all
         if let visible = args.filteringOptions.visible {
             result = result.filter { $0.isVisible == visible }

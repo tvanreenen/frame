@@ -14,9 +14,9 @@ final class AxSubscription {
         self.ax = ax
     }
 
-    private func subscribe(_ key: String, _ job: RunLoopJob) throws -> Bool {
+    private func subscribe(_ key: String, _ job: RunLoopJob, _ observerContext: AppSessionCallbackContext?) throws -> Bool {
         axThreadToken.checkEquals(axTaskLocalAppThreadToken)
-        if AXObserverAddNotification(obs, ax, key as CFString, nil) == .success {
+        if AXObserverAddNotification(obs, ax, key as CFString, observerContext?.rawValue) == .success {
             notifKeys.insert(key)
             return true
         } else {
@@ -24,7 +24,13 @@ final class AxSubscription {
         }
     }
 
-    static func bulkSubscribe(_ nsApp: NSRunningApplication, _ ax: AXUIElement, _ job: RunLoopJob, _ handlerToNotifKeyMapping: HandlerToNotifKeyMapping) throws -> [AxSubscription] {
+    static func bulkSubscribe(
+        _ nsApp: NSRunningApplication,
+        _ ax: AXUIElement,
+        _ job: RunLoopJob,
+        _ handlerToNotifKeyMapping: HandlerToNotifKeyMapping,
+        observerContext: AppSessionCallbackContext? = nil,
+    ) throws -> [AxSubscription] {
         var result: [AxSubscription] = []
         var visitedNotifKeys: Set<String> = []
         for (handler, notifKeys) in handlerToNotifKeyMapping {
@@ -34,7 +40,7 @@ final class AxSubscription {
             for key: String in notifKeys {
                 try job.checkCancellation()
                 assert(visitedNotifKeys.insert(key).inserted)
-                if try !subscription.subscribe(key, job) { return [] }
+                if try !subscription.subscribe(key, job, observerContext) { return [] }
             }
             CFRunLoopAddSource(CFRunLoopGetCurrent(), AXObserverGetRunLoopSource(obs), .defaultMode)
             result.append(subscription)

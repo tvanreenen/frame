@@ -5,9 +5,9 @@ struct ReloadConfigCommand: Command {
     let args: ReloadConfigCmdArgs
     /*conforms*/ var shouldResetClosedWindowsCache = false
 
-    func run(_ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
+    func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         var stdout = ""
-        let isOk = try await reloadConfig(stdout: &stdout)
+        let isOk = try await reloadConfig(session: session, stdout: &stdout)
         if !stdout.isEmpty {
             io.out(stdout)
         }
@@ -17,27 +17,33 @@ struct ReloadConfigCommand: Command {
 
 @MainActor func reloadConfig(forceConfigUrl: URL? = nil) async throws -> Bool {
     var devNull = ""
-    return try await reloadConfig(forceConfigUrl: forceConfigUrl, stdout: &devNull)
+    return try await reloadConfig(session: currentSession, forceConfigUrl: forceConfigUrl, stdout: &devNull)
+}
+
+@MainActor func reloadConfig(session: AppSession, forceConfigUrl: URL? = nil) async throws -> Bool {
+    var devNull = ""
+    return try await reloadConfig(session: session, forceConfigUrl: forceConfigUrl, stdout: &devNull)
 }
 
 @MainActor func reloadConfig(
+    session: AppSession,
     forceConfigUrl: URL? = nil,
     stdout: inout String,
 ) async throws -> Bool {
     let result: Bool
     switch readConfig(forceConfigUrl: forceConfigUrl) {
         case .success(let (parsedConfig, url)):
-            runtimeContext.config = parsedConfig
-            runtimeContext.configUrl = url
-            syncHotKeys()
+            session.config = parsedConfig
+            session.configUrl = url
+            syncHotKeys(session: session)
             syncStartAtLogin()
-            MessageModel.shared.message = nil
+            session.clearConfigMessage()
             result = true
         case .failure(let msg):
             stdout.append(msg)
             let parsedError = parseConfigErrorMessage(msg)
             Task { @MainActor in
-                MessageModel.shared.message = Message(
+                session.setConfigMessage(Message(
                     title: appDisplayName,
                     description: parsedError.path.map {
                         "Failed to parse \($0). Frame will run with the built-in defaults until your configuration is fixed and reloaded."
@@ -48,7 +54,7 @@ struct ReloadConfigCommand: Command {
                         "Run frame doctor.",
                         "Run frame reload-config (or quit and restart Frame).",
                     ],
-                )
+                ))
             }
             result = false
     }
