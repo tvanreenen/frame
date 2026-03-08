@@ -93,12 +93,21 @@ let package = Package(
             name: "FrameEngineTests",
             dependencies: [
                 .target(name: "FrameEngine"),
+                .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
+                .target(name: "Common"),
+                .product(name: "HotKey", package: "HotKey"),
             ],
         ),
         .testTarget(
             name: "FrameMacOSTests",
             dependencies: [
+                .target(name: "FrameEngine"),
                 .target(name: "FrameMacOS"),
+                .target(name: "FrameUI"),
+                .target(name: "Common"),
+                .product(name: "HotKey", package: "HotKey"),
+                .product(name: "TOMLKit", package: "TOMLKit"),
             ],
         ),
         .testTarget(
@@ -110,10 +119,7 @@ let package = Package(
         .testTarget(
             name: "AppBundleTests",
             dependencies: [
-                .target(name: "FrameEngine"),
-                .target(name: "FrameMacOS"),
-                .target(name: "FrameUI"),
-                .product(name: "TOMLKit", package: "TOMLKit"),
+                .target(name: "AppBundle"),
             ],
             path: "Sources/AppBundleTests",
             exclude: [
