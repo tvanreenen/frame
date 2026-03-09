@@ -15,10 +15,10 @@ final class WindowClassificationOverrideTest: XCTestCase {
             pid: 101,
             rawAppBundleId: "com.nomachine.nxdock",
             name: "NoMachine",
-            heuristicType: .popup,
+            placementKind: .popup,
             windowTitle: "",
         )
-        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app)
+        let withoutOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
         assertEquals(withoutOverride, .popup)
 
         let parsed = parseConfig(
@@ -31,8 +31,8 @@ final class WindowClassificationOverrideTest: XCTestCase {
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
-        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app)
-        assertEquals(withOverride, .dialog)
+        let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
+        assertEquals(withOverride, .floating)
     }
 
     func testLegacyFloatingCase_cleanshotPopupCanBeOverriddenByAppNameRegex() async throws {
@@ -40,10 +40,10 @@ final class WindowClassificationOverrideTest: XCTestCase {
             pid: 102,
             rawAppBundleId: "pl.maketheweb.cleanshotx",
             name: "CleanShot X",
-            heuristicType: .popup,
+            placementKind: .popup,
             windowTitle: "",
         )
-        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app)
+        let withoutOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
         assertEquals(withoutOverride, .popup)
 
         let parsed = parseConfig(
@@ -56,8 +56,8 @@ final class WindowClassificationOverrideTest: XCTestCase {
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
-        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app)
-        assertEquals(withOverride, .dialog)
+        let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
+        assertEquals(withOverride, .floating)
     }
 }
 
@@ -69,14 +69,14 @@ private final class ClassificationTestApp: WindowPlatformApp {
     let bundlePath: String? = nil
     let isHidden: Bool = false
 
-    private let heuristicType: AxUiElementWindowType
+    private let placementKind: WindowPlacementKind
     private let windowTitle: String?
 
-    init(pid: Int32, rawAppBundleId: String?, name: String?, heuristicType: AxUiElementWindowType, windowTitle: String?) {
+    init(pid: Int32, rawAppBundleId: String?, name: String?, placementKind: WindowPlacementKind, windowTitle: String?) {
         self.pid = pid
         self.rawAppBundleId = rawAppBundleId
         self.name = name
-        self.heuristicType = heuristicType
+        self.placementKind = placementKind
         self.windowTitle = windowTitle
     }
 
@@ -93,7 +93,7 @@ private final class ClassificationTestApp: WindowPlatformApp {
     func isNativeMinimized(windowId: UInt32) async throws -> Bool? { false }
     func getWindowTitle(windowId: UInt32) async throws -> String? { windowTitle }
     func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
-    func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
-        heuristicType
+    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
+        placementKind
     }
 }

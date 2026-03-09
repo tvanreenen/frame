@@ -240,13 +240,18 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
+    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
         let windowLevel = await MainActor.run {
             getWindowLevel(for: windowId)
         }
-        return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
+        let rawType = try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             return window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } ?? .window
+        return switch rawType {
+            case .window: .tiling
+            case .dialog: .floating
+            case .popup: .popup
+        }
     }
 
     func setNativeFullscreen(_ windowId: UInt32, _ value: Bool) {

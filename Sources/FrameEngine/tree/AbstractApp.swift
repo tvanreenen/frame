@@ -44,5 +44,5 @@ package protocol WindowPlatformApp: AbstractApp {
     func getWindowTitle(windowId: UInt32) async throws -> String?
     func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json]
 
-    func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType
+    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind
 }

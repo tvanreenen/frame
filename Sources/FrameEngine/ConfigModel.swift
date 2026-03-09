@@ -161,10 +161,10 @@ struct ResolvedGaps {
 
 package struct WindowClassificationOverride: ConvenienceCopyable, Equatable {
     package var matcher = WindowClassificationOverrideMatcher()
-    package var kind: AxUiElementWindowType? = nil
+    package var kind: WindowPlacementKind? = nil
     package init() {}
 
-    package var resolvedKind: AxUiElementWindowType {
+    package var resolvedKind: WindowPlacementKind {
         kind ?? dieT("ID-DDD9B91A kind must be initialized by parser")
     }
 }

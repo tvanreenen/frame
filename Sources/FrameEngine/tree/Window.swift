@@ -105,8 +105,8 @@ package final class Window: TreeNode, Hashable {
     }
 
     @MainActor
-    package func getResolvedWindowType() async throws -> AxUiElementWindowType {
-        try await Window.resolveWindowType(windowId: windowId, app: app)
+    package func getResolvedPlacementKind() async throws -> WindowPlacementKind {
+        try await Window.resolvePlacementKind(windowId: windowId, app: app)
     }
 
     package func dumpWindowInfo() async throws -> [String: Json] {
@@ -197,11 +197,11 @@ package final class Window: TreeNode, Hashable {
 
 extension Window {
     @MainActor
-    static func resolveWindowType(
+    static func resolvePlacementKind(
         windowId: UInt32,
         app: any WindowPlatformApp,
-    ) async throws -> AxUiElementWindowType {
-        let heuristicType = try await app.getWindowType(windowId: windowId)
+    ) async throws -> WindowPlacementKind {
+        let heuristicType = try await app.getWindowPlacementKind(windowId: windowId)
         let overrides = runtimeContext.config.windowClassificationOverrides
         guard !overrides.isEmpty else { return heuristicType }
 

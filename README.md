@@ -171,11 +171,11 @@ If Frame misclassifies a specific app window as `popup`/`dialog`/`window`, you c
 ```toml
 [[window-classification-override]]
 if.app-id = "com.apple.finder"
-kind = "window"
+kind = "tiling"
 
 [[window-classification-override]]
 if.app-name-regex-substring = "slack"
-kind = "dialog"
+kind = "floating"
 
 [[window-classification-override]]
 if.window-title-regex-substring = "picture-in-picture"

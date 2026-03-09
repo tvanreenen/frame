@@ -45,7 +45,7 @@ package final class TestApp: WindowPlatformApp {
 
     private var windowRects: [UInt32: Rect] = [:]
     private var windowTitles: [UInt32: String] = [:]
-    private var windowTypes: [UInt32: AxUiElementWindowType] = [:]
+    private var windowPlacementKinds: [UInt32: WindowPlacementKind] = [:]
     private var macosFullscreen: [UInt32: Bool] = [:]
     private var macosMinimized: [UInt32: Bool] = [:]
 
@@ -68,15 +68,15 @@ package final class TestApp: WindowPlatformApp {
         windows = []
         windowRects = [:]
         windowTitles = [:]
-        windowTypes = [:]
+        windowPlacementKinds = [:]
         macosFullscreen = [:]
         macosMinimized = [:]
         isHidden = false
     }
 
     @MainActor
-    package func setWindowType(windowId: UInt32, _ type: AxUiElementWindowType) {
-        windowTypes[windowId] = type
+    package func setWindowPlacementKind(windowId: UInt32, _ kind: WindowPlacementKind) {
+        windowPlacementKinds[windowId] = kind
     }
 
     @MainActor
@@ -131,7 +131,7 @@ package final class TestApp: WindowPlatformApp {
         }
         windowRects.removeValue(forKey: windowId)
         windowTitles.removeValue(forKey: windowId)
-        windowTypes.removeValue(forKey: windowId)
+        windowPlacementKinds.removeValue(forKey: windowId)
         macosFullscreen.removeValue(forKey: windowId)
         macosMinimized.removeValue(forKey: windowId)
     }
@@ -152,7 +152,7 @@ package final class TestApp: WindowPlatformApp {
         [:]
     }
 
-    package func getWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
-        windowTypes[windowId] ?? .window
+    package func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
+        windowPlacementKinds[windowId] ?? .tiling
     }
 }

@@ -49,10 +49,14 @@ private func parseWindowClassificationOverrideMatcher(
     parseTable(raw, WindowClassificationOverrideMatcher(), windowClassificationOverrideMatcherParsers, backtrace, &errors)
 }
 
-private func parseWindowClassificationOverrideKind(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<AxUiElementWindowType> {
+private func parseWindowClassificationOverrideKind(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<WindowPlacementKind> {
     parseString(raw, backtrace).flatMap {
-        AxUiElementWindowType(rawValue: $0)
-            .orFailure(.semantic(backtrace, "'kind' must be one of: window, dialog, popup"))
+        switch $0 {
+            case "window", "tiling": .success(.tiling)
+            case "dialog", "floating": .success(.floating)
+            case "popup": .success(.popup)
+            default: .failure(.semantic(backtrace, "'kind' must be one of: tiling, floating, popup, window, dialog"))
+        }
     }
 }
 
