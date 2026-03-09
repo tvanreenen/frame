@@ -41,7 +41,7 @@ extension TreeNode {
         if self is Window || self is Column || self is NativeFullscreenWindowsContainer || self is HiddenAppWindowsContainer {
             return parent?.nodeMonitor
         }
-        if self is NativeMinimizedWindowsContainer || self is PopupWindowsContainer {
+        if self is NativeMinimizedWindowsContainer || self is ExcludedWindowsContainer {
             return nil
         }
         die("Unknown tree \(self)")
@@ -99,10 +99,10 @@ extension TreeNode {
     }
 
     package var isUnconventionalContainer: Bool {
-        self is NativeMinimizedWindowsContainer ||
+            self is NativeMinimizedWindowsContainer ||
             self is NativeFullscreenWindowsContainer ||
             self is HiddenAppWindowsContainer ||
-            self is PopupWindowsContainer
+            self is ExcludedWindowsContainer
     }
 
     package var tilingNodeOrNil: TilingTreeNode? {

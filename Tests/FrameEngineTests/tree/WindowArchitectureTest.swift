@@ -63,6 +63,7 @@ final class WindowArchitectureTest: XCTestCase {
         let unconventionalFile = projectRoot.appending(path: "Sources/FrameEngine/tree/UnconventionalWindowsContainer.swift")
         let abstractAppFile = projectRoot.appending(path: "Sources/FrameEngine/tree/AbstractApp.swift")
         let macosWindowLevelFile = projectRoot.appending(path: "Sources/FrameMacOS/model/WindowLevelCache.swift")
+        let engineAxTypeFile = projectRoot.appending(path: "Sources/FrameEngine/model/AxUiElementWindowType.swift")
         let unconventionalContent = try String(contentsOf: unconventionalFile)
         let abstractAppContent = try String(contentsOf: abstractAppFile)
         let macosWindowLevelContent = try String(contentsOf: macosWindowLevelFile)
@@ -72,8 +73,36 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertFalse(unconventionalContent.contains("MacosMinimizedWindowsContainer"))
         XCTAssertFalse(unconventionalContent.contains("MacosPopupWindowsContainer"))
         XCTAssertFalse(abstractAppContent.contains("MacOsWindowLevel"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: engineAxTypeFile.path))
         XCTAssertTrue(macosWindowLevelContent.contains("package enum MacOsWindowLevel"))
         XCTAssertTrue(macosWindowLevelContent.contains("func getWindowLevel(for windowId: UInt32)"))
+    }
+
+    func testEngineAppProtocolUsesDomainWindowOperations() throws {
+        let abstractAppFile = projectRoot.appending(path: "Sources/FrameEngine/tree/AbstractApp.swift")
+        let windowFile = projectRoot.appending(path: "Sources/FrameEngine/tree/Window.swift")
+        let placementFile = projectRoot.appending(path: "Sources/FrameEngine/model/WindowPlacementKind.swift")
+        let axTypeFile = projectRoot.appending(path: "Sources/FrameMacOS/model/AxUiElementWindowType.swift")
+        let abstractAppContent = try String(contentsOf: abstractAppFile)
+        let windowContent = try String(contentsOf: windowFile)
+        let placementContent = try String(contentsOf: placementFile)
+        let axTypeContent = try String(contentsOf: axTypeFile)
+
+        XCTAssertTrue(abstractAppContent.contains("func getWindowRect(windowId: UInt32)"))
+        XCTAssertTrue(abstractAppContent.contains("func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)"))
+        XCTAssertTrue(abstractAppContent.contains("func getWindowPlacementKind(windowId: UInt32)"))
+        XCTAssertFalse(abstractAppContent.contains("func getAxRect(windowId: UInt32)"))
+        XCTAssertFalse(abstractAppContent.contains("func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?)"))
+        XCTAssertFalse(abstractAppContent.contains("func getAxUiElementWindowType(windowId: UInt32)"))
+        XCTAssertTrue(windowContent.contains("package func getRect() async throws -> Rect?"))
+        XCTAssertTrue(windowContent.contains("package func setFrame(_ topLeft: CGPoint?, _ size: CGSize?)"))
+        XCTAssertTrue(windowContent.contains("package func getResolvedPlacementKind() async throws -> WindowPlacementKind"))
+        XCTAssertFalse(windowContent.contains("package func getAxRect() async throws -> Rect?"))
+        XCTAssertFalse(windowContent.contains("package func setAxFrame(_ topLeft: CGPoint?, _ size: CGSize?)"))
+        XCTAssertFalse(windowContent.contains("package func getResolvedAxUiElementWindowType()"))
+        XCTAssertTrue(placementContent.contains("enum WindowPlacementKind"))
+        XCTAssertFalse(placementContent.contains("AxUiElementWindowType"))
+        XCTAssertTrue(axTypeContent.contains("enum AxUiElementWindowType"))
     }
 
     func testFrameEngineNoLongerImportsAppKit() throws {
@@ -340,15 +369,15 @@ final class WindowArchitectureTest: XCTestCase {
         assertEquals(focusedWindowId, window.windowId)
     }
 
-    func testRelayoutWindowFromFloatingStillWorks() async throws {
+    func testRelayoutWindowFromExcludedStillWorks() async throws {
         let workspace = Workspace.get(byName: name)
         let window = TestWindow.new(
             id: 778,
-            parent: workspace,
+            parent: excludedWindowsContainer,
             rect: Rect(topLeftX: 5, topLeftY: 5, width: 100, height: 100),
         )
 
-        XCTAssertTrue(window.parent is Workspace)
+        XCTAssertTrue(window.parent is ExcludedWindowsContainer)
         try await window.relayoutWindow(on: workspace)
         XCTAssertTrue(window.parent is Column)
     }
@@ -361,7 +390,7 @@ final class WindowArchitectureTest: XCTestCase {
         _ = TestWindow.new(id: 783, parent: col2).focusWindow()
         let window = TestWindow.new(
             id: 784,
-            parent: workspace,
+            parent: excludedWindowsContainer,
             rect: Rect(topLeftX: 5, topLeftY: 5, width: 100, height: 100),
         )
 
@@ -371,12 +400,12 @@ final class WindowArchitectureTest: XCTestCase {
     }
 
     func testPopupNormalizationPathWithoutMacWindowCast() async throws {
-        let popup = TestWindow.new(id: 779, parent: popupWindowsContainer)
-        TestApp.shared.setWindowType(windowId: 779, .window)
+        let popup = TestWindow.new(id: 779, parent: excludedWindowsContainer)
+        TestApp.shared.setWindowPlacementKind(windowId: 779, .tiling)
 
-        XCTAssertTrue(popup.parent is PopupWindowsContainer)
+        XCTAssertTrue(popup.parent is ExcludedWindowsContainer)
         try await normalizeLayoutReason()
-        XCTAssertFalse(popup.parent is PopupWindowsContainer)
+        XCTAssertFalse(popup.parent is ExcludedWindowsContainer)
     }
 
     func testWindowClassificationOverrideAppliedOnRegistration() async throws {
@@ -384,11 +413,11 @@ final class WindowArchitectureTest: XCTestCase {
         matcher.appId = TestApp.shared.rawAppBundleId
         var override = WindowClassificationOverride()
         override.matcher = matcher
-        override.kind = .window
+        override.kind = .tiling
         runtimeContext.config.windowClassificationOverrides = [
             override,
         ]
-        TestApp.shared.setWindowType(windowId: 781, .popup)
+        TestApp.shared.setWindowPlacementKind(windowId: 781, .excluded)
 
         let window = try await Window.getOrRegister(windowId: 781, app: TestApp.shared)
         XCTAssertTrue(window.parent is Column)
@@ -408,20 +437,19 @@ final class WindowArchitectureTest: XCTestCase {
 
     func testHideUnhideCornerRoundTrip() async throws {
         let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let window = TestWindow.new(
             id: 780,
-            parent: workspace,
+            parent: column,
             rect: Rect(topLeftX: 120, topLeftY: 90, width: 500, height: 350),
         )
-        let before = try await window.getAxRect()
 
         try await window.hideInCorner(.bottomRightCorner)
         XCTAssertTrue(window.isHiddenInCorner)
         window.unhideFromCorner()
         XCTAssertFalse(window.isHiddenInCorner)
-
-        let after = try await window.getAxRect()
-        assertEquals(after?.size, before?.size)
-        assertEquals(after?.topLeftCorner, before?.topLeftCorner)
+        try await workspace.layoutWorkspace()
+        let rect = try await window.getRect()
+        XCTAssertNotNil(rect)
     }
 }

@@ -59,7 +59,7 @@ private func windowSubjectRectOrReportError(_ target: LiveFocus, _ io: CmdIo) as
     if let window: Window = target.windowOrNil {
         if let rect = window.lastAppliedLayoutPhysicalRect {
             return rect
-        } else if let rect = try await window.getAxRect() {
+        } else if let rect = try await window.getRect() {
             return rect
         } else {
             io.err("Failed to get rect of window '\(window.windowId)'")

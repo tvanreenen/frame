@@ -146,7 +146,7 @@ final class MacApp: WindowPlatformApp {
     }
 
     @MainActor
-    func closeAndUnregisterAxWindow(windowId: UInt32) {
+    func closeAndUnregisterWindow(windowId: UInt32) {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         _ = withWindowAsync(windowId) { [windows] window, job in
             guard let closeButton = window.get(Ax.closeButtonAttr) else { return }
@@ -156,7 +156,7 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func getAxSize(windowId: UInt32) async throws -> CGSize? {
+    func getWindowSize(windowId: UInt32) async throws -> CGSize? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.sizeAttr)
         }
@@ -202,7 +202,7 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
+    func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         setFrameJobs[windowId] = withWindowAsync(windowId) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
@@ -211,7 +211,7 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
+    func setWindowFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
         setFrameJobs.removeValue(forKey: windowId)?.cancel()
         try await withWindow(windowId) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
@@ -226,13 +226,13 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
+    func getWindowTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.topLeftCornerAttr)
         }
     }
 
-    func getAxRect(windowId: UInt32) async throws -> Rect? {
+    func getWindowRect(windowId: UInt32) async throws -> Rect? {
         try await withWindow(windowId) { window, job in
             guard let topLeftCorner = window.get(Ax.topLeftCornerAttr) else { return nil }
             guard let size = window.get(Ax.sizeAttr) else { return nil }
@@ -240,13 +240,18 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
+    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
         let windowLevel = await MainActor.run {
             getWindowLevel(for: windowId)
         }
-        return try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
+        let rawType = try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
             return window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
         } ?? .window
+        return switch rawType {
+            case .window: .tiling
+            case .dialog: .excluded
+            case .popup: .excluded
+        }
     }
 
     func setNativeFullscreen(_ windowId: UInt32, _ value: Bool) {
@@ -263,7 +268,7 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] {
+    func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] {
         try await withWindow(windowId) { window, job in
             dumpAxRecursive(window, .window)
         } ?? [:]
@@ -275,7 +280,7 @@ final class MacApp: WindowPlatformApp {
         } ?? [:]
     }
 
-    func getAxTitle(windowId: UInt32) async throws -> String? {
+    func getWindowTitle(windowId: UInt32) async throws -> String? {
         try await withWindow(windowId) { window, job in
             window.get(Ax.titleAttr)
         }

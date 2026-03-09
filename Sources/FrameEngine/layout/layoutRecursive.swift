@@ -20,23 +20,18 @@ extension TreeNode {
             lastAppliedLayoutPhysicalRect = physicalRect
             lastAppliedLayoutVirtualRect = virtual
             try await workspace.columnsRoot.layoutRecursive(point, width: width, height: height, virtual: virtual, context)
-            for window in workspace.children.filterIsInstance(of: Window.self) {
-                window.lastAppliedLayoutPhysicalRect = nil
-                window.lastAppliedLayoutVirtualRect = nil
-                try await window.layoutFloatingWindow(context)
-            }
             return
         }
         if let window = self as? Window {
             if window.windowId != currentSession.currentlyManipulatedWithMouseWindowId {
                 lastAppliedLayoutVirtualRect = virtual
-                if window.isFullscreen && window == context.workspace.columnsRoot.mostRecentWindowRecursive {
+                if window.isFullscreenOverlay && window == context.workspace.columnsRoot.mostRecentWindowRecursive {
                     lastAppliedLayoutPhysicalRect = nil
-                    window.layoutFullscreen(context)
+                    window.layoutFullscreenOverlay(context)
                 } else {
                     lastAppliedLayoutPhysicalRect = physicalRect
-                    window.isFullscreen = false
-                    window.setAxFrame(point, CGSize(width: width, height: height))
+                    window.isFullscreenOverlay = false
+                    window.setFrame(point, CGSize(width: width, height: height))
                 }
             }
             return
@@ -62,31 +57,11 @@ private struct LayoutContext {
 
 extension Window {
     @MainActor
-    fileprivate func layoutFloatingWindow(_ context: LayoutContext) async throws {
-        let workspace = context.workspace
-        let currentMonitor = try await getCenter()?.monitorApproximation // Probably not idempotent
-        if let currentMonitor, let windowTopLeftCorner = try await getAxTopLeftCorner(), workspace != currentMonitor.activeWorkspace {
-            let xProportion = (windowTopLeftCorner.x - currentMonitor.visibleRect.topLeftX) / currentMonitor.visibleRect.width
-            let yProportion = (windowTopLeftCorner.y - currentMonitor.visibleRect.topLeftY) / currentMonitor.visibleRect.height
-
-            let moveTo = workspace.workspaceMonitor
-            setAxFrame(CGPoint(
-                x: moveTo.visibleRect.topLeftX + xProportion * moveTo.visibleRect.width,
-                y: moveTo.visibleRect.topLeftY + yProportion * moveTo.visibleRect.height,
-            ), nil)
-        }
-        if isFullscreen {
-            layoutFullscreen(context)
-            isFullscreen = false
-        }
-    }
-
-    @MainActor
-    fileprivate func layoutFullscreen(_ context: LayoutContext) {
-        let monitorRect = noOuterGapsInFullscreen
+    fileprivate func layoutFullscreenOverlay(_ context: LayoutContext) {
+        let monitorRect = noOuterGapsInFullscreenOverlay
             ? context.workspace.workspaceMonitor.visibleRect
             : context.workspace.workspaceMonitor.visibleRectPaddedByOuterGaps
-        setAxFrame(monitorRect.topLeftCorner, CGSize(width: monitorRect.width, height: monitorRect.height))
+        setFrame(monitorRect.topLeftCorner, CGSize(width: monitorRect.width, height: monitorRect.height))
     }
 }
 

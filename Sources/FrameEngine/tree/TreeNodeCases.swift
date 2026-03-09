@@ -3,11 +3,10 @@ import Common
 package typealias NonLeafTreeNodeObject = NonLeafTreeNode
 
 package enum ChildParentRelation: Equatable {
-    case floatingWindow
     case nativeFullscreenWindow
     case hiddenAppWindow
     case nativeMinimizedWindow
-    case popupWindow
+    case excludedWindow
     case tiling(parent: Column)
     case rootTilingContainer
     case shimContainerRelation
@@ -32,10 +31,8 @@ package func getChildParentRelationOrNil(child: TreeNode, parent: NonLeafTreeNod
             switch parent {
                 case let container as Column:
                     return .tiling(parent: container)
-                case is Workspace:
-                    return .floatingWindow
-                case is PopupWindowsContainer:
-                    return .popupWindow
+                case is ExcludedWindowsContainer:
+                    return .excludedWindow
                 case is NativeMinimizedWindowsContainer:
                     return .nativeMinimizedWindow
                 case is NativeFullscreenWindowsContainer:
@@ -51,7 +48,7 @@ package func getChildParentRelationOrNil(child: TreeNode, parent: NonLeafTreeNod
                     return .tiling(parent: container)
                 case is Workspace:
                     return .rootTilingContainer
-                case is PopupWindowsContainer,
+                case is ExcludedWindowsContainer,
                      is NativeMinimizedWindowsContainer,
                      is NativeFullscreenWindowsContainer,
                      is HiddenAppWindowsContainer:
@@ -66,7 +63,7 @@ package func getChildParentRelationOrNil(child: TreeNode, parent: NonLeafTreeNod
                 default:
                     return nil
             }
-        case is NativeMinimizedWindowsContainer, is PopupWindowsContainer:
+        case is NativeMinimizedWindowsContainer, is ExcludedWindowsContainer:
             return nil
         default:
             die("Unknown tree \(child)")

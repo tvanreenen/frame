@@ -1,10 +1,6 @@
 import Common
 
 extension Workspace {
-    var floatingWindows: [Window] {
-        children.filterIsInstance(of: Window.self)
-    }
-
     @MainActor var nativeFullscreenWindowsContainer: NativeFullscreenWindowsContainer {
         let containers = children.filterIsInstance(of: NativeFullscreenWindowsContainer.self)
         return switch containers.count {

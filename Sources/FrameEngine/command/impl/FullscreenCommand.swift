@@ -9,18 +9,21 @@ struct FullscreenCommand: Command {
         guard let window = target.windowOrNil else {
             return io.err(noWindowIsFocused)
         }
+        guard window.parent is Column else {
+            return io.err("Fullscreen overlay is only supported for tiled windows")
+        }
         let newState: Bool = switch args.toggle {
             case .on: true
             case .off: false
-            case .toggle: !window.isFullscreen
+            case .toggle: !window.isFullscreenOverlay
         }
-        if newState == window.isFullscreen {
+        if newState == window.isFullscreenOverlay {
             io.err((newState ? "Already fullscreen. " : "Already not fullscreen. ") +
                 "Tip: use --fail-if-noop to exit with non-zero code")
             return !args.failIfNoop
         }
-        window.isFullscreen = newState
-        window.noOuterGapsInFullscreen = args.noOuterGaps
+        window.isFullscreenOverlay = newState
+        window.noOuterGapsInFullscreenOverlay = args.noOuterGaps
 
         // Focus on its own workspace
         window.markAsMostRecentChild()

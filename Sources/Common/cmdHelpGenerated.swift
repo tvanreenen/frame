@@ -26,9 +26,6 @@ let fullscreen_help_generated = """
        OR: fullscreen [-h|--help] on  [--window-id <window-id>] [--no-outer-gaps] [--fail-if-noop]
        OR: fullscreen [-h|--help] off [--window-id <window-id>] [--fail-if-noop]
     """
-let layout_help_generated = """
-    USAGE: layout [-h|--help] [--window-id <window-id>] (tiling|floating)...
-    """
 let list_apps_help_generated = """
     USAGE: list-apps [-h|--help] [--macos-native-hidden [no]] [--count] [--json]
     """

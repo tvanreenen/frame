@@ -118,7 +118,6 @@ private let configAllowedCmdKinds: Set<CmdKind> = [
     .focus,
     .focusMonitor,
     .fullscreen,
-    .layout,
     .move,
     .moveMouse,
     .moveNodeToWorkspace,

@@ -45,14 +45,14 @@ package final class TestApp: WindowPlatformApp {
 
     private var windowRects: [UInt32: Rect] = [:]
     private var windowTitles: [UInt32: String] = [:]
-    private var windowTypes: [UInt32: AxUiElementWindowType] = [:]
+    private var windowPlacementKinds: [UInt32: WindowPlacementKind] = [:]
     private var macosFullscreen: [UInt32: Bool] = [:]
     private var macosMinimized: [UInt32: Bool] = [:]
 
     @MainActor
     @discardableResult
     package func registerWindow(id: UInt32, parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat = 1, rect: Rect? = nil, title: String? = nil) -> Window {
-        let window = Window(id: id, self, lastFloatingSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
+        let window = Window(id: id, self, lastKnownSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
         Window.registerForTests(window)
         windows.append(window)
         if let rect {
@@ -68,15 +68,15 @@ package final class TestApp: WindowPlatformApp {
         windows = []
         windowRects = [:]
         windowTitles = [:]
-        windowTypes = [:]
+        windowPlacementKinds = [:]
         macosFullscreen = [:]
         macosMinimized = [:]
         isHidden = false
     }
 
     @MainActor
-    package func setWindowType(windowId: UInt32, _ type: AxUiElementWindowType) {
-        windowTypes[windowId] = type
+    package func setWindowPlacementKind(windowId: UInt32, _ kind: WindowPlacementKind) {
+        windowPlacementKinds[windowId] = kind
     }
 
     @MainActor
@@ -92,19 +92,19 @@ package final class TestApp: WindowPlatformApp {
     @MainActor package func getFocusedWindow() async throws -> Window? { focusedWindow }
     @MainActor package func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
 
-    package func getAxRect(windowId: UInt32) async throws -> Rect? {
+    package func getWindowRect(windowId: UInt32) async throws -> Rect? {
         windowRects[windowId]
     }
 
-    package func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
+    package func getWindowTopLeftCorner(windowId: UInt32) async throws -> CGPoint? {
         windowRects[windowId]?.topLeftCorner
     }
 
-    package func getAxSize(windowId: UInt32) async throws -> CGSize? {
+    package func getWindowSize(windowId: UInt32) async throws -> CGSize? {
         windowRects[windowId]?.size
     }
 
-    package func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
+    package func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {
         let existing = windowRects[windowId]
         let resolvedTopLeft = topLeft ?? existing?.topLeftCorner
         let resolvedSize = size ?? existing?.size
@@ -117,18 +117,12 @@ package final class TestApp: WindowPlatformApp {
         )
     }
 
-    package func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
-        setAxFrame(windowId: windowId, topLeft: topLeft, size: size)
+    package func setWindowFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {
+        setWindowFrame(windowId: windowId, topLeft: topLeft, size: size)
     }
 
     @MainActor
-    package func nativeFocus(windowId: UInt32) {
-        appForTests = self
-        focusedWindow = Window.get(byId: windowId)
-    }
-
-    @MainActor
-    package func closeAndUnregisterAxWindow(windowId: UInt32) {
+    package func closeAndUnregisterWindow(windowId: UInt32) {
         Window.allWindowsMap[windowId]?.unbindFromParent()
         Window.allWindowsMap.removeValue(forKey: windowId)
         windows.removeAll { $0.windowId == windowId }
@@ -137,7 +131,7 @@ package final class TestApp: WindowPlatformApp {
         }
         windowRects.removeValue(forKey: windowId)
         windowTitles.removeValue(forKey: windowId)
-        windowTypes.removeValue(forKey: windowId)
+        windowPlacementKinds.removeValue(forKey: windowId)
         macosFullscreen.removeValue(forKey: windowId)
         macosMinimized.removeValue(forKey: windowId)
     }
@@ -150,15 +144,15 @@ package final class TestApp: WindowPlatformApp {
         macosMinimized[windowId] ?? false
     }
 
-    package func getAxTitle(windowId: UInt32) async throws -> String? {
+    package func getWindowTitle(windowId: UInt32) async throws -> String? {
         windowTitles[windowId] ?? ""
     }
 
-    package func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] {
+    package func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] {
         [:]
     }
 
-    package func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
-        windowTypes[windowId] ?? .window
+    package func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
+        windowPlacementKinds[windowId] ?? .tiling
     }
 }

@@ -10,54 +10,54 @@ import FrameTestSupport
 final class WindowClassificationOverrideTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
-    func testLegacyFloatingCase_nomachinePopupCanBeOverriddenToDialog() async throws {
+    func testExcludedCase_nomachinePopupCanBeOverriddenToTiling() async throws {
         let app = ClassificationTestApp(
             pid: 101,
             rawAppBundleId: "com.nomachine.nxdock",
             name: "NoMachine",
-            heuristicType: .popup,
+            placementKind: .excluded,
             windowTitle: "",
         )
-        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app)
-        assertEquals(withoutOverride, .popup)
+        let withoutOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
+        assertEquals(withoutOverride, .excluded)
 
         let parsed = parseConfig(
             """
             [[window-classification-override]]
                 if.app-id = 'com.nomachine.nxdock'
-                kind = 'dialog'
+                kind = 'tiling'
             """,
         )
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
-        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app)
-        assertEquals(withOverride, .dialog)
+        let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
+        assertEquals(withOverride, .tiling)
     }
 
-    func testLegacyFloatingCase_cleanshotPopupCanBeOverriddenByAppNameRegex() async throws {
+    func testExcludedCase_cleanshotPopupCanBeOverriddenByAppNameRegex() async throws {
         let app = ClassificationTestApp(
             pid: 102,
             rawAppBundleId: "pl.maketheweb.cleanshotx",
             name: "CleanShot X",
-            heuristicType: .popup,
+            placementKind: .excluded,
             windowTitle: "",
         )
-        let withoutOverride = try await Window.resolveWindowType(windowId: 1, app: app)
-        assertEquals(withoutOverride, .popup)
+        let withoutOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
+        assertEquals(withoutOverride, .excluded)
 
         let parsed = parseConfig(
             """
             [[window-classification-override]]
                 if.app-name-regex-substring = 'cleanshot'
-                kind = 'dialog'
+                kind = 'excluded'
             """,
         )
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
-        let withOverride = try await Window.resolveWindowType(windowId: 1, app: app)
-        assertEquals(withOverride, .dialog)
+        let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
+        assertEquals(withOverride, .excluded)
     }
 }
 
@@ -69,32 +69,31 @@ private final class ClassificationTestApp: WindowPlatformApp {
     let bundlePath: String? = nil
     let isHidden: Bool = false
 
-    private let heuristicType: AxUiElementWindowType
+    private let placementKind: WindowPlacementKind
     private let windowTitle: String?
 
-    init(pid: Int32, rawAppBundleId: String?, name: String?, heuristicType: AxUiElementWindowType, windowTitle: String?) {
+    init(pid: Int32, rawAppBundleId: String?, name: String?, placementKind: WindowPlacementKind, windowTitle: String?) {
         self.pid = pid
         self.rawAppBundleId = rawAppBundleId
         self.name = name
-        self.heuristicType = heuristicType
+        self.placementKind = placementKind
         self.windowTitle = windowTitle
     }
 
     @MainActor func getFocusedWindow() async throws -> Window? { nil }
     @MainActor func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
-    @MainActor func nativeFocus(windowId: UInt32) {}
-    @MainActor func closeAndUnregisterAxWindow(windowId: UInt32) {}
+    @MainActor func closeAndUnregisterWindow(windowId: UInt32) {}
 
-    func getAxRect(windowId: UInt32) async throws -> Rect? { nil }
-    func getAxTopLeftCorner(windowId: UInt32) async throws -> CGPoint? { nil }
-    func getAxSize(windowId: UInt32) async throws -> CGSize? { nil }
-    func setAxFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {}
-    func setAxFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {}
+    func getWindowRect(windowId: UInt32) async throws -> Rect? { nil }
+    func getWindowTopLeftCorner(windowId: UInt32) async throws -> CGPoint? { nil }
+    func getWindowSize(windowId: UInt32) async throws -> CGSize? { nil }
+    func setWindowFrame(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) {}
+    func setWindowFrameBlocking(windowId: UInt32, topLeft: CGPoint?, size: CGSize?) async throws {}
     func isNativeFullscreen(windowId: UInt32) async throws -> Bool? { false }
     func isNativeMinimized(windowId: UInt32) async throws -> Bool? { false }
-    func getAxTitle(windowId: UInt32) async throws -> String? { windowTitle }
-    func dumpWindowAxInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
-    func getAxUiElementWindowType(windowId: UInt32) async throws -> AxUiElementWindowType {
-        heuristicType
+    func getWindowTitle(windowId: UInt32) async throws -> String? { windowTitle }
+    func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
+    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
+        placementKind
     }
 }

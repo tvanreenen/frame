@@ -72,11 +72,12 @@ extension Workspace {
     }
 
     /// Removes `column`, moving all its windows to the left neighbor (or right if first).
-    /// If it's the only column, windows become floating.
+    /// If it's the only column, nothing changes because the tiled model always keeps managed windows in columns.
     @MainActor
     package func removeColumn(_ column: Column) {
         let cols = columns
         guard let idx = cols.firstIndex(of: column) else { return }
+        guard cols.count > 1 else { return }
 
         let targetColumn: Column? = if idx > 0 {
             cols[idx - 1]
@@ -89,8 +90,6 @@ extension Workspace {
         for window in Array(column.children).compactMap({ $0 as? Window }) {
             if let target = targetColumn {
                 window.bind(to: target, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
-            } else {
-                window.bindAsFloatingWindow(to: self)
             }
         }
 

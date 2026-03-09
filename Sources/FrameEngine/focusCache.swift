@@ -4,7 +4,7 @@
 ///                      (from nativeFocused to lastKnownNativeFocusedWindowId)
 /// Alternative names: takeFocusFromPlatform, syncFocusFromPlatform
 @MainActor func updateFocusCache(_ nativeFocused: Window?) {
-    if nativeFocused?.parent is PopupWindowsContainer {
+    if nativeFocused?.parent is ExcludedWindowsContainer {
         return
     }
     if nativeFocused?.windowId != lastKnownNativeFocusedWindowId {

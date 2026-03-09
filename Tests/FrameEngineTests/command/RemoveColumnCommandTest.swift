@@ -40,7 +40,7 @@ final class RemoveColumnCommandTest: XCTestCase {
         assertEquals(workspace.allLeafWindowsRecursive.count, 3)
     }
 
-    func testRemoveColumn_singleColumn_windowBecomesFloating() async throws {
+    func testRemoveColumn_singleColumn_isNoop() async throws {
         let workspace = Workspace.get(byName: name)
         let col = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let w1 = TestWindow.new(id: 1, parent: col)
@@ -48,8 +48,7 @@ final class RemoveColumnCommandTest: XCTestCase {
 
         try await RemoveColumnCommand(args: RemoveColumnCmdArgs(rawArgs: [])).run(.defaultEnv, .emptyStdin)
 
-        // Only column removed; window becomes a floating child of the workspace
-        assertEquals(workspace.columns.count, 0)
+        assertEquals(workspace.columns.count, 1)
         assertEquals(workspace.allLeafWindowsRecursive.count, 1)
     }
 }

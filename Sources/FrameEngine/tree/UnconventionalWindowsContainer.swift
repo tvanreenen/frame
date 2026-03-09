@@ -39,10 +39,9 @@ final class NativeMinimizedWindowsContainer: NonLeafTreeNode {
     }
 }
 
-@MainActor let popupWindowsContainer = PopupWindowsContainer()
-/// The container for macOS objects that are windows from AX perspective but from human perspective they are not even
-/// dialogs. E.g. Sonoma (macOS 14) keyboard layout switch
-final class PopupWindowsContainer: NonLeafTreeNode {
+@MainActor let excludedWindowsContainer = ExcludedWindowsContainer()
+/// The container for special windows that should stay out of the normal tiled layout.
+final class ExcludedWindowsContainer: NonLeafTreeNode {
     @available(*, unavailable)
     override init(parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat, index: Int) {
         fatalError("Use the shared singleton container")

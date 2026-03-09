@@ -56,17 +56,16 @@ final class FocusCommandTest: XCTestCase {
         assertEquals(focus.windowOrNil?.windowId, 2)
     }
 
-    func testFocusOverFloatingWindows() async throws {
+    func testFocusOverExcludedWindows() async throws {
         assertEquals(focus.windowOrNil, nil)
-        Workspace.get(byName: name).apply {
-            TestWindow.new(id: 1, parent: $0, rect: Rect(topLeftX: 0, topLeftY: 0, width: 100, height: 100))
-            assertEquals(TestWindow.new(id: 2, parent: $0, rect: Rect(topLeftX: 10, topLeftY: 10, width: 100, height: 100)).focusWindow(), true)
-            TestWindow.new(id: 3, parent: $0, rect: Rect(topLeftX: 20, topLeftY: 20, width: 100, height: 100))
-        }
+        _ = TestWindow.new(id: 1, parent: excludedWindowsContainer, rect: Rect(topLeftX: 0, topLeftY: 0, width: 100, height: 100))
+        let focused = TestWindow.new(id: 2, parent: excludedWindowsContainer, rect: Rect(topLeftX: 10, topLeftY: 10, width: 100, height: 100))
+        _ = TestWindow.new(id: 3, parent: excludedWindowsContainer, rect: Rect(topLeftX: 20, topLeftY: 20, width: 100, height: 100))
+        assertEquals(focused.focusWindow(), false)
 
-        assertEquals(focus.windowOrNil?.windowId, 2)
+        assertEquals(focus.windowOrNil, nil)
         try await FocusCommand.new(direction: .right).run(.defaultEnv, .emptyStdin)
-        assertEquals(focus.windowOrNil?.windowId, 2)
+        assertEquals(focus.windowOrNil, nil)
     }
 
     func testFocusAlongTheContainerOrientation() async throws {

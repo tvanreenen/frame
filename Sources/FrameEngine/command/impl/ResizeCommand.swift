@@ -32,8 +32,7 @@ struct ResizeCommand: Command { // todo cover with tests
                 parent = node?.parent as? Column
         }
         guard let parent else {
-            // Focused floating windows are intentionally ignored by resize.
-            if let window = target.windowOrNil, window.parent is Workspace {
+            if let window = target.windowOrNil, window.parent is ExcludedWindowsContainer {
                 return true
             }
             return false

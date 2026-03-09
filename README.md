@@ -166,23 +166,22 @@ workspace-change-hook = ['/bin/bash', '-c', 'sketchybar --trigger frame_workspac
 
 ### Window Classification Overrides (Optional)
 
-If Frame misclassifies a specific app window as `popup`/`dialog`/`window`, you can force a kind with first-match-wins rules:
+If Frame misclassifies a specific window, you can force it to be either:
+
+- `tiling`: managed in the normal workspace tile layout
+- `excluded`: kept out of the tiled workspace layout entirely
+
+Excluded windows are not workspace-local tiles. They are left out of normal tiling and can remain visible across workspace switches.
+
+Rules are first-match-wins:
 
 ```toml
 [[window-classification-override]]
-if.app-id = "com.apple.finder"
-kind = "window"
-
-[[window-classification-override]]
-if.app-name-regex-substring = "slack"
-kind = "dialog"
-
-[[window-classification-override]]
 if.window-title-regex-substring = "picture-in-picture"
-kind = "popup"
+kind = "excluded"
 ```
 
-Matcher fields are optional per rule (`app-id`, `app-name-regex-substring`, `window-title-regex-substring`), but each rule must define at least one matcher and a `kind`.
+Use `if.app-id` for exact app matches, `if.app-name-regex-substring` when the bundle id is inconvenient or unknown, and `if.window-title-regex-substring` for specific transient windows like picture-in-picture. Each rule must define at least one matcher and a `kind`.
 
 ## Troubleshooting
 

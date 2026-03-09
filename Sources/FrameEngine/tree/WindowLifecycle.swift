@@ -18,12 +18,11 @@ func unbindAndGetBindingDataForNewWindow(
     _ workspace: Workspace,
     window: Window?,
 ) async throws -> BindingData {
-    let windowType = try await Window.resolveWindowType(windowId: windowId, app: app)
+    let windowType = try await Window.resolvePlacementKind(windowId: windowId, app: app)
 
     return switch windowType {
-        case .popup: BindingData(parent: popupWindowsContainer, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
-        case .dialog: BindingData(parent: workspace, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
-        case .window: unbindAndGetBindingDataForNewTilingWindow(on: workspace, window: window)
+        case .excluded: BindingData(parent: excludedWindowsContainer, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
+        case .tiling: unbindAndGetBindingDataForNewTilingWindow(on: workspace, window: window)
     }
 }
 

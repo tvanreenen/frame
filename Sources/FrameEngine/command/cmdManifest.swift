@@ -20,7 +20,6 @@ extension BalanceSizesCmdArgs: CommandFactoryArgs { package func eraseToCommand(
 extension FocusCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { FocusCommand(args: self) } }
 extension FocusMonitorCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { FocusMonitorCommand(args: self) } }
 extension FullscreenCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { FullscreenCommand(args: self) } }
-extension LayoutCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { LayoutCommand(args: self) } }
 extension MoveCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { MoveCommand(args: self) } }
 extension MoveNodeToWorkspaceCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { MoveNodeToWorkspaceCommand(args: self) } }
 extension RemoveColumnCmdArgs: CommandFactoryArgs { package func eraseToCommand() -> any Command { RemoveColumnCommand(args: self) } }

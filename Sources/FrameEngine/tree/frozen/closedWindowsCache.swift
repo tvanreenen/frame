@@ -25,14 +25,12 @@ struct FrozenWorkspace: Sendable {
     let name: String
     let monitor: FrozenMonitor // todo drop this property, once monitor to workspace assignment migrates to TreeNode
     let columns: [FrozenColumn]
-    let floatingWindows: [FrozenWindow]
     let macosUnconventionalWindows: [FrozenWindow]
 
     @MainActor init(_ workspace: Workspace) {
         name = workspace.name
         monitor = FrozenMonitor(workspace.workspaceMonitor)
         columns = workspace.columns.map(FrozenColumn.init)
-        floatingWindows = workspace.floatingWindows.map(FrozenWindow.init)
         macosUnconventionalWindows =
             workspace.hiddenAppWindowsContainer.children.map { FrozenWindow($0 as! Window) } +
             workspace.nativeFullscreenWindowsContainer.children.map { FrozenWindow($0 as! Window) }
@@ -64,11 +62,8 @@ struct FrozenWorkspace: Sendable {
         _ = topLeftCornerToMonitor[frozenWorkspace.monitor.topLeftCorner]?
             .singleOrNil()?
             .setActiveWorkspace(workspace)
-        for frozenWindow in frozenWorkspace.floatingWindows {
-            Window.get(byId: frozenWindow.id)?.bindAsFloatingWindow(to: workspace)
-        }
         for frozenWindow in frozenWorkspace.macosUnconventionalWindows { // Will get fixed by normalizations
-            Window.get(byId: frozenWindow.id)?.bindAsFloatingWindow(to: workspace)
+            try await Window.get(byId: frozenWindow.id)?.relayoutWindow(on: workspace, forceTile: true)
         }
         let root = workspace.rootTilingContainer
         let potentialOrphans = root.allLeafWindowsRecursive

@@ -138,7 +138,7 @@ extension Workspace {
     @MainActor package func focusWorkspace() -> Bool { currentSession.setFocus(to: toLiveFocus()) }
 
     func toLiveFocus() -> LiveFocus {
-        // TODO: prefer floating/unconventional windows over an empty columns root when no tiled window is present.
+        // TODO: prefer excluded/unconventional windows over an empty columns root when no tiled window is present.
         if let wd = mostRecentWindowRecursive ?? anyLeafWindowRecursive {
             LiveFocus(windowOrNil: wd, workspace: self)
         } else {

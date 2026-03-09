@@ -48,14 +48,16 @@ final class MoveNodeToWorkspaceCommandTest: XCTestCase {
         assertEquals(focus.windowOrNil?.windowId, 1)
     }
 
-    func testPreserveFloatingLayout() async throws {
+    func testMovesWindowIntoTilingColumns() async throws {
         let workspaceA = Workspace.get(byName: "a").apply {
-            _ = TestWindow.new(id: 1, parent: $0).focusWindow()
+            $0.rootTilingContainer.apply {
+                _ = TestWindow.new(id: 1, parent: $0).focusWindow()
+            }
         }
 
         try await MoveNodeToWorkspaceCommand(args: MoveNodeToWorkspaceCmdArgs(workspace: "b")).run(.defaultEnv, .emptyStdin)
         XCTAssertTrue(workspaceA.isEffectivelyEmpty)
-        assertEquals(Workspace.get(byName: "b").children.filterIsInstance(of: Window.self).singleOrNil()?.windowId, 1)
+        assertEquals(Workspace.get(byName: "b").allLeafWindowsRecursive.singleOrNil()?.windowId, 1)
     }
 
     func testSummonWindow() async throws {
