@@ -58,6 +58,6 @@
   "Aero.axWindowId" : 14241,
   "Aero.AxUiElementWindowType_isDialogHeuristic" : true,
   "Aero.AxUiElementWindowType" : "popup",
-  "Aero.treeNodeParent" : "FrameEngine.PopupWindowsContainer",
+  "Aero.treeNodeParent" : "FrameEngine.ExcludedWindowsContainer",
   "Aero.workspace" : null
 }

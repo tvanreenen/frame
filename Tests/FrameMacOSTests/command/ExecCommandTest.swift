@@ -16,6 +16,9 @@ final class ExecCommandTest: XCTestCase {
 
         let enableErr = parseCommand("enable off").errorOrNil ?? ""
         XCTAssertTrue(enableErr.contains("enable"), enableErr)
+
+        let layoutErr = parseCommand("layout tiling").errorOrNil ?? ""
+        XCTAssertTrue(layoutErr.contains("layout"), layoutErr)
     }
 
     func testCheckConfigCommandIsRejected() {

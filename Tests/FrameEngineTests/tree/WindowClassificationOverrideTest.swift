@@ -10,54 +10,54 @@ import FrameTestSupport
 final class WindowClassificationOverrideTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
-    func testLegacyFloatingCase_nomachinePopupCanBeOverriddenToDialog() async throws {
+    func testExcludedCase_nomachinePopupCanBeOverriddenToTiling() async throws {
         let app = ClassificationTestApp(
             pid: 101,
             rawAppBundleId: "com.nomachine.nxdock",
             name: "NoMachine",
-            placementKind: .popup,
+            placementKind: .excluded,
             windowTitle: "",
         )
         let withoutOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
-        assertEquals(withoutOverride, .popup)
+        assertEquals(withoutOverride, .excluded)
 
         let parsed = parseConfig(
             """
             [[window-classification-override]]
                 if.app-id = 'com.nomachine.nxdock'
-                kind = 'dialog'
+                kind = 'tiling'
             """,
         )
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
         let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
-        assertEquals(withOverride, .floating)
+        assertEquals(withOverride, .tiling)
     }
 
-    func testLegacyFloatingCase_cleanshotPopupCanBeOverriddenByAppNameRegex() async throws {
+    func testExcludedCase_cleanshotPopupCanBeOverriddenByAppNameRegex() async throws {
         let app = ClassificationTestApp(
             pid: 102,
             rawAppBundleId: "pl.maketheweb.cleanshotx",
             name: "CleanShot X",
-            placementKind: .popup,
+            placementKind: .excluded,
             windowTitle: "",
         )
         let withoutOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
-        assertEquals(withoutOverride, .popup)
+        assertEquals(withoutOverride, .excluded)
 
         let parsed = parseConfig(
             """
             [[window-classification-override]]
                 if.app-name-regex-substring = 'cleanshot'
-                kind = 'dialog'
+                kind = 'excluded'
             """,
         )
         assertEquals(parsed.errors, [])
         runtimeContext.config.windowClassificationOverrides = parsed.config.windowClassificationOverrides
 
         let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
-        assertEquals(withOverride, .floating)
+        assertEquals(withOverride, .excluded)
     }
 }
 

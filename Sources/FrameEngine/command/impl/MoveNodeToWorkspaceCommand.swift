@@ -36,9 +36,7 @@ func moveWindowToWorkspace(_ window: Window, _ targetWorkspace: Workspace, _ io:
         }
         return !failIfNoop
     }
-    let bindingData = window.isFloating
-        ? BindingData(parent: targetWorkspace, adaptiveWeight: WEIGHT_AUTO, index: index)
-        : targetWorkspace.transferredTilingWindowBindingData(index: index)
+    let bindingData = targetWorkspace.transferredTilingWindowBindingData(index: index)
     window.bind(to: bindingData.parent, adaptiveWeight: bindingData.adaptiveWeight, index: bindingData.index)
     return focusFollowsWindow ? window.focusWindow() : true
 }

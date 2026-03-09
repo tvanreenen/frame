@@ -50,9 +50,9 @@ package class TreeNode: Equatable, AeroAny {
             case .tiling(let parent):
                 parent.orientation == targetOrientation ? adaptiveWeight : parent.getWeight(targetOrientation)
             case .rootTilingContainer: parent.getWeight(targetOrientation)
-            case .floatingWindow, .nativeFullscreenWindow: dieT("Weight doesn't make sense for floating windows")
+            case .nativeFullscreenWindow: dieT("Weight doesn't make sense for fullscreen overlay windows")
             case .nativeMinimizedWindow: dieT("Weight doesn't make sense for minimized windows")
-            case .popupWindow: dieT("Weight doesn't make sense for popup windows")
+            case .excludedWindow: dieT("Weight doesn't make sense for excluded windows")
             case .hiddenAppWindow: dieT("Weight doesn't make sense for windows of hidden apps")
             case .shimContainerRelation: dieT("Weight doesn't make sense for stub containers")
         }
@@ -71,9 +71,9 @@ package class TreeNode: Equatable, AeroAny {
             self.adaptiveWeight = switch relation {
                 case .tiling(let newParent):
                     CGFloat(newParent.children.sumOfDouble { $0.getWeight(newParent.orientation) }).div(newParent.children.count) ?? 1
-                case .floatingWindow, .nativeFullscreenWindow,
+                case .nativeFullscreenWindow,
                      .rootTilingContainer, .nativeMinimizedWindow,
-                     .shimContainerRelation, .popupWindow, .hiddenAppWindow:
+                     .shimContainerRelation, .excludedWindow, .hiddenAppWindow:
                     WEIGHT_DOESNT_MATTER
             }
         } else {
@@ -82,10 +82,8 @@ package class TreeNode: Equatable, AeroAny {
         newParent._children.insert(self, at: index != INDEX_BIND_LAST ? index : newParent._children.count)
         _parent = newParent
         unboundStacktrace = nil
-        // todo consider disabling automatic mru propogation
-        // 1. "floating windows" in FocusCommand break the MRU because of that :(
-        // 2. Misbehaved apps that abuse real window as popups https://github.com/tvanreenen/frame/issues/106 (the
-        //    last appeared window, is not necessarily the one that has the focus)
+        // todo consider disabling automatic mru propagation for excluded windows abused as popups:
+        // https://github.com/tvanreenen/frame/issues/106
         markAsMostRecentChild()
         return result
     }
@@ -140,7 +138,7 @@ package struct TreeNodeUserDataKey<T> {
 package let WEIGHT_DOESNT_MATTER = CGFloat(-2)
 /// Splits containers evenly if tiling.
 ///
-/// Reset weight is bind to workspace (aka "floating windows")
+/// Reset weight is handled automatically by the receiving parent.
 package let WEIGHT_AUTO = CGFloat(-1)
 
 package let INDEX_BIND_LAST = -1

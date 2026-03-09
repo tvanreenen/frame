@@ -7,7 +7,6 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
     case focus
     case focusMonitor = "focus-monitor"
     case fullscreen
-    case layout
     case listApps = "list-apps"
     case listMonitors = "list-monitors"
     case listWindows = "list-windows"
@@ -37,8 +36,6 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(parseFocusMonitorCmdArgs)
             case .fullscreen:
                 result[kind.rawValue] = SubCommandParser(parseFullscreenCmdArgs)
-            case .layout:
-                result[kind.rawValue] = SubCommandParser(parseLayoutCmdArgs)
             case .listApps:
                 result[kind.rawValue] = SubCommandParser(parseListAppsCmdArgs)
             case .listMonitors:

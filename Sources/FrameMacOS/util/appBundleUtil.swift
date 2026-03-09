@@ -30,7 +30,7 @@ private func makeAllWindowsVisibleAndRestoreSize() async throws {
     for (_, window) in Window.allWindowsMap {
         let monitor = try await window.getCenter()?.monitorApproximation ?? mainMonitor
         let monitorVisibleRect = monitor.visibleRect
-        let windowSize = window.lastFloatingSize ?? CGSize(width: monitorVisibleRect.width, height: monitorVisibleRect.height)
+        let windowSize = window.lastKnownSize ?? CGSize(width: monitorVisibleRect.width, height: monitorVisibleRect.height)
         let point = CGPoint(
             x: (monitorVisibleRect.width - windowSize.width) / 2,
             y: (monitorVisibleRect.height - windowSize.height) / 2,

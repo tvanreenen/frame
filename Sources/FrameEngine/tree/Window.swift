@@ -4,9 +4,9 @@ import Foundation
 package final class Window: TreeNode, Hashable {
     package let windowId: UInt32
     package let app: any WindowPlatformApp
-    package var lastFloatingSize: CGSize?
-    package var isFullscreen: Bool = false
-    package var noOuterGapsInFullscreen: Bool = false
+    package var lastKnownSize: CGSize?
+    package var isFullscreenOverlay: Bool = false
+    package var noOuterGapsInFullscreenOverlay: Bool = false
     package var layoutReason: LayoutReason = .standard
     private var prevUnhiddenProportionalPositionInsideWorkspaceRect: CGPoint?
 
@@ -20,14 +20,14 @@ package final class Window: TreeNode, Hashable {
     package init(
         id: UInt32,
         _ app: any WindowPlatformApp,
-        lastFloatingSize: CGSize?,
+        lastKnownSize: CGSize?,
         parent: NonLeafTreeNodeObject,
         adaptiveWeight: CGFloat,
         index: Int,
     ) {
         self.windowId = id
         self.app = app
-        self.lastFloatingSize = lastFloatingSize
+        self.lastKnownSize = lastKnownSize
         super.init(parent: parent, adaptiveWeight: adaptiveWeight, index: index)
     }
 
@@ -54,7 +54,7 @@ package final class Window: TreeNode, Hashable {
         let window = Window(
             id: windowId,
             app,
-            lastFloatingSize: rect?.size,
+            lastKnownSize: rect?.size,
             parent: data.parent,
             adaptiveWeight: data.adaptiveWeight,
             index: data.index,
@@ -150,9 +150,9 @@ package final class Window: TreeNode, Hashable {
         guard let parent else { return }
 
         switch getChildParentRelation(child: self, parent: parent) {
-            // Just a small optimization to avoid unnecessary AX calls for non floating windows
+            // Just a small optimization to avoid unnecessary AX calls for excluded windows.
             // Tiling windows should be unhidden with layoutRecursive anyway
-            case .floatingWindow:
+            case .excludedWindow:
                 let workspaceRect = nodeWorkspace.workspaceMonitor.rect
                 let pointInsideWorkspace = CGPoint(
                     x: workspaceRect.width * prevUnhiddenProportionalPositionInsideWorkspaceRect.x,
@@ -160,7 +160,7 @@ package final class Window: TreeNode, Hashable {
                 )
                 setFrame(workspaceRect.topLeftCorner + pointInsideWorkspace, nil)
             case .nativeFullscreenWindow, .hiddenAppWindow, .nativeMinimizedWindow,
-                 .popupWindow, .tiling, .rootTilingContainer, .shimContainerRelation:
+                 .tiling, .rootTilingContainer, .shimContainerRelation:
                 break
         }
 
@@ -228,17 +228,6 @@ package enum LayoutReason: Equatable {
 }
 
 package enum PreviousWindowPlacement: Equatable {
-    case floating
     case tiled
     case reclassify
-}
-
-extension Window {
-    package var isFloating: Bool { parent is Workspace } // todo drop. It will be a source of bugs when sticky is introduced
-
-    @discardableResult
-    @MainActor
-    package func bindAsFloatingWindow(to workspace: Workspace) -> BindingData? {
-        bind(to: workspace, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
-    }
 }

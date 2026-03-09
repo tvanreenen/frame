@@ -52,7 +52,7 @@ package final class TestApp: WindowPlatformApp {
     @MainActor
     @discardableResult
     package func registerWindow(id: UInt32, parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat = 1, rect: Rect? = nil, title: String? = nil) -> Window {
-        let window = Window(id: id, self, lastFloatingSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
+        let window = Window(id: id, self, lastKnownSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
         Window.registerForTests(window)
         windows.append(window)
         if let rect {

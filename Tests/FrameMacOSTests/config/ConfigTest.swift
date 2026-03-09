@@ -155,7 +155,7 @@ final class ConfigTest: XCTestCase {
             """
             [[window-classification-override]]
                 if.app-id = 'com.apple.finder'
-                kind = 'popup'
+                kind = 'excluded'
 
             [[window-classification-override]]
                 if.window-title-regex-substring = 'picture-in-picture'
@@ -163,7 +163,7 @@ final class ConfigTest: XCTestCase {
             """,
         )
         assertEquals(errors.descriptions, [])
-        assertEquals(config.windowClassificationOverrides.map(\.resolvedKind), [.popup, .tiling])
+        assertEquals(config.windowClassificationOverrides.map(\.resolvedKind), [.excluded, .tiling])
         XCTAssertTrue(
             config.windowClassificationOverrides[0].matcher.matches(
                 appBundleId: "com.apple.finder",
@@ -180,7 +180,7 @@ final class ConfigTest: XCTestCase {
         )
     }
 
-    func testParseWindowClassificationOverrides_acceptsLegacyKinds() {
+    func testParseWindowClassificationOverrides_rejectsRemovedKinds() {
         let (config, errors) = parseConfig(
             """
             [[window-classification-override]]
@@ -192,8 +192,13 @@ final class ConfigTest: XCTestCase {
                 kind = 'dialog'
             """,
         )
-        assertEquals(errors.descriptions, [])
-        assertEquals(config.windowClassificationOverrides.map(\.resolvedKind), [.tiling, .floating])
+        assertEquals(errors.descriptions, [
+            "window-classification-override[0].kind: 'kind' must be one of: tiling, excluded",
+            "window-classification-override[0]: 'kind' is mandatory key",
+            "window-classification-override[1].kind: 'kind' must be one of: tiling, excluded",
+            "window-classification-override[1]: 'kind' is mandatory key",
+        ])
+        assertEquals(config.windowClassificationOverrides, [])
     }
 
     func testWindowClassificationOverrideValidationErrors() {
@@ -203,7 +208,7 @@ final class ConfigTest: XCTestCase {
                 if.app-id = 'com.apple.finder'
 
             [[window-classification-override]]
-                kind = 'window'
+                kind = 'tiling'
             """,
         )
         assertEquals(errors.descriptions, [
@@ -345,15 +350,9 @@ final class ConfigTest: XCTestCase {
         )
     }
 
-    func testParseLayout() {
-        let command = parseCommand("layout tiling floating").cmdOrNil
-        XCTAssertTrue(command is LayoutCommand)
-        assertEquals((command as! LayoutCommand).args.toggleBetween.val, [.tiling, .floating])
-
-        guard case .help = parseCommand("layout -h") else {
-            XCTFail()
-            return
-        }
+    func testLayoutCommandWasRemoved() {
+        XCTAssertTrue((parseCommand("layout tiling").errorOrNil ?? "").contains("Unrecognized subcommand 'layout'"))
+        XCTAssertTrue((parseCommand("layout -h").errorOrNil ?? "").contains("Unrecognized subcommand 'layout'"))
     }
 
     func testParseWorkspaceToMonitorAssignment() {

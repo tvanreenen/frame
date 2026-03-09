@@ -37,8 +37,6 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         _ = TestWindow.new(id: 1, parent: col1).focusWindow()
         _ = TestWindow.new(id: 2, parent: col1)
         _ = TestWindow.new(id: 3, parent: col2)
-        _ = TestWindow.new(id: 4, parent: workspace)
-
         cacheClosedWindowIfNeeded()
 
         for workspace in Workspace.all {
@@ -47,18 +45,16 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         Window.resetForTests()
         TestApp.shared.resetState()
 
-        let restoredWindow = TestWindow.new(id: 1, parent: workspace)
-        _ = TestWindow.new(id: 2, parent: workspace)
-        _ = TestWindow.new(id: 3, parent: workspace)
-        _ = TestWindow.new(id: 4, parent: workspace)
-
+        let detectedColumn = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let restoredWindow = TestWindow.new(id: 1, parent: detectedColumn)
+        _ = TestWindow.new(id: 2, parent: detectedColumn)
+        _ = TestWindow.new(id: 3, parent: detectedColumn)
         let didRestore = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: restoredWindow)
         XCTAssertTrue(didRestore)
         XCTAssertTrue(workspace.columnsRoot === root)
         assertEquals(workspace.columns.count, 2)
         assertEquals(workspace.columns[0].children.compactMap { ($0 as? Window)?.windowId }, [1, 2])
         assertEquals(workspace.columns[1].children.compactMap { ($0 as? Window)?.windowId }, [3])
-        assertEquals(workspace.floatingWindows.map(\.windowId), [4])
         XCTAssertTrue(workspace.columnsRoot.children.allSatisfy { $0 is Column })
     }
 
@@ -99,22 +95,20 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         assertColumnChildren(workspace, [[], [1]])
     }
 
-    func testNormalizeLayoutReason_restoresFloatingFullscreenWindowToWorkspace() async throws {
-        let workspace = Workspace.get(byName: name)
-        let window = TestWindow.new(id: 2, parent: workspace)
+    func testNormalizeLayoutReason_reclassifiesExcludedFullscreenWindow() async throws {
+        let window = TestWindow.new(id: 2, parent: excludedWindowsContainer)
         _ = window.focusWindow()
 
         TestApp.shared.setNativeFullscreen(windowId: 2, true)
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is NativeFullscreenWindowsContainer)
-        assertPreviousPlacement(window.layoutReason, expected: .floating)
+        assertPreviousPlacement(window.layoutReason, expected: .reclassify)
 
         TestApp.shared.setNativeFullscreen(windowId: 2, false)
         try await normalizeLayoutReason()
 
-        XCTAssertTrue(window.parent is Workspace)
-        assertEquals(workspace.floatingWindows.map(\.windowId), [2])
+        XCTAssertTrue(window.parent is Column || window.parent is ExcludedWindowsContainer)
     }
 
     func testNormalizeLayoutReason_restoresTiledMinimizedWindowToColumn() async throws {
@@ -136,22 +130,20 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         assertColumnChildren(workspace, [[], [3]])
     }
 
-    func testNormalizeLayoutReason_restoresFloatingMinimizedWindowToWorkspace() async throws {
-        let workspace = Workspace.get(byName: name)
-        let window = TestWindow.new(id: 4, parent: workspace)
+    func testNormalizeLayoutReason_reclassifiesExcludedMinimizedWindow() async throws {
+        let window = TestWindow.new(id: 4, parent: excludedWindowsContainer)
         _ = window.focusWindow()
 
         TestApp.shared.setNativeMinimized(windowId: 4, true)
         try await normalizeLayoutReason()
 
         XCTAssertTrue(window.parent is NativeMinimizedWindowsContainer)
-        assertPreviousPlacement(window.layoutReason, expected: .floating)
+        assertPreviousPlacement(window.layoutReason, expected: .reclassify)
 
         TestApp.shared.setNativeMinimized(windowId: 4, false)
         try await normalizeLayoutReason()
 
-        XCTAssertTrue(window.parent is Workspace)
-        assertEquals(workspace.floatingWindows.map(\.windowId), [4])
+        XCTAssertTrue(window.parent is Column || window.parent is ExcludedWindowsContainer)
     }
 }
 

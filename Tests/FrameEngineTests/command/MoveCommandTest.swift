@@ -163,7 +163,7 @@ extension TreeNode {
         if self is NativeMinimizedWindowsContainer { return .nativeMinimized }
         if self is NativeFullscreenWindowsContainer { return .nativeFullscreen }
         if self is HiddenAppWindowsContainer { return .hiddenAppWindow }
-        if self is PopupWindowsContainer { return .popupWindowsContainer }
+        if self is ExcludedWindowsContainer { return .excludedWindowsContainer }
         guard let container = self as? Column else { die("Unknown tree \(self)") }
         return container.orientation == .h
             ? .h_tiles(container.children.map(\.layoutDescription))
@@ -176,7 +176,7 @@ enum LayoutDescription: Equatable {
     case h_tiles([LayoutDescription])
     case v_tiles([LayoutDescription])
     case window(UInt32)
-    case popupWindowsContainer
+    case excludedWindowsContainer
     case nativeMinimized
     case hiddenAppWindow
     case nativeFullscreen

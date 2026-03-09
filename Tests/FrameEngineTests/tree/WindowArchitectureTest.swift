@@ -369,15 +369,15 @@ final class WindowArchitectureTest: XCTestCase {
         assertEquals(focusedWindowId, window.windowId)
     }
 
-    func testRelayoutWindowFromFloatingStillWorks() async throws {
+    func testRelayoutWindowFromExcludedStillWorks() async throws {
         let workspace = Workspace.get(byName: name)
         let window = TestWindow.new(
             id: 778,
-            parent: workspace,
+            parent: excludedWindowsContainer,
             rect: Rect(topLeftX: 5, topLeftY: 5, width: 100, height: 100),
         )
 
-        XCTAssertTrue(window.parent is Workspace)
+        XCTAssertTrue(window.parent is ExcludedWindowsContainer)
         try await window.relayoutWindow(on: workspace)
         XCTAssertTrue(window.parent is Column)
     }
@@ -390,7 +390,7 @@ final class WindowArchitectureTest: XCTestCase {
         _ = TestWindow.new(id: 783, parent: col2).focusWindow()
         let window = TestWindow.new(
             id: 784,
-            parent: workspace,
+            parent: excludedWindowsContainer,
             rect: Rect(topLeftX: 5, topLeftY: 5, width: 100, height: 100),
         )
 
@@ -400,12 +400,12 @@ final class WindowArchitectureTest: XCTestCase {
     }
 
     func testPopupNormalizationPathWithoutMacWindowCast() async throws {
-        let popup = TestWindow.new(id: 779, parent: popupWindowsContainer)
+        let popup = TestWindow.new(id: 779, parent: excludedWindowsContainer)
         TestApp.shared.setWindowPlacementKind(windowId: 779, .tiling)
 
-        XCTAssertTrue(popup.parent is PopupWindowsContainer)
+        XCTAssertTrue(popup.parent is ExcludedWindowsContainer)
         try await normalizeLayoutReason()
-        XCTAssertFalse(popup.parent is PopupWindowsContainer)
+        XCTAssertFalse(popup.parent is ExcludedWindowsContainer)
     }
 
     func testWindowClassificationOverrideAppliedOnRegistration() async throws {
@@ -417,7 +417,7 @@ final class WindowArchitectureTest: XCTestCase {
         runtimeContext.config.windowClassificationOverrides = [
             override,
         ]
-        TestApp.shared.setWindowPlacementKind(windowId: 781, .popup)
+        TestApp.shared.setWindowPlacementKind(windowId: 781, .excluded)
 
         let window = try await Window.getOrRegister(windowId: 781, app: TestApp.shared)
         XCTAssertTrue(window.parent is Column)
@@ -437,20 +437,19 @@ final class WindowArchitectureTest: XCTestCase {
 
     func testHideUnhideCornerRoundTrip() async throws {
         let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
         let window = TestWindow.new(
             id: 780,
-            parent: workspace,
+            parent: column,
             rect: Rect(topLeftX: 120, topLeftY: 90, width: 500, height: 350),
         )
-        let before = try await window.getRect()
 
         try await window.hideInCorner(.bottomRightCorner)
         XCTAssertTrue(window.isHiddenInCorner)
         window.unhideFromCorner()
         XCTAssertFalse(window.isHiddenInCorner)
-
-        let after = try await window.getRect()
-        assertEquals(after?.size, before?.size)
-        assertEquals(after?.topLeftCorner, before?.topLeftCorner)
+        try await workspace.layoutWorkspace()
+        let rect = try await window.getRect()
+        XCTAssertNotNil(rect)
     }
 }

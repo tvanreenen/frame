@@ -25,7 +25,9 @@ struct MoveCommand: Command {
                     return true
             }
         }
-        if parent is Workspace { return io.err("moving floating windows isn't yet supported") }
+        if parent is ExcludedWindowsContainer {
+            return io.err("moving excluded windows isn't supported")
+        }
         if parent is NativeMinimizedWindowsContainer || parent is NativeFullscreenWindowsContainer || parent is HiddenAppWindowsContainer {
             return io.err(moveOutUnconventionalWindow)
         }

@@ -5,15 +5,16 @@ func normalizeLayoutReason() async throws {
         try await _normalizeLayoutReason(workspace: workspace, windows: windows)
     }
     try await _normalizeLayoutReason(workspace: focus.workspace, windows: nativeMinimizedWindowsContainer.children.filterIsInstance(of: Window.self))
-    try await validateStillPopups()
+    try await _normalizeLayoutReason(workspace: focus.workspace, windows: excludedWindowsContainer.children.filterIsInstance(of: Window.self))
+    try await validateStillExcluded()
 }
 
 @MainActor
-private func validateStillPopups() async throws {
-    for node in popupWindowsContainer.children {
-        guard let popup = node as? Window else { continue }
-        if try await popup.getResolvedPlacementKind() != .popup {
-            try await popup.relayoutWindow(on: focus.workspace)
+private func validateStillExcluded() async throws {
+    for node in excludedWindowsContainer.children {
+        guard let excluded = node as? Window else { continue }
+        if try await excluded.getResolvedPlacementKind() != .excluded {
+            try await excluded.relayoutWindow(on: focus.workspace)
         }
     }
 }
@@ -49,8 +50,6 @@ private func _normalizeLayoutReason(workspace: Workspace, windows: [Window]) asy
 func restoreFromPlatformDisplacement(window: Window, previousPlacement: PreviousWindowPlacement, workspace: Workspace) async throws {
     window.layoutReason = .standard
     switch previousPlacement {
-        case .floating:
-            window.bindAsFloatingWindow(to: workspace)
         case .tiled:
             try await window.relayoutWindow(on: workspace, forceTile: true)
         case .reclassify:
@@ -60,7 +59,6 @@ func restoreFromPlatformDisplacement(window: Window, previousPlacement: Previous
 
 extension NonLeafTreeNode {
     var recoveryPlacement: PreviousWindowPlacement {
-        if self is Workspace { return .floating }
         if self is Column { return .tiled }
         return .reclassify
     }

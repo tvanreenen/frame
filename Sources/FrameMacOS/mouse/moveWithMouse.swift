@@ -29,21 +29,8 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
 private func moveWithMouse(_ window: Window) async throws { // todo cover with tests
     resetClosedWindowsCache()
     guard let parent = window.parent else { return }
-    if parent is Workspace {
-        try await moveFloatingWindow(window)
-        return
-    }
     if parent is Column {
         moveTilingWindow(window)
-    }
-}
-
-@MainActor
-private func moveFloatingWindow(_ window: Window) async throws {
-    guard let targetWorkspace = try await window.getCenter()?.monitorApproximation.activeWorkspace else { return }
-    guard let parent = window.parent else { return }
-    if targetWorkspace != parent {
-        window.bindAsFloatingWindow(to: targetWorkspace)
     }
 }
 

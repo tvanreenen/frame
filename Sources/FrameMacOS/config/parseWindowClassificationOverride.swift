@@ -52,10 +52,9 @@ private func parseWindowClassificationOverrideMatcher(
 private func parseWindowClassificationOverrideKind(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<WindowPlacementKind> {
     parseString(raw, backtrace).flatMap {
         switch $0 {
-            case "window", "tiling": .success(.tiling)
-            case "dialog", "floating": .success(.floating)
-            case "popup": .success(.popup)
-            default: .failure(.semantic(backtrace, "'kind' must be one of: tiling, floating, popup, window, dialog"))
+            case "tiling": .success(.tiling)
+            case "excluded": .success(.excluded)
+            default: .failure(.semantic(backtrace, "'kind' must be one of: tiling, excluded"))
         }
     }
 }

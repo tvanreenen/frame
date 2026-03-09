@@ -249,8 +249,8 @@ final class MacApp: WindowPlatformApp {
         } ?? .window
         return switch rawType {
             case .window: .tiling
-            case .dialog: .floating
-            case .popup: .popup
+            case .dialog: .excluded
+            case .popup: .excluded
         }
     }
 
