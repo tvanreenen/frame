@@ -2,7 +2,7 @@
 
 Frame is a keyboard-first window manager for macOS built to make window management simple and intuitive.
 
-![Frame icon](./resources/Assets.xcassets/AppIcon.appiconset/Frame-macOS-Default-128x128@1x.png)
+![Frame hero](.github/assets/hero.png)
 
 It focuses on layout and navigation — automatically organizing windows to fill the available screen space with no overlapping or layering. Keyboard shortcuts provide deliberate control over navigating, resizing, and movement within and across workspaces, while native macOS window behavior remains intact.
 
@@ -37,22 +37,6 @@ Learn the core defaults:
 - `alt + f`: toggle fullscreen
 
 These are intentionally layered: keep direction/number keys the same, add modifiers for stronger variants (focus -> move/resize, workspace -> move-to-workspace).
-
-### Verify Install
-
-```bash
-frame --version
-```
-
-CLI version output:
-
-- `<version+hash>`
-
-For CLI + daemon diagnostics:
-
-```bash
-frame doctor
-```
 
 ## Configuration
 
