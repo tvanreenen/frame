@@ -1,6 +1,6 @@
 # Frame
 
-Frame is a keyboard-first window manager for macOS built to make window management simple and intuitive.
+Frame is a keyboard-first window and workspace manager for macOS built to make window management simple and intuitive.
 
 ![Frame hero](.github/assets/hero.png)
 
@@ -51,7 +51,7 @@ cp docs/config-examples/default-config.toml ~/.frame.toml
 Startup behavior example (`~/.frame.toml`):
 
 ```toml
-start-at-login = false
+start-at-login = true
 ```
 
 Persistent workspaces keep named workspaces alive even when empty, so they remain addressable and stable for keybindings/status bars:
@@ -81,6 +81,7 @@ ctrl-shift-alt-k = "resize height -50"
 
 alt-1 = "workspace 1"
 alt-shift-1 = "move-node-to-workspace 1"
+
 alt-f = "fullscreen"
 ```
 
