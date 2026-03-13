@@ -85,16 +85,16 @@ alt-shift-1 = "move-node-to-workspace 1"
 alt-f = "fullscreen"
 ```
 
-Gaps config example (`~/.frame.toml`):
+Gaps: set `inner.*` / `outer.*` to a number, or use an array to tailor per monitor — list `{ monitor."<description>" = <value> }` entries then the default as the last element (descriptions: `main`, `secondary`, numeric order, or a substring of the display name). Example — MacBook built-in (notch) with no top gap, external monitor (e.g. Mac mini) with 32px top gap:
 
 ```toml
 [gaps]
-inner.horizontal = 8
-inner.vertical = 8
-outer.left = 8
-outer.bottom = 8
-outer.top = 8
-outer.right = 8
+inner.horizontal = 0
+inner.vertical = 0
+outer.left = 0
+outer.bottom = 0
+outer.top = [{ monitor."Built-in Retina Display" = 0 }, 32]
+outer.right = 0
 ```
 
 ### Single vs Dual Monitor Setup
