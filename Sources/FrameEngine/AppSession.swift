@@ -31,6 +31,7 @@ package final class AppSession {
     // Session-owned seam for platform lookups, refresh, UI sync, and mouse state.
     package var platformServices: PlatformServices
     package var currentlyManipulatedWithMouseWindowId: UInt32? = nil
+    nonisolated package let windowEventsDiagnosticsLogger: WindowEventsDiagnosticsLogger
 
     package init(config: Config, configUrl: URL) {
         self.config = config
@@ -41,6 +42,7 @@ package final class AppSession {
         appFocusJob = nil
         closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
         platformServices = PlatformServices()
+        windowEventsDiagnosticsLogger = WindowEventsDiagnosticsLogger()
     }
 
     package func initializedFocus() -> FrozenFocus {
