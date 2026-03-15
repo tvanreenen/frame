@@ -103,6 +103,20 @@ final class ConfigTest: XCTestCase {
         assertEquals(config.workspaceChangeHook, ["/bin/bash", "-c", "echo changed"])
     }
 
+    func testParseDebugWindowEventsBinding() {
+        let (config, errors) = parseConfig(
+            """
+            [binding]
+                alt-shift-d = 'debug-window-events'
+            """,
+        )
+
+        assertEquals(errors.descriptions, [])
+        let binding = config.bindings["alt-shift-d"].orDie()
+        assertEquals(binding.commands.count, 1)
+        assertEquals(binding.commands[0].info.kind, .debugWindowEvents)
+    }
+
     func testWorkspaceChangeHookMustNotBeEmpty() {
         let (_, errors) = parseConfig(
             """
