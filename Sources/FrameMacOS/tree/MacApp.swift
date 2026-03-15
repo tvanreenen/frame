@@ -166,7 +166,16 @@ final class MacApp: WindowPlatformApp {
     func getFocusedWindow() async throws -> Window? {
         let windowId = try await thread?.runInLoop { [nsApp, axApp, windows, observerContext] job in
             try axApp.threadGuarded.get(Ax.focusedWindowAttr)
-                .flatMap { try windows.threadGuarded.getOrRegisterAxWindow(windowId: $0.windowId, $0.ax.cast, nsApp, observerContext, job) }?
+                .flatMap {
+                    try windows.threadGuarded.getOrRegisterAxWindow(
+                        windowId: $0.windowId,
+                        $0.ax.cast,
+                        nsApp,
+                        observerContext,
+                        "focused_window",
+                        job,
+                    )
+                }?
                 .windowId
         }
         guard let windowId else { return nil }
@@ -304,7 +313,7 @@ final class MacApp: WindowPlatformApp {
             return []
         }
         guard let thread else { return [] }
-        let (alive, dead) = try await thread.runInLoop { [nsApp, windows, axApp, observerContext] (job) -> ([UInt32], [UInt32]) in
+        let (alive, dead, focusedWindowId, axWindowIds) = try await thread.runInLoop { [nsApp, windows, axApp, observerContext] (job) -> ([UInt32], [UInt32], UInt32?, [UInt32]) in
             var alive: [UInt32: AxWindow] = windows.threadGuarded
             var dead = [UInt32: AxWindow]()
             // Second line of defence against lock screen. See the first line of defence: closedWindowsCache
@@ -316,15 +325,23 @@ final class MacApp: WindowPlatformApp {
                 }
             }
 
-            for (id, window) in axApp.threadGuarded.get(Ax.windowsAttr) ?? [] {
+            let axWindows = axApp.threadGuarded.get(Ax.windowsAttr) ?? []
+            let focusedWindowId = axApp.threadGuarded.get(Ax.focusedWindowAttr)?.windowId
+            for (id, window) in axWindows {
                 try job.checkCancellation()
-                try alive.getOrRegisterAxWindow(windowId: id, window, nsApp, observerContext, job)
+                try alive.getOrRegisterAxWindow(windowId: id, window, nsApp, observerContext, "ax_windows", job)
             }
 
             windows.threadGuarded = alive
-            return (Array(alive.keys), Array(dead.keys))
+            return (Array(alive.keys), Array(dead.keys), focusedWindowId, axWindows.map(\.windowId))
         }
         windowsCount = alive.count
+        AppSession.fromCallbackContext(observerContext)?.windowEventsDiagnosticsLogger.logAppRefresh(
+            bundleId: rawAppBundleId,
+            pid: pid,
+            aliveWindowIds: axWindowIds,
+            focusedWindowId: focusedWindowId,
+        )
         for windowId in dead {
             setFrameJobs.removeValue(forKey: windowId)?.cancel()
         }
@@ -406,8 +423,17 @@ extension [UInt32: AxWindow] {
         _ axWindow: AXUIElement,
         _ nsApp: NSRunningApplication,
         _ observerContext: AppSessionCallbackContext,
+        _ source: String,
         _ job: RunLoopJob,
     ) throws -> AxWindow? {
+        let alreadyRegistered = self[id] != nil
+        AppSession.fromCallbackContext(observerContext)?.windowEventsDiagnosticsLogger.logAxWindowSeen(
+            bundleId: nsApp.bundleIdentifier,
+            pid: nsApp.processIdentifier,
+            windowId: id,
+            source: source,
+            alreadyRegistered: alreadyRegistered,
+        )
         if let existing = self[id] { return existing }
         // Delay new window detection if mouse is down
         // It helps with apps that allow dragging their tabs out to create new windows

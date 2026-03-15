@@ -60,6 +60,18 @@ package final class Window: TreeNode, Hashable {
             index: data.index,
         )
         allWindowsMap[windowId] = window
+        let session = currentSession
+        if session.windowEventsDiagnosticsLogger.isEnabled(forBundleId: app.rawAppBundleId) {
+            let placementKind = try await Window.resolvePlacementKind(windowId: windowId, app: app)
+            let title = try await app.getWindowTitle(windowId: windowId)
+            session.windowEventsDiagnosticsLogger.logWindowRegistered(
+                bundleId: app.rawAppBundleId,
+                pid: app.pid,
+                windowId: windowId,
+                placementKind: placementKind,
+                title: title,
+            )
+        }
 
         _ = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: window)
         return window
@@ -174,6 +186,11 @@ package final class Window: TreeNode, Hashable {
         if Window.allWindowsMap.removeValue(forKey: windowId) == nil {
             return
         }
+        currentSession.windowEventsDiagnosticsLogger.logWindowGarbageCollected(
+            bundleId: app.rawAppBundleId,
+            pid: app.pid,
+            windowId: windowId,
+        )
         if !skipClosedWindowsCache { cacheClosedWindowIfNeeded() }
         let parent = unbindFromParent().parent
         let deadWindowWorkspace = parent.nodeWorkspace

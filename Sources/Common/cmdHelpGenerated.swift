@@ -7,6 +7,9 @@ let add_column_help_generated = """
 let balance_sizes_help_generated = """
     USAGE: balance-sizes [-h|--help] [--workspace <workspace>]
     """
+let debug_window_events_help_generated = """
+    USAGE: debug-window-events [-h|--help]
+    """
 let doctor_help_generated = """
     USAGE: doctor [-h|--help]
     """

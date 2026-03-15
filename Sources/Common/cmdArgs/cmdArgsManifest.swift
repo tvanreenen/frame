@@ -3,6 +3,7 @@ public enum CmdKind: String, CaseIterable, Equatable, Sendable {
 
     case addColumn = "add-column"
     case balanceSizes = "balance-sizes"
+    case debugWindowEvents = "debug-window-events"
     case doctor
     case focus
     case focusMonitor = "focus-monitor"
@@ -28,6 +29,8 @@ func initSubcommands() -> [String: any SubCommandParserProtocol] {
                 result[kind.rawValue] = SubCommandParser(AddColumnCmdArgs.init)
             case .balanceSizes:
                 result[kind.rawValue] = SubCommandParser(BalanceSizesCmdArgs.init)
+            case .debugWindowEvents:
+                result[kind.rawValue] = SubCommandParser(parseDebugWindowEventsCmdArgs)
             case .focus:
                 result[kind.rawValue] = SubCommandParser(parseFocusCmdArgs)
             case .doctor:
