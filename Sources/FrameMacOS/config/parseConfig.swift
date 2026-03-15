@@ -115,6 +115,7 @@ private let persistentWorkspacesKey = "persistent-workspaces"
 private let configAllowedCmdKinds: Set<CmdKind> = [
     .addColumn,
     .balanceSizes,
+    .debugWindowEvents,
     .focus,
     .focusMonitor,
     .fullscreen,
