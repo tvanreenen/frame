@@ -18,7 +18,8 @@ final class WindowEventsDiagnosticsLoggerTest: XCTestCase {
         logger.logAppRefresh(
             bundleId: "com.mitchellh.ghostty",
             pid: 42,
-            aliveWindowIds: [2, 1],
+            axWindowIds: [2, 1],
+            authoritativeWindowIds: [2],
             focusedWindowId: 2,
         )
         logger.logWindowGarbageCollected(
@@ -38,7 +39,8 @@ final class WindowEventsDiagnosticsLoggerTest: XCTestCase {
         assertEquals(refresh["event"] as? String, "app_refresh")
         assertEquals(refresh["bundleId"] as? String, "com.mitchellh.ghostty")
         assertEquals(refresh["placementKind"] as? String, nil)
-        assertEquals((refresh["aliveWindowIds"] as? [NSNumber])?.map(\.intValue), [1, 2])
+        assertEquals((refresh["axWindowIds"] as? [NSNumber])?.map(\.intValue), [1, 2])
+        assertEquals((refresh["authoritativeWindowIds"] as? [NSNumber])?.map(\.intValue), [2])
         assertEquals((refresh["focusedWindowId"] as? NSNumber)?.intValue, 2)
 
         let gc = try XCTUnwrap(parseLine(lines[1]))
@@ -114,6 +116,66 @@ final class WindowEventsDiagnosticsLoggerTest: XCTestCase {
         let payload = try XCTUnwrap(parseLine(lines[0]))
         assertEquals(payload["bundleId"] as? String, "com.mitchellh.ghostty")
         assertEquals((payload["windowId"] as? NSNumber)?.intValue, 10)
+    }
+
+    func testWindowReboundIncludesLogicalAndPlatformIds() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let logger = WindowEventsDiagnosticsLogger(logPath: url.path)
+        _ = logger.toggleRuntime(forBundleId: "com.mitchellh.ghostty")
+        logger.logWindowRebound(
+            bundleId: "com.mitchellh.ghostty",
+            pid: 7,
+            frameWindowId: 17,
+            oldPlatformWindowId: 55,
+            newPlatformWindowId: 56,
+        )
+
+        logger.flush()
+
+        let line = try String(contentsOf: url, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload = try XCTUnwrap(parseLine(line))
+        assertEquals(payload["event"] as? String, "window_rebound")
+        assertEquals(payload["frameWindowId"] as? String, "frame-17")
+        assertEquals((payload["oldPlatformWindowId"] as? NSNumber)?.intValue, 55)
+        assertEquals((payload["newPlatformWindowId"] as? NSNumber)?.intValue, 56)
+    }
+
+    @MainActor
+    func testRefreshReconcileIncludesUnmatchedSetsAndDecision() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let workspace = Workspace.get(byName: name)
+        let window = TestWindow.new(id: 17, parent: workspace.columnsRoot)
+        let logger = WindowEventsDiagnosticsLogger(logPath: url.path)
+        _ = logger.toggleRuntime(forBundleId: "com.frame.test-app")
+        logger.logRefreshReconcile(
+            bundleId: "com.frame.test-app",
+            pid: 7,
+            existingPlatformWindowIds: [17, 99],
+            unmatchedFrameWindowIds: [window.windowId.description],
+            unmatchedWindowIds: [55],
+            focusedWindowId: 55,
+            replacementFrameWindowId: window.windowId,
+            replacementWindowId: 55,
+            replacementReason: "rebind",
+            applyResult: nil,
+        )
+
+        logger.flush()
+
+        let line = try String(contentsOf: url, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload = try XCTUnwrap(parseLine(line))
+        assertEquals(payload["event"] as? String, "refresh_reconcile")
+        assertEquals((payload["existingPlatformWindowIds"] as? [NSNumber])?.map(\.intValue), [17, 99])
+        assertEquals(payload["unmatchedFrameWindowIds"] as? [String], [window.windowId.description])
+        assertEquals((payload["unmatchedWindowIds"] as? [NSNumber])?.map(\.intValue), [55])
+        assertEquals(payload["replacementFrameWindowId"] as? String, window.windowId.description)
+        assertEquals((payload["windowId"] as? NSNumber)?.intValue, 55)
+        assertEquals(payload["replacementReason"] as? String, "rebind")
+        XCTAssertNil(payload["applyResult"])
     }
 
     private func parseLine(_ line: String) -> [String: Any]? {

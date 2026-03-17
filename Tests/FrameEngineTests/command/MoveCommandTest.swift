@@ -175,7 +175,7 @@ enum LayoutDescription: Equatable {
     case workspace([LayoutDescription])
     case h_tiles([LayoutDescription])
     case v_tiles([LayoutDescription])
-    case window(UInt32)
+    case window(FrameWindowId)
     case excludedWindowsContainer
     case nativeMinimized
     case hiddenAppWindow

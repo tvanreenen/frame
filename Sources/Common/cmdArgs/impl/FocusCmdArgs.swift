@@ -5,7 +5,7 @@ public struct FocusCmdArgs: CmdArgs {
         kind: .focus,
         help: focus_help_generated,
         flags: [
-            "--window-id": SubArgParser(\.windowId, upcastSubArgParserFun(parseUInt32SubArg)),
+            "--window-id": SubArgParser(\.windowId, upcastSubArgParserFun(parseFrameWindowIdSubArg)),
 
             "--boundaries": SubArgParser(\.rawBoundaries, upcastSubArgParserFun(parseBoundaries)),
             "--boundaries-action": SubArgParser(\.rawBoundariesAction, upcastSubArgParserFun(parseBoundariesAction)),
@@ -28,7 +28,7 @@ public struct FocusCmdArgs: CmdArgs {
         self.direction = direction
     }
 
-    public init(rawArgs: StrArrSlice, windowId: UInt32) {
+    public init(rawArgs: StrArrSlice, windowId: FrameWindowId) {
         self.commonState = .init(rawArgs)
         self.windowId = windowId
     }
@@ -47,7 +47,7 @@ public struct FocusCmdArgs: CmdArgs {
 
 public enum FocusCmdTarget {
     case direction(CardinalDirection)
-    case windowId(UInt32)
+    case windowId(FrameWindowId)
 }
 
 extension FocusCmdArgs {

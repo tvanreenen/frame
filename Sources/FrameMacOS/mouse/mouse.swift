@@ -9,5 +9,8 @@ func isManipulatedWithMouse(_ window: Window) async throws -> Bool {
         isLeftMouseButtonDown &&
         (currentSession.currentlyManipulatedWithMouseWindowId == nil ||
             window.windowId == currentSession.currentlyManipulatedWithMouseWindowId))
-        .andAsync { @Sendable @MainActor in try await getNativeFocusedWindow() == window }
+        .andAsync { @Sendable @MainActor in
+            guard let nativeFocused = try await getNativeFocusedWindow() else { return false }
+            return nativeFocused.app.pid == window.app.pid && nativeFocused.platformWindowId == window.platformWindowId
+        }
 }

@@ -37,7 +37,7 @@ final class FocusCommandTest: XCTestCase {
             "ERROR: Duplicated option '--boundaries'",
         )
         assertEquals(
-            parseCommand("focus --window-id 42 --wrap-around").errorOrNil,
+            parseCommand("focus --window-id frame-42 --wrap-around").errorOrNil,
             "--window-id is incompatible with other options",
         )
         assertEquals(

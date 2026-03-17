@@ -1,3 +1,4 @@
+import Common
 import Foundation
 
 package let defaultWindowEventsDiagnosticsLogPath = "/tmp/frame-window-events.log"
@@ -18,12 +19,22 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
         let event: String
         let bundleId: String
         let pid: Int32?
+        let frameWindowId: String?
         let windowId: UInt32?
+        let oldPlatformWindowId: UInt32?
+        let newPlatformWindowId: UInt32?
         let notification: String?
         let source: String?
         let alreadyRegistered: Bool?
-        let aliveWindowIds: [UInt32]?
+        let axWindowIds: [UInt32]?
+        let authoritativeWindowIds: [UInt32]?
         let focusedWindowId: UInt32?
+        let existingPlatformWindowIds: [UInt32]?
+        let unmatchedFrameWindowIds: [String]?
+        let unmatchedWindowIds: [UInt32]?
+        let replacementFrameWindowId: String?
+        let replacementReason: String?
+        let applyResult: String?
         let placementKind: String?
         let title: String?
     }
@@ -70,30 +81,95 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
                 event: "ax_notification",
                 bundleId: bundleId,
                 pid: pid,
+                frameWindowId: nil,
                 windowId: nil,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
                 notification: notification,
                 source: nil,
                 alreadyRegistered: nil,
-                aliveWindowIds: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
                 focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
                 placementKind: nil,
                 title: nil,
             )
         }
     }
 
-    package func logAppRefresh(bundleId: String?, pid: Int32, aliveWindowIds: [UInt32], focusedWindowId: UInt32?) {
+    package func logAppRefresh(
+        bundleId: String?,
+        pid: Int32,
+        axWindowIds: [UInt32],
+        authoritativeWindowIds: [UInt32],
+        focusedWindowId: UInt32?,
+    ) {
         queue.async {
             self.log(
                 event: "app_refresh",
                 bundleId: bundleId,
                 pid: pid,
+                frameWindowId: nil,
                 windowId: nil,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
                 notification: nil,
                 source: nil,
                 alreadyRegistered: nil,
-                aliveWindowIds: aliveWindowIds.sorted(),
+                axWindowIds: axWindowIds.sorted(),
+                authoritativeWindowIds: authoritativeWindowIds.sorted(),
                 focusedWindowId: focusedWindowId,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
+                placementKind: nil,
+                title: nil,
+            )
+        }
+    }
+
+    package func logRefreshReconcile(
+        bundleId: String?,
+        pid: Int32,
+        existingPlatformWindowIds: [UInt32],
+        unmatchedFrameWindowIds: [String],
+        unmatchedWindowIds: [UInt32],
+        focusedWindowId: UInt32?,
+        replacementFrameWindowId: FrameWindowId?,
+        replacementWindowId: UInt32?,
+        replacementReason: String,
+        applyResult: String?,
+    ) {
+        queue.async {
+            self.log(
+                event: "refresh_reconcile",
+                bundleId: bundleId,
+                pid: pid,
+                frameWindowId: nil,
+                windowId: replacementWindowId,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
+                notification: nil,
+                source: nil,
+                alreadyRegistered: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
+                focusedWindowId: focusedWindowId,
+                existingPlatformWindowIds: existingPlatformWindowIds.sorted(),
+                unmatchedFrameWindowIds: unmatchedFrameWindowIds.sorted(),
+                unmatchedWindowIds: unmatchedWindowIds.sorted(),
+                replacementFrameWindowId: replacementFrameWindowId?.description,
+                replacementReason: replacementReason,
+                applyResult: applyResult,
                 placementKind: nil,
                 title: nil,
             )
@@ -112,12 +188,22 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
                 event: "ax_window_seen",
                 bundleId: bundleId,
                 pid: pid,
+                frameWindowId: nil,
                 windowId: windowId,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
                 notification: nil,
                 source: source,
                 alreadyRegistered: alreadyRegistered,
-                aliveWindowIds: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
                 focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
                 placementKind: nil,
                 title: nil,
             )
@@ -136,14 +222,58 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
                 event: "window_registered",
                 bundleId: bundleId,
                 pid: pid,
+                frameWindowId: nil,
                 windowId: windowId,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
                 notification: nil,
                 source: nil,
                 alreadyRegistered: nil,
-                aliveWindowIds: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
                 focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
                 placementKind: placementKind.rawValue,
                 title: title,
+            )
+        }
+    }
+
+    package func logWindowRebound(
+        bundleId: String?,
+        pid: Int32,
+        frameWindowId: FrameWindowId,
+        oldPlatformWindowId: UInt32,
+        newPlatformWindowId: UInt32,
+    ) {
+        queue.async {
+            self.log(
+                event: "window_rebound",
+                bundleId: bundleId,
+                pid: pid,
+                frameWindowId: frameWindowId.description,
+                windowId: nil,
+                oldPlatformWindowId: oldPlatformWindowId,
+                newPlatformWindowId: newPlatformWindowId,
+                notification: nil,
+                source: nil,
+                alreadyRegistered: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
+                focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
+                placementKind: nil,
+                title: nil,
             )
         }
     }
@@ -154,12 +284,22 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
                 event: "window_garbage_collected",
                 bundleId: bundleId,
                 pid: pid,
+                frameWindowId: nil,
                 windowId: windowId,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
                 notification: nil,
                 source: nil,
                 alreadyRegistered: nil,
-                aliveWindowIds: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
                 focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
                 placementKind: nil,
                 title: nil,
             )
@@ -170,12 +310,22 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
         event: String,
         bundleId: String?,
         pid: Int32?,
+        frameWindowId: String?,
         windowId: UInt32?,
+        oldPlatformWindowId: UInt32?,
+        newPlatformWindowId: UInt32?,
         notification: String?,
         source: String?,
         alreadyRegistered: Bool?,
-        aliveWindowIds: [UInt32]?,
+        axWindowIds: [UInt32]?,
+        authoritativeWindowIds: [UInt32]?,
         focusedWindowId: UInt32?,
+        existingPlatformWindowIds: [UInt32]?,
+        unmatchedFrameWindowIds: [String]?,
+        unmatchedWindowIds: [UInt32]?,
+        replacementFrameWindowId: String?,
+        replacementReason: String?,
+        applyResult: String?,
         placementKind: String?,
         title: String?,
     ) {
@@ -186,12 +336,22 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
             event: event,
             bundleId: bundleId,
             pid: pid,
+            frameWindowId: frameWindowId,
             windowId: windowId,
+            oldPlatformWindowId: oldPlatformWindowId,
+            newPlatformWindowId: newPlatformWindowId,
             notification: notification,
             source: source,
             alreadyRegistered: alreadyRegistered,
-            aliveWindowIds: aliveWindowIds,
+            axWindowIds: axWindowIds,
+            authoritativeWindowIds: authoritativeWindowIds,
             focusedWindowId: focusedWindowId,
+            existingPlatformWindowIds: existingPlatformWindowIds,
+            unmatchedFrameWindowIds: unmatchedFrameWindowIds,
+            unmatchedWindowIds: unmatchedWindowIds,
+            replacementFrameWindowId: replacementFrameWindowId,
+            replacementReason: replacementReason,
+            applyResult: applyResult,
             placementKind: placementKind,
             title: title,
         )

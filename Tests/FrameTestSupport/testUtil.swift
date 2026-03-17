@@ -35,6 +35,7 @@ package func setUpWorkspacesForTests() {
     Window.resetForTests()
     TestApp.shared.resetState()
     appForTests = nil
+    resetLastKnownNativeFocusedWindowIdForTests()
 }
 
 @MainActor

@@ -62,7 +62,7 @@ extension AppSession {
         }
     }
 
-    func refreshAllMacAppsAndGetAliveWindowIds(frontmostAppBundleId: String?) async throws -> [MacApp: [UInt32]] {
+    func refreshAllMacAppsAndGetWindowSnapshots(frontmostAppBundleId: String?) async throws -> [MacApp: PlatformAppRefreshSnapshot] {
         for (_, app) in appsByPid { // gc dead apps
             try checkCancellation()
             guard let app = app as? MacApp else { continue }
@@ -70,11 +70,16 @@ extension AppSession {
                 await app.destroy()
             }
         }
-        return try await withThrowingTaskGroup(of: (pid_t, [UInt32]).self, returning: [MacApp: [UInt32]].self) { group in
+        return try await withThrowingTaskGroup(
+            of: (pid_t, PlatformAppRefreshSnapshot).self,
+            returning: [MacApp: PlatformAppRefreshSnapshot].self
+        ) { group in
             func refreshTheApp(_ nsApp: NSRunningApplication) {
                 group.addTask { @Sendable @MainActor in
-                    guard let app = try await self.getOrRegisterMacApp(nsApp) else { return (nsApp.processIdentifier, []) }
-                    return (nsApp.processIdentifier, try await app.refreshAndGetAliveWindowIds(frontmostAppBundleId: frontmostAppBundleId))
+                    guard let app = try await self.getOrRegisterMacApp(nsApp) else {
+                        return (nsApp.processIdentifier, PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil))
+                    }
+                    return (nsApp.processIdentifier, try await app.refreshAndGetWindowSnapshot(frontmostAppBundleId: frontmostAppBundleId))
                 }
             }
             // Register new apps
@@ -94,10 +99,10 @@ extension AppSession {
                     refreshTheApp(app.nsApp)
                 }
             }
-            var result: [MacApp: [UInt32]] = [:]
-            for try await (pid, windowIds) in group {
+            var result: [MacApp: PlatformAppRefreshSnapshot] = [:]
+            for try await (pid, snapshot) in group {
                 if let app = appsByPid[pid] as? MacApp {
-                    result[app] = windowIds
+                    result[app] = snapshot
                 }
             }
             return result
@@ -163,8 +168,8 @@ final class MacApp: WindowPlatformApp {
     }
 
     // todo merge together with detectNewWindows
-    func getFocusedWindow() async throws -> Window? {
-        let windowId = try await thread?.runInLoop { [nsApp, axApp, windows, observerContext] job in
+    func getFocusedPlatformWindowId() async throws -> UInt32? {
+        try await thread?.runInLoop { [nsApp, axApp, windows, observerContext] job in
             try axApp.threadGuarded.get(Ax.focusedWindowAttr)
                 .flatMap {
                     try windows.threadGuarded.getOrRegisterAxWindow(
@@ -178,8 +183,6 @@ final class MacApp: WindowPlatformApp {
                 }?
                 .windowId
         }
-        guard let windowId else { return nil }
-        return try await Window.getOrRegister(windowId: windowId, app: self)
     }
 
     @MainActor
@@ -307,19 +310,19 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    fileprivate func refreshAndGetAliveWindowIds(frontmostAppBundleId: String?) async throws -> [UInt32] {
+    fileprivate func refreshAndGetWindowSnapshot(frontmostAppBundleId: String?) async throws -> PlatformAppRefreshSnapshot {
         if nsApp.isTerminated {
             await destroy()
-            return []
+            return PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil)
         }
-        guard let thread else { return [] }
-        let (alive, dead, focusedWindowId, axWindowIds) = try await thread.runInLoop { [nsApp, windows, axApp, observerContext] (job) -> ([UInt32], [UInt32], UInt32?, [UInt32]) in
-            var alive: [UInt32: AxWindow] = windows.threadGuarded
+        guard let thread else { return PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil) }
+        let (deadWindowIds, focusedWindowId, rawAxWindowIds) = try await thread.runInLoop { [nsApp, windows, axApp, observerContext] (job) -> ([UInt32], UInt32?, [UInt32]) in
+            var cachedWindows = windows.threadGuarded
             var dead = [UInt32: AxWindow]()
             // Second line of defence against lock screen. See the first line of defence: closedWindowsCache
             // Second and third lines of defence are technically needed only to avoid potential flickering
             if frontmostAppBundleId != lockScreenAppBundleId {
-                (alive, dead) = try alive.partition {
+                (cachedWindows, dead) = try cachedWindows.partition {
                     try job.checkCancellation()
                     return $0.value.ax.containingWindowId() != nil
                 }
@@ -329,23 +332,41 @@ final class MacApp: WindowPlatformApp {
             let focusedWindowId = axApp.threadGuarded.get(Ax.focusedWindowAttr)?.windowId
             for (id, window) in axWindows {
                 try job.checkCancellation()
-                try alive.getOrRegisterAxWindow(windowId: id, window, nsApp, observerContext, "ax_windows", job)
+                try cachedWindows.getOrRegisterAxWindow(windowId: id, window, nsApp, observerContext, "ax_windows", job)
             }
 
-            windows.threadGuarded = alive
-            return (Array(alive.keys), Array(dead.keys), focusedWindowId, axWindows.map(\.windowId))
+            if let focusedWindowId,
+                let focusedAxWindow = axApp.threadGuarded.get(Ax.focusedWindowAttr)
+            {
+                try cachedWindows.getOrRegisterAxWindow(
+                    windowId: focusedWindowId,
+                    focusedAxWindow.ax.cast,
+                    nsApp,
+                    observerContext,
+                    "focused_window",
+                    job,
+                )
+            }
+
+            windows.threadGuarded = cachedWindows
+            return (Array(dead.keys), focusedWindowId, axWindows.map(\.windowId))
         }
-        windowsCount = alive.count
+        let authoritativeWindowIds = makeAuthoritativeTopLevelWindowIds(
+            axWindowIds: rawAxWindowIds,
+            focusedWindowId: focusedWindowId,
+        )
+        windowsCount = authoritativeWindowIds.count
         AppSession.fromCallbackContext(observerContext)?.windowEventsDiagnosticsLogger.logAppRefresh(
             bundleId: rawAppBundleId,
             pid: pid,
-            aliveWindowIds: axWindowIds,
+            axWindowIds: rawAxWindowIds,
+            authoritativeWindowIds: authoritativeWindowIds,
             focusedWindowId: focusedWindowId,
         )
-        for windowId in dead {
+        for windowId in deadWindowIds {
             setFrameJobs.removeValue(forKey: windowId)?.cancel()
         }
-        return alive
+        return PlatformAppRefreshSnapshot(windowIds: authoritativeWindowIds, focusedWindowId: focusedWindowId)
     }
 
     fileprivate func destroy() async {
@@ -379,6 +400,17 @@ final class MacApp: WindowPlatformApp {
             try? body(window.ax, job)
         } ?? .cancelled
     }
+}
+
+package func makeAuthoritativeTopLevelWindowIds(
+    axWindowIds: [UInt32],
+    focusedWindowId: UInt32?,
+) -> [UInt32] {
+    var authoritativeWindowIds = axWindowIds
+    if let focusedWindowId, !authoritativeWindowIds.contains(focusedWindowId) {
+        authoritativeWindowIds.append(focusedWindowId)
+    }
+    return authoritativeWindowIds
 }
 
 private final class AxWindow {

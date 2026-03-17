@@ -17,7 +17,7 @@ func configureFrameMacOSPlatformServices(for session: AppSession) {
             NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         },
         refreshPlatformApps: { frontmostAppBundleId in
-            try await session.refreshAllMacAppsAndGetAliveWindowIds(frontmostAppBundleId: frontmostAppBundleId)
+            try await session.refreshAllMacAppsAndGetWindowSnapshots(frontmostAppBundleId: frontmostAppBundleId)
                 .map { ($0.key as any WindowPlatformApp, $0.value) }
         },
         syncUiState: { session in

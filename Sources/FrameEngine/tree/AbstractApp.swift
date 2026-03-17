@@ -5,7 +5,6 @@ package protocol AbstractApp: AnyObject, Hashable, AeroAny {
     var pid: Int32 { get }
     var rawAppBundleId: String? { get }
 
-    @MainActor func getFocusedWindow() async throws -> Window?
     var name: String? { get }
     var execPath: String? { get }
     var bundlePath: String? { get }
@@ -29,6 +28,7 @@ extension AbstractApp {
 
 package protocol WindowPlatformApp: AbstractApp {
     var isHidden: Bool { get }
+    @MainActor func getFocusedPlatformWindowId() async throws -> UInt32?
     @MainActor func setLastNativeFocusedWindowId(_ windowId: UInt32?)
 
     func getWindowRect(windowId: UInt32) async throws -> Rect?

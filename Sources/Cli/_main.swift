@@ -77,7 +77,7 @@ struct Main {
             }
         }
 
-        let windowId = ProcessInfo.processInfo.environment[FRAME_WINDOW_ID].flatMap(UInt32.init)
+        let windowId = ProcessInfo.processInfo.environment[FRAME_WINDOW_ID].flatMap(FrameWindowId.init)
         let workspace = ProcessInfo.processInfo.environment[FRAME_WORKSPACE]
         let ans = await run(connection, args, stdin: stdin, windowId: windowId, workspace: workspace)
 
@@ -120,7 +120,7 @@ func runDoctor() async -> Int32 {
     )
 }
 
-func run(_ connection: NWConnection, _ args: StrArrSlice, stdin: String, windowId: UInt32?, workspace: String?) async -> ServerAnswer {
+func run(_ connection: NWConnection, _ args: StrArrSlice, stdin: String, windowId: FrameWindowId?, workspace: String?) async -> ServerAnswer {
     if let e = await connection.write(ClientRequest(args: args.toArray(), stdin: stdin, windowId: windowId, workspace: workspace)) {
         exit(stderrMsg: "Failed to write to daemon socket: \(e)")
     }

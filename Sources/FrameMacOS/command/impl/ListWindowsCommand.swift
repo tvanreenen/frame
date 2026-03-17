@@ -75,7 +75,7 @@ private struct ListWindowsTextRow {
 }
 
 private struct ListWindowsJsonRow: Encodable {
-    let windowId: UInt32
+    let windowId: String
     let appName: String
     let windowTitle: String
 
@@ -86,7 +86,7 @@ private struct ListWindowsJsonRow: Encodable {
     }
 
     init(_ item: (window: Window, title: String)) {
-        windowId = item.window.windowId
+        windowId = item.window.windowId.description
         appName = item.window.app.name ?? "NULL-APP-NAME"
         windowTitle = item.title
     }

@@ -11,7 +11,7 @@ func resizedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: Unsaf
     let session = AppSession.fromCallbackContext(data)
     Task { @MainActor in
         let session = session ?? currentSession
-        guard let windowId, let window = Window.get(byId: windowId), try await isManipulatedWithMouse(window) else {
+        guard let windowId, let window = Window.get(byPlatformWindowId: windowId), try await isManipulatedWithMouse(window) else {
             session.scheduleRefreshSession(.ax(notif))
             return
         }

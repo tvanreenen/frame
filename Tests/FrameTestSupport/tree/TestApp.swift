@@ -39,9 +39,11 @@ package final class TestApp: WindowPlatformApp {
             if let window = newValue {
                 check(windows.contains(window))
             }
+            focusedPlatformWindowId = newValue?.platformWindowId
             _focusedWindow = newValue
         }
     }
+    package var focusedPlatformWindowId: UInt32? = nil
 
     private var windowRects: [UInt32: Rect] = [:]
     private var windowTitles: [UInt32: String] = [:]
@@ -52,7 +54,15 @@ package final class TestApp: WindowPlatformApp {
     @MainActor
     @discardableResult
     package func registerWindow(id: UInt32, parent: NonLeafTreeNodeObject, adaptiveWeight: CGFloat = 1, rect: Rect? = nil, title: String? = nil) -> Window {
-        let window = Window(id: id, self, lastKnownSize: nil, parent: parent, adaptiveWeight: adaptiveWeight, index: INDEX_BIND_LAST)
+        let window = Window(
+            id: currentSession.makeFrameWindowId(serial: id),
+            platformWindowId: id,
+            self,
+            lastKnownSize: nil,
+            parent: parent,
+            adaptiveWeight: adaptiveWeight,
+            index: INDEX_BIND_LAST,
+        )
         Window.registerForTests(window)
         windows.append(window)
         if let rect {
@@ -65,6 +75,7 @@ package final class TestApp: WindowPlatformApp {
     @MainActor
     package func resetState() {
         focusedWindow = nil
+        focusedPlatformWindowId = nil
         windows = []
         windowRects = [:]
         windowTitles = [:]
@@ -80,6 +91,11 @@ package final class TestApp: WindowPlatformApp {
     }
 
     @MainActor
+    package func setWindowRect(windowId: UInt32, _ rect: Rect?) {
+        windowRects[windowId] = rect
+    }
+
+    @MainActor
     package func setNativeFullscreen(windowId: UInt32, _ isFullscreen: Bool) {
         macosFullscreen[windowId] = isFullscreen
     }
@@ -89,7 +105,7 @@ package final class TestApp: WindowPlatformApp {
         macosMinimized[windowId] = isMinimized
     }
 
-    @MainActor package func getFocusedWindow() async throws -> Window? { focusedWindow }
+    @MainActor package func getFocusedPlatformWindowId() async throws -> UInt32? { focusedPlatformWindowId }
     @MainActor package func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
 
     package func getWindowRect(windowId: UInt32) async throws -> Rect? {
@@ -123,11 +139,16 @@ package final class TestApp: WindowPlatformApp {
 
     @MainActor
     package func closeAndUnregisterWindow(windowId: UInt32) {
-        Window.allWindowsMap[windowId]?.unbindFromParent()
-        Window.allWindowsMap.removeValue(forKey: windowId)
-        windows.removeAll { $0.windowId == windowId }
-        if focusedWindow?.windowId == windowId {
+        Window.get(byPlatformWindowId: windowId)?.unbindFromParent()
+        if let logicalWindow = Window.get(byPlatformWindowId: windowId) {
+            Window.allWindowsMap.removeValue(forKey: logicalWindow.windowId)
+        }
+        windows.removeAll { $0.platformWindowId == windowId }
+        if focusedWindow?.platformWindowId == windowId {
             focusedWindow = nil
+        }
+        if focusedPlatformWindowId == windowId {
+            focusedPlatformWindowId = nil
         }
         windowRects.removeValue(forKey: windowId)
         windowTitles.removeValue(forKey: windowId)
