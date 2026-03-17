@@ -36,8 +36,16 @@ public func parseUInt32SubArg(i: SubArgParserInput) -> ParsedCliArgs<UInt32> {
     }
 }
 
-public func optionalWindowIdFlag<T: CmdArgs>() -> SubArgParser<T, UInt32?> {
-    SubArgParser(\T.windowId, upcastSubArgParserFun(parseUInt32SubArg))
+public func parseFrameWindowIdSubArg(i: SubArgParserInput) -> ParsedCliArgs<FrameWindowId> {
+    if let arg = i.nonFlagArgOrNil() {
+        return .init(FrameWindowId(arg).orFailure("Can't parse '\(arg)'. It must have format '\(FrameWindowId.prefix)<number>'"), advanceBy: 1)
+    } else {
+        return .fail("'\(i.superArg)' must be followed by mandatory window id", advanceBy: 0)
+    }
+}
+
+public func optionalWindowIdFlag<T: CmdArgs>() -> SubArgParser<T, FrameWindowId?> {
+    SubArgParser(\T.windowId, upcastSubArgParserFun(parseFrameWindowIdSubArg))
 }
 public func optionalWorkspaceFlag<T: CmdArgs>() -> SubArgParser<T, WorkspaceName?> {
     SubArgParser(\T.workspaceName, upcastSubArgParserFun(parseWorkspaceNameSubArg))

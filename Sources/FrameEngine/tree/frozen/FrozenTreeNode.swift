@@ -12,7 +12,7 @@ struct FrozenColumn: Sendable {
 }
 
 struct FrozenWindow: Sendable {
-    let id: UInt32
+    let id: FrameWindowId
     let weight: CGFloat
 
     @MainActor init(_ window: Window) {

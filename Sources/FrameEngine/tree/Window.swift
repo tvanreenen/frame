@@ -2,7 +2,8 @@ import Common
 import Foundation
 
 package final class Window: TreeNode, Hashable {
-    package let windowId: UInt32
+    package let windowId: FrameWindowId
+    package private(set) var platformWindowId: UInt32
     package let app: any WindowPlatformApp
     package var lastKnownSize: CGSize?
     package var isFullscreenOverlay: Bool = false
@@ -10,15 +11,20 @@ package final class Window: TreeNode, Hashable {
     package var layoutReason: LayoutReason = .standard
     private var prevUnhiddenProportionalPositionInsideWorkspaceRect: CGPoint?
 
-    @MainActor package static var allWindowsMap: [UInt32: Window] {
+    @MainActor package static var allWindowsMap: [FrameWindowId: Window] {
         get { runtimeContext.windowsById }
         set { runtimeContext.windowsById = newValue }
+    }
+    @MainActor private static var frameIdByPlatformWindowId: [UInt32: FrameWindowId] {
+        get { runtimeContext.frameIdByPlatformWindowId }
+        set { runtimeContext.frameIdByPlatformWindowId = newValue }
     }
     @MainActor package static var allWindows: [Window] { Array(runtimeContext.windowsById.values) }
 
     @MainActor
     package init(
-        id: UInt32,
+        id: FrameWindowId,
+        platformWindowId: UInt32,
         _ app: any WindowPlatformApp,
         lastKnownSize: CGSize?,
         parent: NonLeafTreeNodeObject,
@@ -26,19 +32,26 @@ package final class Window: TreeNode, Hashable {
         index: Int,
     ) {
         self.windowId = id
+        self.platformWindowId = platformWindowId
         self.app = app
         self.lastKnownSize = lastKnownSize
         super.init(parent: parent, adaptiveWeight: adaptiveWeight, index: index)
     }
 
-    @MainActor package static func get(byId windowId: UInt32) -> Window? { // todo make non optional
+    @MainActor package static func get(byId windowId: FrameWindowId) -> Window? { // todo make non optional
         allWindowsMap[windowId]
     }
 
     @MainActor
     @discardableResult
+    package static func get(byPlatformWindowId platformWindowId: UInt32) -> Window? {
+        frameIdByPlatformWindowId[platformWindowId].flatMap { allWindowsMap[$0] }
+    }
+
+    @MainActor
+    @discardableResult
     package static func getOrRegister(windowId: UInt32, app: any WindowPlatformApp) async throws -> Window {
-        if let existing = allWindowsMap[windowId] { return existing }
+        if let existing = get(byPlatformWindowId: windowId) { return existing }
         let rect = try await app.getWindowRect(windowId: windowId)
         let data = try await unbindAndGetBindingDataForNewWindow(
             windowId,
@@ -50,16 +63,18 @@ package final class Window: TreeNode, Hashable {
         )
 
         // atomic synchronous section
-        if let existing = allWindowsMap[windowId] { return existing }
+        if let existing = get(byPlatformWindowId: windowId) { return existing }
         let window = Window(
-            id: windowId,
+            id: currentSession.makeFrameWindowId(),
+            platformWindowId: windowId,
             app,
             lastKnownSize: rect?.size,
             parent: data.parent,
             adaptiveWeight: data.adaptiveWeight,
             index: data.index,
         )
-        allWindowsMap[windowId] = window
+        allWindowsMap[window.windowId] = window
+        frameIdByPlatformWindowId[windowId] = window.windowId
         let session = currentSession
         if session.windowEventsDiagnosticsLogger.isEnabled(forBundleId: app.rawAppBundleId) {
             let placementKind = try await Window.resolvePlacementKind(windowId: windowId, app: app)
@@ -80,49 +95,69 @@ package final class Window: TreeNode, Hashable {
     @MainActor
     package static func registerForTests(_ window: Window) {
         allWindowsMap[window.windowId] = window
+        frameIdByPlatformWindowId[window.platformWindowId] = window.windowId
     }
 
     @MainActor
     package static func resetForTests() {
         allWindowsMap = [:]
+        frameIdByPlatformWindowId = [:]
     }
 
     @MainActor
     func closeWindow() {
         garbageCollect(skipClosedWindowsCache: true)
-        app.closeAndUnregisterWindow(windowId: windowId)
+        app.closeAndUnregisterWindow(windowId: platformWindowId)
+    }
+
+    @MainActor
+    package func rebind(toPlatformWindowId newPlatformWindowId: UInt32, lastKnownSize: CGSize?) {
+        let oldPlatformWindowId = platformWindowId
+        Window.frameIdByPlatformWindowId.removeValue(forKey: platformWindowId)
+        platformWindowId = newPlatformWindowId
+        Window.frameIdByPlatformWindowId[newPlatformWindowId] = windowId
+        if let lastKnownSize {
+            self.lastKnownSize = lastKnownSize
+        }
+        currentSession.windowEventsDiagnosticsLogger.logWindowRebound(
+            bundleId: app.rawAppBundleId,
+            pid: app.pid,
+            frameWindowId: windowId,
+            oldPlatformWindowId: oldPlatformWindowId,
+            newPlatformWindowId: newPlatformWindowId,
+        )
     }
 
     nonisolated public func hash(into hasher: inout Hasher) {
         hasher.combine(windowId)
     }
 
-    package func getTopLeftCorner() async throws -> CGPoint? { try await app.getWindowTopLeftCorner(windowId: windowId) }
-    package func getSize() async throws -> CGSize? { try await app.getWindowSize(windowId: windowId) }
-    package var title: String { get async throws { try await app.getWindowTitle(windowId: windowId) ?? "" } }
-    package var isNativeFullscreen: Bool { get async throws { try await app.isNativeFullscreen(windowId: windowId) == true } }
-    package var isNativeMinimized: Bool { get async throws { try await app.isNativeMinimized(windowId: windowId) == true } } // todo replace with enum NativeWindowState { normal, fullscreen, invisible }
+    package func getTopLeftCorner() async throws -> CGPoint? { try await app.getWindowTopLeftCorner(windowId: platformWindowId) }
+    package func getSize() async throws -> CGSize? { try await app.getWindowSize(windowId: platformWindowId) }
+    package var title: String { get async throws { try await app.getWindowTitle(windowId: platformWindowId) ?? "" } }
+    package var isNativeFullscreen: Bool { get async throws { try await app.isNativeFullscreen(windowId: platformWindowId) == true } }
+    package var isNativeMinimized: Bool { get async throws { try await app.isNativeMinimized(windowId: platformWindowId) == true } } // todo replace with enum NativeWindowState { normal, fullscreen, invisible }
     package var isHiddenInCorner: Bool { prevUnhiddenProportionalPositionInsideWorkspaceRect != nil }
     @MainActor
-    package func nativeFocus() { currentSession.platformServices.nativeFocusWindow(app, windowId) }
-    package func getRect() async throws -> Rect? { try await app.getWindowRect(windowId: windowId) }
+    package func nativeFocus() { currentSession.platformServices.nativeFocusWindow(app, platformWindowId) }
+    package func getRect() async throws -> Rect? { try await app.getWindowRect(windowId: platformWindowId) }
     package func getCenter() async throws -> CGPoint? { try await getRect()?.center }
 
     package func setFrameBlocking(_ topLeft: CGPoint?, _ size: CGSize?) async throws {
-        try await app.setWindowFrameBlocking(windowId: windowId, topLeft: topLeft, size: size)
+        try await app.setWindowFrameBlocking(windowId: platformWindowId, topLeft: topLeft, size: size)
     }
 
     package func setFrame(_ topLeft: CGPoint?, _ size: CGSize?) {
-        app.setWindowFrame(windowId: windowId, topLeft: topLeft, size: size)
+        app.setWindowFrame(windowId: platformWindowId, topLeft: topLeft, size: size)
     }
 
     @MainActor
     package func getResolvedPlacementKind() async throws -> WindowPlacementKind {
-        try await Window.resolvePlacementKind(windowId: windowId, app: app)
+        try await Window.resolvePlacementKind(windowId: platformWindowId, app: app)
     }
 
     package func dumpWindowInfo() async throws -> [String: Json] {
-        try await app.dumpWindowInfo(windowId: windowId)
+        try await app.dumpWindowInfo(windowId: platformWindowId)
     }
 
     @MainActor
@@ -186,10 +221,11 @@ package final class Window: TreeNode, Hashable {
         if Window.allWindowsMap.removeValue(forKey: windowId) == nil {
             return
         }
+        Window.frameIdByPlatformWindowId.removeValue(forKey: platformWindowId)
         currentSession.windowEventsDiagnosticsLogger.logWindowGarbageCollected(
             bundleId: app.rawAppBundleId,
             pid: app.pid,
-            windowId: windowId,
+            windowId: platformWindowId,
         )
         if !skipClosedWindowsCache { cacheClosedWindowIfNeeded() }
         let parent = unbindFromParent().parent

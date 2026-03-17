@@ -157,7 +157,7 @@ private func assertPreviousPlacement(_ layoutReason: LayoutReason, expected: Pre
 }
 
 @MainActor
-private func assertColumnChildren(_ workspace: Workspace, _ expected: [[UInt32]], file: String = #filePath, line: Int = #line) {
+private func assertColumnChildren(_ workspace: Workspace, _ expected: [[FrameWindowId]], file: String = #filePath, line: Int = #line) {
     let actual = workspace.columns.map { column in
         column.children.compactMap { ($0 as? Window)?.windowId }
     }

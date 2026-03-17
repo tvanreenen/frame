@@ -9,11 +9,13 @@ package struct AppSessionCallbackContext: @unchecked Sendable {
 package final class AppSession {
     package var config: Config
     package var configUrl: URL
-    package var windowsById: [UInt32: Window]
+    package var windowsById: [FrameWindowId: Window]
+    package var frameIdByPlatformWindowId: [UInt32: FrameWindowId]
     package var appsByPid: [pid_t: any WindowPlatformApp]
     package var appsWipByPid: [pid_t: AwaitableOneTimeBroadcastLatch]
     package var appFocusJob: RunLoopJob?
     package var closedWindowsCache: FrozenWorld
+    private var nextFrameWindowSerial: UInt32 = 0
 
     package var activeRefreshTask: Task<(), any Error>? = nil
 
@@ -30,19 +32,24 @@ package final class AppSession {
 
     // Session-owned seam for platform lookups, refresh, UI sync, and mouse state.
     package var platformServices: PlatformServices
-    package var currentlyManipulatedWithMouseWindowId: UInt32? = nil
+    package var currentlyManipulatedWithMouseWindowId: FrameWindowId? = nil
     nonisolated package let windowEventsDiagnosticsLogger: WindowEventsDiagnosticsLogger
 
-    package init(config: Config, configUrl: URL) {
+    package init(
+        config: Config,
+        configUrl: URL,
+        windowEventsDiagnosticsLogger: WindowEventsDiagnosticsLogger = WindowEventsDiagnosticsLogger(),
+    ) {
         self.config = config
         self.configUrl = configUrl
         windowsById = [:]
+        frameIdByPlatformWindowId = [:]
         appsByPid = [:]
         appsWipByPid = [:]
         appFocusJob = nil
         closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
         platformServices = PlatformServices()
-        windowEventsDiagnosticsLogger = WindowEventsDiagnosticsLogger()
+        self.windowEventsDiagnosticsLogger = windowEventsDiagnosticsLogger
     }
 
     package func initializedFocus() -> FrozenFocus {
@@ -58,6 +65,15 @@ package final class AppSession {
         focusState = focus
         lastKnownFocus = focus
         return focus
+    }
+
+    package func makeFrameWindowId(serial preferredSerial: UInt32? = nil) -> FrameWindowId {
+        if let preferredSerial {
+            nextFrameWindowSerial = max(nextFrameWindowSerial, preferredSerial)
+            return FrameWindowId(serial: preferredSerial)
+        }
+        nextFrameWindowSerial += 1
+        return FrameWindowId(serial: nextFrameWindowSerial)
     }
 
     package func initializedLastKnownFocus() -> FrozenFocus {

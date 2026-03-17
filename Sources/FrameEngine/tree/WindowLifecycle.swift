@@ -5,7 +5,7 @@ extension Window {
     func relayoutWindow(on workspace: Workspace, forceTile: Bool = false) async throws {
         let data = forceTile
             ? unbindAndGetBindingDataForNewTilingWindow(on: workspace, window: self)
-            : try await unbindAndGetBindingDataForNewWindow(windowId, app, workspace, window: self)
+            : try await unbindAndGetBindingDataForNewWindow(platformWindowId, app, workspace, window: self)
         bind(to: data.parent, adaptiveWeight: data.adaptiveWeight, index: data.index)
     }
 }

@@ -17,7 +17,7 @@ public protocol CmdArgs: ConvenienceCopyable, Equatable, CustomStringConvertible
 
 public struct CmdArgsCommonState: ConvenienceCopyable, Equatable, Sendable {
     let rawArgsForStrRepr: EquatableNoop<StrArrSlice>
-    var windowId: UInt32? = nil
+    var windowId: FrameWindowId? = nil
     var workspaceName: WorkspaceName? = nil
 
     public init(_ raw: StrArrSlice) { rawArgsForStrRepr = .init(raw) }
@@ -26,7 +26,7 @@ public struct CmdArgsCommonState: ConvenienceCopyable, Equatable, Sendable {
 extension CmdArgs {
     public static var info: CmdStaticInfo { Self.parser.info }
 
-    public var windowId: UInt32? {
+    public var windowId: FrameWindowId? {
         get { commonState.windowId }
         set(value) { commonState.windowId = value }
     }

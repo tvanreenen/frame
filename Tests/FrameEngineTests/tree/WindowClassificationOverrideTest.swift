@@ -80,7 +80,7 @@ private final class ClassificationTestApp: WindowPlatformApp {
         self.windowTitle = windowTitle
     }
 
-    @MainActor func getFocusedWindow() async throws -> Window? { nil }
+    @MainActor func getFocusedPlatformWindowId() async throws -> UInt32? { nil }
     @MainActor func setLastNativeFocusedWindowId(_ windowId: UInt32?) {}
     @MainActor func closeAndUnregisterWindow(windowId: UInt32) {}
 

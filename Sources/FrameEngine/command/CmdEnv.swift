@@ -1,10 +1,10 @@
 import Common
 
 package struct CmdEnv: ConvenienceCopyable {
-    package var windowId: UInt32?
+    package var windowId: FrameWindowId?
     package var workspaceName: String?
 
-    package init(windowId: UInt32? = nil, workspaceName: String? = nil) {
+    package init(windowId: FrameWindowId? = nil, workspaceName: String? = nil) {
         self.windowId = windowId
         self.workspaceName = workspaceName
     }

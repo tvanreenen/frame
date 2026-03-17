@@ -30,7 +30,7 @@ final class ClientServerTest: XCTestCase {
 
     func testClientRequestJsonV3_decoding2() {
         let data = """
-            { "args": ["foo", "bar"], "stdin": "stdin", "windowId": 1, "workspace": "foo" }
+            { "args": ["foo", "bar"], "stdin": "stdin", "windowId": "frame-1", "workspace": "foo" }
             """.data(using: .utf8)!
         let expected = ClientRequest(args: ["foo", "bar"], stdin: "stdin", windowId: 1, workspace: "foo")
         assertSucc(ClientRequest.decodeJson(data), expected)
@@ -48,7 +48,7 @@ final class ClientServerTest: XCTestCase {
         encoder.outputFormatting = [.sortedKeys]
         let testData = [
             (ClientRequest(args: ["args"], stdin: "stdin", windowId: 0, workspace: "foo"), """
-                {"args":["args"],"stdin":"stdin","windowId":0,"workspace":"foo"}
+                {"args":["args"],"stdin":"stdin","windowId":"frame-0","workspace":"foo"}
                 """),
             (ClientRequest(args: ["args"], stdin: "stdin", windowId: nil, workspace: nil), """
                 {"args":["args"],"stdin":"stdin","windowId":null,"workspace":null}

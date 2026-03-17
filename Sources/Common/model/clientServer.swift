@@ -31,13 +31,13 @@ public struct ClientRequest: Codable, Sendable, ConvenienceCopyable, Equatable {
 
     // Please forward FRAME_WINDOW_ID and FRAME_WORKSPACE to these fields.
     // The fields are required to be present in the JSON payload and can be null.
-    public var windowId: UInt32?
+    public var windowId: FrameWindowId?
     public var workspace: String?
 
     public init(
         args: [String],
         stdin: String,
-        windowId: UInt32?,
+        windowId: FrameWindowId?,
         workspace: String?,
     ) {
         self.args = args
@@ -73,7 +73,7 @@ public struct ClientRequest: Codable, Sendable, ConvenienceCopyable, Equatable {
                 DecodingError.Context(codingPath: container.codingPath, debugDescription: "'workspace' field is mandatory"),
             )
         }
-        windowId = try container.decode(UInt32?.self, forKey: .windowId)
+        windowId = try container.decode(FrameWindowId?.self, forKey: .windowId)
         workspace = try container.decode(String?.self, forKey: .workspace)
     }
 

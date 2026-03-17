@@ -294,7 +294,7 @@ final class WindowArchitectureTest: XCTestCase {
         let macosHooksContent = try String(contentsOf: macosHooksFile)
         let abstractAppContent = try String(contentsOf: abstractAppFile)
 
-        XCTAssertTrue(windowContent.contains("currentSession.platformServices.nativeFocusWindow(app, windowId)"))
+        XCTAssertTrue(windowContent.contains("currentSession.platformServices.nativeFocusWindow(app, platformWindowId)"))
         XCTAssertTrue(hooksContent.contains("package var nativeFocusWindow:"))
         XCTAssertTrue(macosHooksContent.contains("nativeFocusWindow: { app, windowId in"))
         XCTAssertFalse(abstractAppContent.contains("func nativeFocus(windowId: UInt32)"))
@@ -366,7 +366,7 @@ final class WindowArchitectureTest: XCTestCase {
         window.nativeFocus()
 
         assertEquals(followedPoint, workspace.workspaceMonitor.rect.center)
-        assertEquals(focusedWindowId, window.windowId)
+        assertEquals(focusedWindowId, window.platformWindowId)
     }
 
     func testRelayoutWindowFromExcludedStillWorks() async throws {

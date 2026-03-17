@@ -1,6 +1,37 @@
 import Common
 import Foundation
 
+package struct AppWindowBindingSnapshot: Equatable {
+    package let frameWindowId: FrameWindowId
+    package let platformWindowId: UInt32
+    package let appPid: Int32
+}
+
+package struct PlannedWindowRebind: Equatable {
+    package let frameWindowId: FrameWindowId
+    package let expectedPlatformWindowId: UInt32
+    package let newPlatformWindowId: UInt32
+    package let lastKnownSize: CGSize?
+}
+
+package struct PlannedWindowGarbageCollection: Equatable {
+    package let frameWindowId: FrameWindowId
+    package let expectedPlatformWindowId: UInt32
+}
+
+package struct AppRefreshPlan: Equatable {
+    package let snapshotPlatformWindowIds: [UInt32]
+    package let unmatchedFrameWindowIds: [FrameWindowId]
+    package let unmatchedWindowIds: [UInt32]
+    package let focusedWindowId: UInt32?
+    package let replacementFrameWindowId: FrameWindowId?
+    package let replacementWindowId: UInt32?
+    package let replacementReason: String
+    package let rebind: PlannedWindowRebind?
+    package let garbageCollections: [PlannedWindowGarbageCollection]
+    package let registerWindowIds: [UInt32]
+}
+
 extension AppSession {
     @MainActor package func scheduleRefreshSession(
         _ event: RefreshSessionEvent,
@@ -29,6 +60,9 @@ extension AppSession {
 
                 refreshModel()
                 try await refresh()
+                let nativeFocusedAfterRefresh = try await platformServices.nativeFocusedWindow()
+                updateFocusCache(nativeFocusedAfterRefresh)
+                refreshModel()
                 gcMonitors()
 
                 platformServices.syncUiState(self)
@@ -77,23 +111,209 @@ extension AppSession {
 
     @MainActor
     private func refresh() async throws {
-        // Garbage collect terminated apps and windows before working with all windows
         let mapping = try await platformServices.refreshPlatformApps(platformServices.frontmostAppBundleId())
-        let aliveWindowIds = mapping.flatMap { $0.1 }.toSet()
+        let processedPids = mapping.map(\.app.pid).toSet()
+        let windowBindingSnapshotsByPid = Dictionary(grouping: Window.allWindows.map {
+            AppWindowBindingSnapshot(
+                frameWindowId: $0.windowId,
+                platformWindowId: $0.platformWindowId,
+                appPid: $0.app.pid,
+            )
+        }, by: \.appPid)
 
-        for window in Window.allWindows {
-            if !aliveWindowIds.contains(window.windowId) {
-                window.garbageCollect(skipClosedWindowsCache: false)
-            }
+        for (app, snapshot) in mapping {
+            let bindingSnapshots = windowBindingSnapshotsByPid[app.pid] ?? []
+            let plan = try await makeAppRefreshPlan(app: app, snapshot: snapshot, bindingSnapshots: bindingSnapshots)
+            try await applyAppRefreshPlan(plan, app: app)
         }
-        for (app, windowIds) in mapping {
-            for windowId in windowIds {
-                try await Window.getOrRegister(windowId: windowId, app: app)
-            }
+
+        for window in Window.allWindows where !processedPids.contains(window.app.pid) {
+            window.garbageCollect(skipClosedWindowsCache: false)
         }
 
         // Garbage collect workspaces after apps, because workspaces contain apps.
         garbageCollectUnusedWorkspaces()
+    }
+
+    @MainActor
+    package func makeAppRefreshPlan(
+        app: any WindowPlatformApp,
+        snapshot: PlatformAppRefreshSnapshot,
+        bindingSnapshots: [AppWindowBindingSnapshot],
+    ) async throws -> AppRefreshPlan {
+        let windowIds = snapshot.windowIds
+        let windowIdSet = windowIds.toSet()
+        let snapshotPlatformWindowIds = bindingSnapshots.map(\.platformWindowId)
+
+        let unmatchedBindingSnapshots = bindingSnapshots.filter { !windowIdSet.contains($0.platformWindowId) }
+        let unmatchedWindowIds = windowIds.filter { windowId in
+            !bindingSnapshots.contains { $0.platformWindowId == windowId }
+        }
+        let replacementFrameWindowId = unmatchedBindingSnapshots.singleOrNil()?.frameWindowId
+        let candidateReplacementWindowId =
+            unmatchedBindingSnapshots.count == 1
+            ? try await replacementPlatformWindowId(
+                for: unmatchedBindingSnapshots[0],
+                candidates: unmatchedWindowIds,
+                app: app,
+                focusedWindowId: snapshot.focusedWindowId,
+            )
+            : nil
+
+        let replacementReason: String
+        if unmatchedBindingSnapshots.isEmpty && unmatchedWindowIds.isEmpty {
+            replacementReason = "exact_matches_only"
+        } else if unmatchedBindingSnapshots.count != 1 {
+            replacementReason = "unmatched_windows_count_\(unmatchedBindingSnapshots.count)"
+        } else if candidateReplacementWindowId == nil {
+            replacementReason = "no_replacement_candidate"
+        } else {
+            replacementReason = "rebind"
+        }
+
+        let rebind: PlannedWindowRebind?
+        let garbageCollections: [PlannedWindowGarbageCollection]
+        let registerWindowIds: [UInt32]
+        if replacementReason == "rebind",
+            let replacementWindowId = candidateReplacementWindowId,
+            let reboundSnapshot = unmatchedBindingSnapshots.singleOrNil()
+        {
+            let rect = try await app.getWindowRect(windowId: replacementWindowId)
+            rebind = PlannedWindowRebind(
+                frameWindowId: reboundSnapshot.frameWindowId,
+                expectedPlatformWindowId: reboundSnapshot.platformWindowId,
+                newPlatformWindowId: replacementWindowId,
+                lastKnownSize: rect?.size,
+            )
+            garbageCollections = []
+            registerWindowIds = unmatchedWindowIds.filter { $0 != replacementWindowId }
+        } else {
+            rebind = nil
+            garbageCollections = unmatchedBindingSnapshots.map {
+                PlannedWindowGarbageCollection(
+                    frameWindowId: $0.frameWindowId,
+                    expectedPlatformWindowId: $0.platformWindowId,
+                )
+            }
+            registerWindowIds = unmatchedWindowIds
+        }
+
+        return AppRefreshPlan(
+            snapshotPlatformWindowIds: snapshotPlatformWindowIds,
+            unmatchedFrameWindowIds: unmatchedBindingSnapshots.map(\.frameWindowId),
+            unmatchedWindowIds: unmatchedWindowIds,
+            focusedWindowId: snapshot.focusedWindowId,
+            replacementFrameWindowId: replacementFrameWindowId,
+            replacementWindowId: candidateReplacementWindowId,
+            replacementReason: replacementReason,
+            rebind: rebind,
+            garbageCollections: garbageCollections,
+            registerWindowIds: registerWindowIds,
+        )
+    }
+
+    @MainActor
+    package func applyAppRefreshPlan(
+        _ plan: AppRefreshPlan,
+        app: any WindowPlatformApp,
+    ) async throws {
+        currentSession.windowEventsDiagnosticsLogger.logRefreshReconcile(
+            bundleId: app.rawAppBundleId,
+            pid: app.pid,
+            existingPlatformWindowIds: plan.snapshotPlatformWindowIds,
+            unmatchedFrameWindowIds: plan.unmatchedFrameWindowIds.map(\.description),
+            unmatchedWindowIds: plan.unmatchedWindowIds,
+            focusedWindowId: plan.focusedWindowId,
+            replacementFrameWindowId: plan.replacementFrameWindowId,
+            replacementWindowId: plan.replacementWindowId,
+            replacementReason: plan.replacementReason,
+            applyResult: nil,
+        )
+        try checkCancellation()
+        if let applyResult = validateAppRefreshPlan(plan) {
+            currentSession.windowEventsDiagnosticsLogger.logRefreshReconcile(
+                bundleId: app.rawAppBundleId,
+                pid: app.pid,
+                existingPlatformWindowIds: plan.snapshotPlatformWindowIds,
+                unmatchedFrameWindowIds: plan.unmatchedFrameWindowIds.map(\.description),
+                unmatchedWindowIds: plan.unmatchedWindowIds,
+                focusedWindowId: plan.focusedWindowId,
+                replacementFrameWindowId: plan.replacementFrameWindowId,
+                replacementWindowId: plan.replacementWindowId,
+                replacementReason: plan.replacementReason,
+                applyResult: applyResult,
+            )
+            return
+        }
+
+        if let rebind = plan.rebind {
+            Window.get(byId: rebind.frameWindowId)?.rebind(
+                toPlatformWindowId: rebind.newPlatformWindowId,
+                lastKnownSize: rebind.lastKnownSize,
+            )
+        }
+        for garbageCollection in plan.garbageCollections {
+            Window.get(byId: garbageCollection.frameWindowId)?.garbageCollect(skipClosedWindowsCache: false)
+        }
+        for windowId in plan.registerWindowIds {
+            try checkCancellation()
+            _ = try await Window.getOrRegister(windowId: windowId, app: app)
+        }
+    }
+
+    @MainActor
+    private func validateAppRefreshPlan(_ plan: AppRefreshPlan) -> String? {
+        if let rebind = plan.rebind {
+            guard let window = Window.get(byId: rebind.frameWindowId),
+                window.platformWindowId == rebind.expectedPlatformWindowId,
+                Window.get(byPlatformWindowId: rebind.newPlatformWindowId) == nil
+            else {
+                return "snapshot_drift"
+            }
+        }
+        for garbageCollection in plan.garbageCollections {
+            guard let window = Window.get(byId: garbageCollection.frameWindowId),
+                window.platformWindowId == garbageCollection.expectedPlatformWindowId
+            else {
+                return "snapshot_drift"
+            }
+        }
+        for windowId in plan.registerWindowIds where Window.get(byPlatformWindowId: windowId) != nil {
+            return "snapshot_drift"
+        }
+        return nil
+    }
+
+    @MainActor
+    private func replacementPlatformWindowId(
+        for window: AppWindowBindingSnapshot,
+        candidates: [UInt32],
+        app: any WindowPlatformApp,
+        focusedWindowId: UInt32?,
+    ) async throws -> UInt32? {
+        if candidates.count == 1 {
+            return candidates.singleOrNil()
+        }
+        guard let currentRect = try await app.getWindowRect(windowId: window.platformWindowId) else { return nil }
+
+        var matchingCandidates: [UInt32] = []
+        for candidate in candidates {
+            if let candidateRect = try await app.getWindowRect(windowId: candidate),
+                candidateRect.topLeftX == currentRect.topLeftX,
+                candidateRect.topLeftY == currentRect.topLeftY,
+                candidateRect.width == currentRect.width,
+                candidateRect.height == currentRect.height
+            {
+                matchingCandidates.append(candidate)
+            }
+        }
+        if matchingCandidates.count == 1 {
+            return matchingCandidates.singleOrNil()
+        }
+        if let focusedWindowId, matchingCandidates.count > 1 {
+            return matchingCandidates.filter { $0 == focusedWindowId }.singleOrNil()
+        }
+        return nil
     }
 
     @MainActor
