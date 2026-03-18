@@ -4,7 +4,6 @@ import FrameEngine
 
 struct ListWorkspacesCommand: Command {
     let args: ListWorkspacesCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
         var result: [Workspace] = Workspace.all

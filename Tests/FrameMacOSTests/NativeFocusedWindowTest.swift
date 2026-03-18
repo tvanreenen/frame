@@ -18,21 +18,30 @@ final class NativeFocusedWindowTest: XCTestCase {
         assertEquals(Window.allWindows.count, 0)
     }
 
-    func testAuthoritativeTopLevelWindowIdsIgnoreCachedWindows() {
-        let result = makeAuthoritativeTopLevelWindowIds(
-            axWindowIds: [5085],
-            focusedWindowId: 5085,
+    func testPlatformObservationUnavailableReasonIsNilWhenObservationIsHealthy() {
+        let result = makePlatformObservationUnavailableReason(
+            frontmostAppBundleId: nil,
+            isAccessibilityTrusted: true,
         )
 
-        assertEquals(result, [5085])
+        XCTAssertNil(result)
     }
 
-    func testAuthoritativeTopLevelWindowIdsIncludeFocusedWindowOnce() {
-        let result = makeAuthoritativeTopLevelWindowIds(
-            axWindowIds: [5085],
-            focusedWindowId: 5091,
+    func testPlatformObservationUnavailableReasonDetectsScreenLock() {
+        let result = makePlatformObservationUnavailableReason(
+            frontmostAppBundleId: lockScreenAppBundleId,
+            isAccessibilityTrusted: true,
         )
 
-        assertEquals(result, [5085, 5091])
+        assertEquals(result, .screenLocked)
+    }
+
+    func testPlatformObservationUnavailableReasonDetectsAccessibilityOutage() {
+        let result = makePlatformObservationUnavailableReason(
+            frontmostAppBundleId: nil,
+            isAccessibilityTrusted: false,
+        )
+
+        assertEquals(result, .accessibilityUnavailable)
     }
 }

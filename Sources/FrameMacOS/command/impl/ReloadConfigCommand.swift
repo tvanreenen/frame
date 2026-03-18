@@ -5,7 +5,6 @@ import FrameUI
 
 struct ReloadConfigCommand: Command {
     let args: ReloadConfigCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         var stdout = ""

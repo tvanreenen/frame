@@ -21,8 +21,8 @@ final class WindowIdentityReconciliationTest: XCTestCase {
             Rect(topLeftX: 0, topLeftY: 0, width: 800, height: 600),
         )
 
-        currentSession.platformServices.refreshPlatformApps = { _ in
-            [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [3244], focusedWindowId: 3244))]
+        currentSession.platformServices.refreshPlatformState = {
+            .observed(appSnapshots: [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [3244], focusedWindowId: 3244))])
         }
 
         try await currentSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
@@ -87,8 +87,8 @@ final class WindowIdentityReconciliationTest: XCTestCase {
             Rect(topLeftX: 900, topLeftY: 0, width: 800, height: 600),
         )
 
-        currentSession.platformServices.refreshPlatformApps = { _ in
-            [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [3244, 3356], focusedWindowId: 3356))]
+        currentSession.platformServices.refreshPlatformState = {
+            .observed(appSnapshots: [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [3244, 3356], focusedWindowId: 3356))])
         }
 
         try await currentSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
@@ -119,8 +119,8 @@ final class WindowIdentityReconciliationTest: XCTestCase {
         currentSession.platformServices.nativeFocusedWindow = {
             NativeFocusedWindowSnapshot(app: TestApp.shared, platformWindowId: 3244)
         }
-        currentSession.platformServices.refreshPlatformApps = { _ in
-            [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [3244], focusedWindowId: 3244))]
+        currentSession.platformServices.refreshPlatformState = {
+            .observed(appSnapshots: [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [3244], focusedWindowId: 3244))])
         }
 
         try await currentSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
@@ -129,6 +129,54 @@ final class WindowIdentityReconciliationTest: XCTestCase {
         XCTAssertTrue(focus.windowOrNil === original)
         assertEquals(Window.allWindows.count, 1)
         assertEquals(original.platformWindowId, 3244)
+    }
+
+    func testUnavailablePlatformRefreshPreservesLogicalWindows() async throws {
+        let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let original = TestWindow.new(
+            id: 4044,
+            parent: column,
+            rect: Rect(topLeftX: 0, topLeftY: 0, width: 800, height: 600),
+        )
+
+        currentSession.platformServices.refreshPlatformState = {
+            .unavailable(reason: .screenLocked)
+        }
+
+        try await currentSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
+
+        XCTAssertTrue(Window.get(byId: original.windowId) === original)
+        XCTAssertTrue(original.nodeWorkspace === workspace)
+        assertEquals(Window.allWindows.count, 1)
+    }
+
+    func testObservedRefreshAfterOutagePreservesLogicalWindow() async throws {
+        let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        let original = TestWindow.new(
+            id: 4044,
+            parent: column,
+            rect: Rect(topLeftX: 0, topLeftY: 0, width: 800, height: 600),
+        )
+        var refreshCount = 0
+
+        currentSession.platformServices.refreshPlatformState = {
+            defer { refreshCount += 1 }
+            if refreshCount == 0 {
+                return .unavailable(reason: .screenLocked)
+            }
+            return .observed(appSnapshots: [(TestApp.shared as any WindowPlatformApp, PlatformAppRefreshSnapshot(windowIds: [4044], focusedWindowId: 4044))])
+        }
+
+        try await currentSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
+
+        try await currentSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
+
+        XCTAssertTrue(Window.get(byId: original.windowId) === original)
+        XCTAssertTrue(Window.get(byPlatformWindowId: 4044) === original)
+        XCTAssertTrue(original.nodeWorkspace === workspace)
+        assertEquals(Window.allWindows.count, 1)
     }
 
     func testRebindLogsWindowReboundWithoutWindowRegistered() async throws {

@@ -2,7 +2,6 @@ import Common
 
 struct DebugWindowEventsCommand: Command {
     let args: DebugWindowEventsCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     @MainActor
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {

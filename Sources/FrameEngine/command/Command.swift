@@ -5,9 +5,6 @@ package protocol Command: AeroAny, Equatable, Sendable {
     var args: T { get }
     @MainActor
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool
-
-    /// We should reset closedWindowsCache when the command can potentiall change the tree
-    var shouldResetClosedWindowsCache: Bool { get }
 }
 
 extension Command {
@@ -50,7 +47,6 @@ extension [any Command] {
             var isSucc = true
             for command in self {
                 isSucc = try await command.run(in: session, env, io) && isSucc
-                if command.shouldResetClosedWindowsCache { resetClosedWindowsCache() }
                 refreshModel()
             }
             return isSucc

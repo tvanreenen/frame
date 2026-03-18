@@ -118,6 +118,33 @@ final class WindowEventsDiagnosticsLoggerTest: XCTestCase {
         assertEquals((payload["windowId"] as? NSNumber)?.intValue, 10)
     }
 
+    func testPlatformRefreshLogsObservedAndUnavailableStates() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let logger = WindowEventsDiagnosticsLogger(logPath: url.path)
+        _ = logger.toggleRuntime(forBundleId: "com.mitchellh.ghostty")
+        logger.logPlatformRefreshObserved()
+        logger.logPlatformRefreshUnavailable(reason: .screenLocked)
+
+        logger.flush()
+
+        let lines = try String(contentsOf: url, encoding: .utf8)
+            .split(separator: "\n")
+            .map(String.init)
+        assertEquals(lines.count, 2)
+
+        let observed = try XCTUnwrap(parseLine(lines[0]))
+        assertEquals(observed["event"] as? String, "platform_refresh")
+        assertEquals(observed["platformRefreshState"] as? String, "observed")
+        XCTAssertNil(observed["unavailableReason"])
+
+        let unavailable = try XCTUnwrap(parseLine(lines[1]))
+        assertEquals(unavailable["event"] as? String, "platform_refresh")
+        assertEquals(unavailable["platformRefreshState"] as? String, "unavailable")
+        assertEquals(unavailable["unavailableReason"] as? String, "screenLocked")
+    }
+
     func testWindowReboundIncludesLogicalAndPlatformIds() throws {
         let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
         defer { try? FileManager.default.removeItem(at: url) }

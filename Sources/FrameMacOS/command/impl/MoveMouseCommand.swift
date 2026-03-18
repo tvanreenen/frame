@@ -4,7 +4,6 @@ import FrameEngine
 
 struct MoveMouseCommand: Command {
     let args: MoveMouseCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {
         let mouse = session.platformServices.mouseLocation()

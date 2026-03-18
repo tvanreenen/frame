@@ -2,7 +2,6 @@ import Common
 
 struct FullscreenCommand: Command {
     let args: FullscreenCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }

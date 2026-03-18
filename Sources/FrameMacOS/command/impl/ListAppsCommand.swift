@@ -4,7 +4,6 @@ import FrameEngine
 
 struct ListAppsCommand: Command {
     let args: ListAppsCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
         var result = session.registeredMacApps

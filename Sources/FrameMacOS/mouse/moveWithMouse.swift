@@ -27,7 +27,6 @@ func movedObs(_ obs: AXObserver, ax: AXUIElement, notif: CFString, data: UnsafeM
 
 @MainActor
 private func moveWithMouse(_ window: Window) async throws { // todo cover with tests
-    resetClosedWindowsCache()
     guard let parent = window.parent else { return }
     if parent is Column {
         moveTilingWindow(window)

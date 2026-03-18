@@ -4,11 +4,6 @@ import FrameEngine
 
 enum GlobalObserver {
     private static func onNotif(session: AppSession, _ notification: Notification) {
-        // Third line of defence against lock screen window. See: closedWindowsCache
-        // Second and third lines of defence are technically needed only to avoid potential flickering
-        if (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier == lockScreenAppBundleId {
-            return
-        }
         let notifName = notification.name.rawValue
         Task { @MainActor in
             if notifName == NSWorkspace.didActivateApplicationNotification.rawValue {
