@@ -3,7 +3,6 @@ import FrameEngine
 
 struct DoctorCommand: Command {
     let args: DoctorCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     @MainActor
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) async throws -> Bool {

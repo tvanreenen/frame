@@ -14,7 +14,6 @@ package final class AppSession {
     package var appsByPid: [pid_t: any WindowPlatformApp]
     package var appsWipByPid: [pid_t: AwaitableOneTimeBroadcastLatch]
     package var appFocusJob: RunLoopJob?
-    package var closedWindowsCache: FrozenWorld
     private var nextFrameWindowSerial: UInt32 = 0
 
     package var activeRefreshTask: Task<(), any Error>? = nil
@@ -47,7 +46,6 @@ package final class AppSession {
         appsByPid = [:]
         appsWipByPid = [:]
         appFocusJob = nil
-        closedWindowsCache = FrozenWorld(workspaces: [], monitors: [], windowIds: [])
         platformServices = PlatformServices()
         self.windowEventsDiagnosticsLogger = windowEventsDiagnosticsLogger
     }

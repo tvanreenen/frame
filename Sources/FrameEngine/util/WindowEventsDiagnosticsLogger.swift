@@ -35,6 +35,8 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
         let replacementFrameWindowId: String?
         let replacementReason: String?
         let applyResult: String?
+        let platformRefreshState: String?
+        let unavailableReason: String?
         let placementKind: String?
         let title: String?
     }
@@ -134,6 +136,18 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
                 placementKind: nil,
                 title: nil,
             )
+        }
+    }
+
+    package func logPlatformRefreshObserved() {
+        queue.async {
+            self.logTrackedPlatformRefresh(state: "observed", reason: nil)
+        }
+    }
+
+    package func logPlatformRefreshUnavailable(reason: PlatformObservationUnavailableReason) {
+        queue.async {
+            self.logTrackedPlatformRefresh(state: "unavailable", reason: reason.rawValue)
         }
     }
 
@@ -352,10 +366,44 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
             replacementFrameWindowId: replacementFrameWindowId,
             replacementReason: replacementReason,
             applyResult: applyResult,
+            platformRefreshState: nil,
+            unavailableReason: nil,
             placementKind: placementKind,
             title: title,
         )
 
+        guard let data = try? encoder.encode(line) else { return }
+        appendLine(data)
+    }
+
+    private func logTrackedPlatformRefresh(state refreshState: String, reason: String?) {
+        guard let bundleId = self.state.runtimeAppBundleId else { return }
+        let line = LogLine(
+            timestamp: iso8601Formatter.string(from: .now),
+            event: "platform_refresh",
+            bundleId: bundleId,
+            pid: nil,
+            frameWindowId: nil,
+            windowId: nil,
+            oldPlatformWindowId: nil,
+            newPlatformWindowId: nil,
+            notification: nil,
+            source: nil,
+            alreadyRegistered: nil,
+            axWindowIds: nil,
+            authoritativeWindowIds: nil,
+            focusedWindowId: nil,
+            existingPlatformWindowIds: nil,
+            unmatchedFrameWindowIds: nil,
+            unmatchedWindowIds: nil,
+            replacementFrameWindowId: nil,
+            replacementReason: nil,
+            applyResult: nil,
+            platformRefreshState: refreshState,
+            unavailableReason: reason,
+            placementKind: nil,
+            title: nil,
+        )
         guard let data = try? encoder.encode(line) else { return }
         appendLine(data)
     }

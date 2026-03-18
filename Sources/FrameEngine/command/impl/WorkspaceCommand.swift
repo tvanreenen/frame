@@ -3,7 +3,6 @@ import Foundation
 
 struct WorkspaceCommand: Command {
     let args: WorkspaceCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool { // todo refactor
         guard let target = args.resolveTargetOrReportError(env, io) else { return false }

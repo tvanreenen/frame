@@ -3,6 +3,19 @@ import Common
 import FrameEngine
 
 extension AppSession {
+    func refreshMacOSPlatformState() async throws -> PlatformRefreshResult {
+        let unavailableReason = makePlatformObservationUnavailableReason(
+            frontmostAppBundleId: NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+            isAccessibilityTrusted: AXIsProcessTrusted(),
+        )
+        if let unavailableReason {
+            return .unavailable(reason: unavailableReason)
+        }
+        let appSnapshots = try await refreshAllMacAppsAndGetWindowSnapshots()
+            .map { ($0.key as any WindowPlatformApp, $0.value) }
+        return .observed(appSnapshots: appSnapshots)
+    }
+
     var registeredMacApps: [MacApp] {
         appsByPid.values.compactMap { $0 as? MacApp }
     }
@@ -62,7 +75,7 @@ extension AppSession {
         }
     }
 
-    func refreshAllMacAppsAndGetWindowSnapshots(frontmostAppBundleId: String?) async throws -> [MacApp: PlatformAppRefreshSnapshot] {
+    func refreshAllMacAppsAndGetWindowSnapshots() async throws -> [MacApp: PlatformAppRefreshSnapshot] {
         for (_, app) in appsByPid { // gc dead apps
             try checkCancellation()
             guard let app = app as? MacApp else { continue }
@@ -79,7 +92,7 @@ extension AppSession {
                     guard let app = try await self.getOrRegisterMacApp(nsApp) else {
                         return (nsApp.processIdentifier, PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil))
                     }
-                    return (nsApp.processIdentifier, try await app.refreshAndGetWindowSnapshot(frontmostAppBundleId: frontmostAppBundleId))
+                    return (nsApp.processIdentifier, try await app.refreshAndGetWindowSnapshot())
                 }
             }
             // Register new apps
@@ -310,7 +323,7 @@ final class MacApp: WindowPlatformApp {
         }
     }
 
-    fileprivate func refreshAndGetWindowSnapshot(frontmostAppBundleId: String?) async throws -> PlatformAppRefreshSnapshot {
+    fileprivate func refreshAndGetWindowSnapshot() async throws -> PlatformAppRefreshSnapshot {
         if nsApp.isTerminated {
             await destroy()
             return PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil)
@@ -319,13 +332,9 @@ final class MacApp: WindowPlatformApp {
         let (deadWindowIds, focusedWindowId, rawAxWindowIds) = try await thread.runInLoop { [nsApp, windows, axApp, observerContext] (job) -> ([UInt32], UInt32?, [UInt32]) in
             var cachedWindows = windows.threadGuarded
             var dead = [UInt32: AxWindow]()
-            // Second line of defence against lock screen. See the first line of defence: closedWindowsCache
-            // Second and third lines of defence are technically needed only to avoid potential flickering
-            if frontmostAppBundleId != lockScreenAppBundleId {
-                (cachedWindows, dead) = try cachedWindows.partition {
-                    try job.checkCancellation()
-                    return $0.value.ax.containingWindowId() != nil
-                }
+            (cachedWindows, dead) = try cachedWindows.partition {
+                try job.checkCancellation()
+                return $0.value.ax.containingWindowId() != nil
             }
 
             let axWindows = axApp.threadGuarded.get(Ax.windowsAttr) ?? []
@@ -351,10 +360,10 @@ final class MacApp: WindowPlatformApp {
             windows.threadGuarded = cachedWindows
             return (Array(dead.keys), focusedWindowId, axWindows.map(\.windowId))
         }
-        let authoritativeWindowIds = makeAuthoritativeTopLevelWindowIds(
-            axWindowIds: rawAxWindowIds,
-            focusedWindowId: focusedWindowId,
-        )
+        var authoritativeWindowIds = rawAxWindowIds
+        if let focusedWindowId, !authoritativeWindowIds.contains(focusedWindowId) {
+            authoritativeWindowIds.append(focusedWindowId)
+        }
         windowsCount = authoritativeWindowIds.count
         AppSession.fromCallbackContext(observerContext)?.windowEventsDiagnosticsLogger.logAppRefresh(
             bundleId: rawAppBundleId,
@@ -400,17 +409,6 @@ final class MacApp: WindowPlatformApp {
             try? body(window.ax, job)
         } ?? .cancelled
     }
-}
-
-package func makeAuthoritativeTopLevelWindowIds(
-    axWindowIds: [UInt32],
-    focusedWindowId: UInt32?,
-) -> [UInt32] {
-    var authoritativeWindowIds = axWindowIds
-    if let focusedWindowId, !authoritativeWindowIds.contains(focusedWindowId) {
-        authoritativeWindowIds.append(focusedWindowId)
-    }
-    return authoritativeWindowIds
 }
 
 private final class AxWindow {

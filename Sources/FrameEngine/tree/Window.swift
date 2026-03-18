@@ -87,8 +87,6 @@ package final class Window: TreeNode, Hashable {
                 title: title,
             )
         }
-
-        _ = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: window)
         return window
     }
 
@@ -106,7 +104,7 @@ package final class Window: TreeNode, Hashable {
 
     @MainActor
     func closeWindow() {
-        garbageCollect(skipClosedWindowsCache: true)
+        garbageCollect()
         app.closeAndUnregisterWindow(windowId: platformWindowId)
     }
 
@@ -214,10 +212,8 @@ package final class Window: TreeNode, Hashable {
         self.prevUnhiddenProportionalPositionInsideWorkspaceRect = nil
     }
 
-    // skipClosedWindowsCache is an optimization when it's definitely not necessary to cache closed window.
-    //                        If you are unsure, it's better to pass `false`
     @MainActor
-    package func garbageCollect(skipClosedWindowsCache: Bool) {
+    package func garbageCollect() {
         if Window.allWindowsMap.removeValue(forKey: windowId) == nil {
             return
         }
@@ -227,7 +223,6 @@ package final class Window: TreeNode, Hashable {
             pid: app.pid,
             windowId: platformWindowId,
         )
-        if !skipClosedWindowsCache { cacheClosedWindowIfNeeded() }
         let parent = unbindFromParent().parent
         let deadWindowWorkspace = parent.nodeWorkspace
         let focus = focus

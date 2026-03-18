@@ -111,28 +111,35 @@ extension AppSession {
 
     @MainActor
     private func refresh() async throws {
-        let mapping = try await platformServices.refreshPlatformApps(platformServices.frontmostAppBundleId())
-        let processedPids = mapping.map(\.app.pid).toSet()
-        let windowBindingSnapshotsByPid = Dictionary(grouping: Window.allWindows.map {
-            AppWindowBindingSnapshot(
-                frameWindowId: $0.windowId,
-                platformWindowId: $0.platformWindowId,
-                appPid: $0.app.pid,
-            )
-        }, by: \.appPid)
+        let platformRefreshState = try await platformServices.refreshPlatformState()
+        switch platformRefreshState {
+            case .unavailable(let reason):
+                windowEventsDiagnosticsLogger.logPlatformRefreshUnavailable(reason: reason)
+                return
+            case .observed(let mapping):
+                windowEventsDiagnosticsLogger.logPlatformRefreshObserved()
+                let processedPids = mapping.map(\.app.pid).toSet()
+                let windowBindingSnapshotsByPid = Dictionary(grouping: Window.allWindows.map {
+                    AppWindowBindingSnapshot(
+                        frameWindowId: $0.windowId,
+                        platformWindowId: $0.platformWindowId,
+                        appPid: $0.app.pid,
+                    )
+                }, by: \.appPid)
 
-        for (app, snapshot) in mapping {
-            let bindingSnapshots = windowBindingSnapshotsByPid[app.pid] ?? []
-            let plan = try await makeAppRefreshPlan(app: app, snapshot: snapshot, bindingSnapshots: bindingSnapshots)
-            try await applyAppRefreshPlan(plan, app: app)
+                for (app, snapshot) in mapping {
+                    let bindingSnapshots = windowBindingSnapshotsByPid[app.pid] ?? []
+                    let plan = try await makeAppRefreshPlan(app: app, snapshot: snapshot, bindingSnapshots: bindingSnapshots)
+                    try await applyAppRefreshPlan(plan, app: app)
+                }
+
+                for window in Window.allWindows where !processedPids.contains(window.app.pid) {
+                    window.garbageCollect()
+                }
+
+                // Garbage collect workspaces after apps, because workspaces contain apps.
+                garbageCollectUnusedWorkspaces()
         }
-
-        for window in Window.allWindows where !processedPids.contains(window.app.pid) {
-            window.garbageCollect(skipClosedWindowsCache: false)
-        }
-
-        // Garbage collect workspaces after apps, because workspaces contain apps.
-        garbageCollectUnusedWorkspaces()
     }
 
     @MainActor
@@ -253,7 +260,7 @@ extension AppSession {
             )
         }
         for garbageCollection in plan.garbageCollections {
-            Window.get(byId: garbageCollection.frameWindowId)?.garbageCollect(skipClosedWindowsCache: false)
+            Window.get(byId: garbageCollection.frameWindowId)?.garbageCollect()
         }
         for windowId in plan.registerWindowIds {
             try checkCancellation()

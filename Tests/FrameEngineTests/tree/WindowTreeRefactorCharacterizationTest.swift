@@ -29,53 +29,6 @@ final class WindowTreeRefactorCharacterizationTest: XCTestCase {
         assertColumnChildren(targetWorkspace, [[2], [3, 1]])
     }
 
-    func testRestoreClosedWindowsCache_restoresColumnsStructure() async throws {
-        let workspace = Workspace.get(byName: name)
-        let root = workspace.columnsRoot
-        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        _ = TestWindow.new(id: 1, parent: col1).focusWindow()
-        _ = TestWindow.new(id: 2, parent: col1)
-        _ = TestWindow.new(id: 3, parent: col2)
-        cacheClosedWindowIfNeeded()
-
-        for workspace in Workspace.all {
-            clearWorkspaceChildrenForTests(workspace)
-        }
-        Window.resetForTests()
-        TestApp.shared.resetState()
-
-        let detectedColumn = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let restoredWindow = TestWindow.new(id: 1, parent: detectedColumn)
-        _ = TestWindow.new(id: 2, parent: detectedColumn)
-        _ = TestWindow.new(id: 3, parent: detectedColumn)
-        let didRestore = try await restoreClosedWindowsCacheIfNeeded(newlyDetectedWindow: restoredWindow)
-        XCTAssertTrue(didRestore)
-        XCTAssertTrue(workspace.columnsRoot === root)
-        assertEquals(workspace.columns.count, 2)
-        assertEquals(workspace.columns[0].children.compactMap { ($0 as? Window)?.windowId }, [1, 2])
-        assertEquals(workspace.columns[1].children.compactMap { ($0 as? Window)?.windowId }, [3])
-        XCTAssertTrue(workspace.columnsRoot.children.allSatisfy { $0 is Column })
-    }
-
-    func testFrozenWorkspaceSnapshot_usesColumnsModel() {
-        let workspace = Workspace.get(byName: name)
-        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 2)
-        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 3)
-        _ = TestWindow.new(id: 11, parent: col1, adaptiveWeight: 4)
-        _ = TestWindow.new(id: 12, parent: col1, adaptiveWeight: 5)
-        _ = TestWindow.new(id: 13, parent: col2, adaptiveWeight: 6)
-
-        let frozen = FrozenWorkspace(workspace)
-
-        assertEquals(frozen.columns.count, 2)
-        assertEquals(frozen.columns[0].windows.map(\.id), [11, 12])
-        assertEquals(frozen.columns[1].windows.map(\.id), [13])
-        assertEquals(frozen.columns.map(\.weight), [2, 3])
-        assertEquals(frozen.columns[0].windows.map(\.weight), [4, 5])
-        assertEquals(frozen.columns[1].windows.map(\.weight), [6])
-    }
-
     func testNormalizeLayoutReason_restoresTiledFullscreenWindowToColumn() async throws {
         let workspace = Workspace.get(byName: name)
         let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)

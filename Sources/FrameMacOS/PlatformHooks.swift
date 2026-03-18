@@ -1,6 +1,15 @@
 import AppKit
 import FrameEngine
 
+package func makePlatformObservationUnavailableReason(
+    frontmostAppBundleId: String?,
+    isAccessibilityTrusted: Bool
+) -> PlatformObservationUnavailableReason? {
+    if frontmostAppBundleId == lockScreenAppBundleId { return .screenLocked }
+    if !isAccessibilityTrusted { return .accessibilityUnavailable }
+    return nil
+}
+
 @MainActor
 func configureFrameMacOSPlatformServices(for session: AppSession) {
     session.platformServices = PlatformServices(
@@ -16,9 +25,8 @@ func configureFrameMacOSPlatformServices(for session: AppSession) {
         frontmostAppBundleId: {
             NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         },
-        refreshPlatformApps: { frontmostAppBundleId in
-            try await session.refreshAllMacAppsAndGetWindowSnapshots(frontmostAppBundleId: frontmostAppBundleId)
-                .map { ($0.key as any WindowPlatformApp, $0.value) }
+        refreshPlatformState: {
+            try await session.refreshMacOSPlatformState()
         },
         syncUiState: { session in
             session.syncUiState()

@@ -11,6 +11,16 @@ package struct PlatformAppRefreshSnapshot: Sendable {
     }
 }
 
+package enum PlatformObservationUnavailableReason: String, Sendable {
+    case screenLocked
+    case accessibilityUnavailable
+}
+
+package enum PlatformRefreshResult: @unchecked Sendable {
+    case observed(appSnapshots: PlatformAppWindowMapping)
+    case unavailable(reason: PlatformObservationUnavailableReason)
+}
+
 @MainActor
 package struct NativeFocusedWindowSnapshot {
     package let app: any WindowPlatformApp
@@ -32,7 +42,7 @@ package struct PlatformServices {
     package var monitors: @MainActor @Sendable () -> [any Monitor]
     package var nativeFocusedWindow: @MainActor @Sendable () async throws -> NativeFocusedWindowSnapshot?
     package var frontmostAppBundleId: @MainActor @Sendable () -> String?
-    package var refreshPlatformApps: @MainActor @Sendable (_ frontmostAppBundleId: String?) async throws -> PlatformAppWindowMapping
+    package var refreshPlatformState: @MainActor @Sendable () async throws -> PlatformRefreshResult
     package var syncUiState: @MainActor @Sendable (_ session: AppSession) -> Void
     package var mouseLocation: @MainActor @Sendable () -> CGPoint
     package var followFocusedMonitorWithMouse: @MainActor @Sendable (_ target: CGPoint) -> Void
@@ -43,7 +53,7 @@ package struct PlatformServices {
         monitors: @escaping @MainActor @Sendable () -> [any Monitor] = { [defaultTestMonitor] },
         nativeFocusedWindow: @escaping @MainActor @Sendable () async throws -> NativeFocusedWindowSnapshot? = { nil },
         frontmostAppBundleId: @escaping @MainActor @Sendable () -> String? = { nil },
-        refreshPlatformApps: @escaping @MainActor @Sendable (_ frontmostAppBundleId: String?) async throws -> PlatformAppWindowMapping = { _ in [] },
+        refreshPlatformState: @escaping @MainActor @Sendable () async throws -> PlatformRefreshResult = { .observed(appSnapshots: []) },
         syncUiState: @escaping @MainActor @Sendable (_ session: AppSession) -> Void = { _ in },
         mouseLocation: @escaping @MainActor @Sendable () -> CGPoint = { .zero },
         followFocusedMonitorWithMouse: @escaping @MainActor @Sendable (_ target: CGPoint) -> Void = { _ in },
@@ -53,7 +63,7 @@ package struct PlatformServices {
         self.monitors = monitors
         self.nativeFocusedWindow = nativeFocusedWindow
         self.frontmostAppBundleId = frontmostAppBundleId
-        self.refreshPlatformApps = refreshPlatformApps
+        self.refreshPlatformState = refreshPlatformState
         self.syncUiState = syncUiState
         self.mouseLocation = mouseLocation
         self.followFocusedMonitorWithMouse = followFocusedMonitorWithMouse

@@ -4,7 +4,6 @@ import FrameEngine
 
 struct ListMonitorsCommand: Command {
     let args: ListMonitorsCmdArgs
-    /*conforms*/ var shouldResetClosedWindowsCache = false
 
     func run(in session: AppSession, _ env: CmdEnv, _ io: CmdIo) -> Bool {
         let focus = focus

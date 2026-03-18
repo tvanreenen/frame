@@ -181,13 +181,15 @@ final class WindowArchitectureTest: XCTestCase {
     func testRefreshUsesSessionPlatformServices() async throws {
         let previousSession = currentSession
         let isolatedSession = AppSession(config: defaultConfig, configUrl: defaultConfigUrl)
-        var receivedFrontmostBundleId: String?
+        var frontmostBundleLookups = 0
         var syncUiStateCalls = 0
 
-        isolatedSession.platformServices.frontmostAppBundleId = { "dev.frame.test-app" }
-        isolatedSession.platformServices.refreshPlatformApps = { frontmostAppBundleId in
-            receivedFrontmostBundleId = frontmostAppBundleId
-            return []
+        isolatedSession.platformServices.frontmostAppBundleId = {
+            frontmostBundleLookups += 1
+            return "dev.frame.test-app"
+        }
+        isolatedSession.platformServices.refreshPlatformState = {
+            .observed(appSnapshots: [])
         }
         isolatedSession.platformServices.syncUiState = { _ in
             syncUiStateCalls += 1
@@ -198,7 +200,7 @@ final class WindowArchitectureTest: XCTestCase {
 
         try await isolatedSession.runRefreshSessionBlocking(.menuBarButton, layoutWorkspaces: false)
 
-        assertEquals(receivedFrontmostBundleId, "dev.frame.test-app")
+        assertEquals(frontmostBundleLookups, 0)
         assertEquals(syncUiStateCalls, 1)
     }
 
@@ -315,7 +317,6 @@ final class WindowArchitectureTest: XCTestCase {
                 return true
             }
 
-            var shouldResetClosedWindowsCache: Bool { false }
         }
 
         let previousSession = currentSession
