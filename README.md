@@ -2,7 +2,7 @@
 
 Frame is a keyboard-first tiling window and workspace manager for macOS built to make window management simple and intuitive.
 
-The project orginated as a fork of [AeroSpace](https://github.com/nikitabobko/AeroSpace), but it's been completely overhauled into something cleaner, simpler, and more intuitive.
+The project originated as a fork of [AeroSpace](https://github.com/nikitabobko/AeroSpace), but it's been completely overhauled into something cleaner, simpler, and more intuitive.
 
 ![Frame hero](.github/assets/hero.png)
 
