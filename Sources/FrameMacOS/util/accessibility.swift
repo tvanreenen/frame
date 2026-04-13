@@ -256,18 +256,23 @@ enum Ax {
     )
     /// Returns windows visible on all monitors
     /// If some windows are located on not active macOS Spaces then they won't be returned
-    static let windowsAttr = ReadableAttrImpl<[WindowIdAndAxUiElement]>(
+    static let windowsAttr = ReadableAttrImpl<[WindowIdAndAxUiElementMock]>(
         key: kAXWindowsAttribute,
-        getter: { ($0 as? NSArray)?.compactMap(windowOrNil).map { ($0.windowId, $0.ax.cast) } ?? [] },
+        getter: {
+            if let windows = $0 as? [Json] {
+                return windows.compactMap { windowOrNil($0.rawValue) }
+            }
+            return ($0 as? NSArray)?.compactMap(windowOrNil) ?? []
+        },
     )
     static let focusedWindowAttr = ReadableAttrImpl<WindowIdAndAxUiElementMock>(
         key: kAXFocusedWindowAttribute,
         getter: windowOrNil,
     )
-    //static let mainWindowAttr = ReadableAttrImpl<AXUIElement>(
-    //    key: kAXMainWindowAttribute,
-    //    getter: tryGetWindow
-    //)
+    static let mainWindowAttr = ReadableAttrImpl<WindowIdAndAxUiElementMock>(
+        key: kAXMainWindowAttribute,
+        getter: windowOrNil,
+    )
     static let closeButtonAttr = ReadableAttrImpl<any AxUiElementMock>(
         key: kAXCloseButtonAttribute,
         getter: castToAxUiElementMock,
@@ -313,11 +318,13 @@ private func castToAxUiElementMock(_ a: AnyObject) -> AxUiElementMock {
     return a as! AXUIElement
 }
 
-typealias WindowIdAndAxUiElement = (windowId: UInt32, ax: AXUIElement)
 typealias WindowIdAndAxUiElementMock = (windowId: UInt32, ax: AxUiElementMock)
 
 private func windowOrNil(_ any: Any?) -> WindowIdAndAxUiElementMock? {
     guard let any else { return nil }
+    if let json = any as? Json {
+        return windowOrNil(json.rawValue)
+    }
     let potentialWindow = castToAxUiElementMock(any as AnyObject)
     // Filter out non-window objects (e.g. Finder's desktop)
     let windowId = potentialWindow.containingWindowId()

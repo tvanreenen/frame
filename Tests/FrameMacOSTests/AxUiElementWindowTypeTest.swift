@@ -9,6 +9,36 @@ final class AxWindowKindTest: XCTestCase {
     func test() throws {
         try checkAxDumpsRecursive(projectRoot.appending(path: "Tests/FrameMacOSTests/fixtures/axDumps"))
     }
+
+    func testPowerPointSecondaryButtonlessFocusedWindowIsPopup() {
+        let popupWindowId: UInt32 = 37352
+        let mainWindowId: UInt32 = 36873
+        let axApp: [String: Json] = [
+            "AXFocusedWindow": .string("AXUIElement(AxWindowId=\(popupWindowId), title=\"\", role=\"AXWindow\", subrole=\"AXUnknown\")"),
+            "AXMainWindow": .string("AXUIElement(AxWindowId=\(mainWindowId), title=\"Deck\", role=\"AXWindow\", subrole=\"AXStandardWindow\")"),
+        ]
+        let popupWindow: [String: Json] = [
+            "Aero.axWindowId": .uint32(popupWindowId),
+            "AXCloseButton": .null,
+            "AXFocused": .bool(true),
+            "AXFullScreenButton": .null,
+            "AXMain": .bool(false),
+            "AXMinimizeButton": .null,
+            "AXSubrole": .string("AXUnknown"),
+            "AXTitle": .string(""),
+            "AXZoomButton": .null,
+        ]
+
+        assertEquals(
+            popupWindow.getWindowType(
+                axApp: axApp,
+                .powerPoint,
+                .regular,
+                .normalWindow,
+            ),
+            .popup,
+        )
+    }
 }
 
 func checkAxDumpsRecursive(_ dir: URL) throws {
@@ -59,44 +89,6 @@ private func assertAxDumpSchema(_ rawJson: [String: Any], _ file: URL) throws {
             code: 1,
             userInfo: [NSLocalizedDescriptionKey: "\(file.path):0:0: Legacy key 'Aero.on-window-detected' is no longer allowed"],
         )
-    }
-}
-
-extension [String: Json]: AxUiElementMock {
-    public func get<Attr>(_ attr: Attr) -> Attr.T? where Attr: ReadableAttr {
-        guard let value = self[attr.key] else {
-            return isSynthetic ? dieT("\(self) doesn't contain \(attr.key)") : nil
-        }
-        if let value = value.rawValue {
-            return attr.getter(value as AnyObject)
-                ?? dieT("Value \(value) (of type \(Swift.type(of: value))) isn't convertible to \(attr.key)")
-        } else {
-            return nil
-        }
-    }
-
-    private var isSynthetic: Bool { self[kAXAeroSynthetic] != nil }
-
-    public func containingWindowId() -> CGWindowID? { _containingWindowId() }
-
-    private func _containingWindowId() -> CGWindowID {
-        let windowId = self["Aero.axWindowId"]?.rawValue ?? dieT()
-        if let windowId = windowId as? Int {
-            return UInt32.init(windowId)
-        } else {
-            return windowId as? UInt32 ?? dieT()
-        }
-    }
-}
-
-extension NSApplication.ActivationPolicy {
-    static func from(string: String) -> NSApplication.ActivationPolicy {
-        switch string {
-            case "regular": .regular
-            case "accessory": .accessory
-            case "prohibited": .prohibited
-            default: dieT("Unknown ActivationPolicy \(string)")
-        }
     }
 }
 

@@ -1,93 +1,150 @@
 import AppKit
 import FrameEngine
 
-private let nonNormalWindowPopupIds: Set<KnownBundleId> = [
-    .slack,
-    .chrome,
-    .braveBrowser,
-    .screenstudio,
-    .cleanshotx,
-    .iterm2,
-]
+private struct EmptyAxUiElementMock: AxUiElementMock {
+    func get<Attr>(_ attr: Attr) -> Attr.T? where Attr: ReadableAttr { nil }
+    func containingWindowId() -> CGWindowID? { nil }
+}
 
-private let noFullscreenDialogExemptIds: Set<KnownBundleId> = [
-    .gimp,
-    .chrome,
-    .activityMonitor,
-    .alacritty,
-    .kitty,
-    .wezterm,
-    .qutebrowser,
-    .iterm2,
-    .emacs,
-    .steam,
-]
+struct ResolvedAxWindow {
+    let windowId: UInt32
+    let ax: any AxUiElementMock
+    let source: WindowPlacementDecisionSource
+}
+
+enum WindowPlacementDecisionResolver {
+    static func resolveAxWindow(
+        windowId: UInt32,
+        cachedWindow: (any AxUiElementMock)?,
+        axApp: any AxUiElementMock,
+    ) -> ResolvedAxWindow? {
+        if let cachedWindow {
+            return ResolvedAxWindow(
+                windowId: windowId,
+                ax: cachedWindow,
+                source: .cachedAxWindow,
+            )
+        }
+        if let focusedWindow = axApp.get(Ax.focusedWindowAttr), focusedWindow.windowId == windowId {
+            return ResolvedAxWindow(
+                windowId: windowId,
+                ax: focusedWindow.ax,
+                source: .focusedWindowLookup,
+            )
+        }
+        if let axWindow = (axApp.get(Ax.windowsAttr) ?? []).first(where: { $0.windowId == windowId })?.ax {
+            return ResolvedAxWindow(
+                windowId: windowId,
+                ax: axWindow,
+                source: .windowsListLookup,
+            )
+        }
+        return nil
+    }
+
+    static func resolveRegistrationSnapshot(
+        windowId: UInt32,
+        cachedWindow: (any AxUiElementMock)?,
+        axApp: any AxUiElementMock,
+        appId: String?,
+        knownBundleId: KnownBundleId?,
+        activationPolicy: NSApplication.ActivationPolicy,
+        windowLevel: MacOsWindowLevel?,
+    ) -> WindowRegistrationSnapshot? {
+        guard let resolvedWindow = resolveAxWindow(
+            windowId: windowId,
+            cachedWindow: cachedWindow,
+            axApp: axApp,
+        ) else {
+            return nil
+        }
+        return resolvedWindow.ax.getWindowRegistrationSnapshot(
+            axApp: axApp,
+            appId: appId,
+            knownBundleId: knownBundleId,
+            activationPolicy: activationPolicy,
+            windowLevel: windowLevel,
+        ).withSource(resolvedWindow.source)
+    }
+
+    static func resolve(
+        windowId: UInt32,
+        cachedWindow: (any AxUiElementMock)?,
+        axApp: any AxUiElementMock,
+        appId: String?,
+        knownBundleId: KnownBundleId?,
+        activationPolicy: NSApplication.ActivationPolicy,
+        windowLevel: MacOsWindowLevel?,
+    ) -> WindowPlacementDecision {
+        if let snapshot = resolveRegistrationSnapshot(
+            windowId: windowId,
+            cachedWindow: cachedWindow,
+            axApp: axApp,
+            appId: appId,
+            knownBundleId: knownBundleId,
+            activationPolicy: activationPolicy,
+            windowLevel: windowLevel,
+        ) {
+            return snapshot.placementDecision
+        }
+        return WindowPlacementDecision(
+            placementKind: .excluded,
+            reason: WindowPlacementDecisionSource.disappearedBeforeClassification.rawValue,
+            source: WindowPlacementDecisionSource.disappearedBeforeClassification.rawValue,
+        )
+    }
+}
 
 extension AxUiElementMock {
-    func isDialogHeuristic(_ id: KnownBundleId?, _ windowLevel: MacOsWindowLevel?) -> Bool {
-        if id == ._1password && windowLevel != .normalWindow { return true }
-        if id == .iphonesimulator { return true }
-        if get(Ax.subroleAttr) != kAXStandardWindowSubrole && id != .qutebrowser { return true }
-        if id?.isFirefox == true && get(Ax.minimizeButtonAttr)?.get(Ax.enabledAttr) != true { return true }
-        if id == .photoBooth { return true }
-
-        if id == .ghostty {
-            return get(Ax.fullscreenButtonAttr)?.get(Ax.enabledAttr) != true &&
-                get(Ax.closeButtonAttr)?.get(Ax.enabledAttr) == true
-        }
-
-        return shouldTreatNoFullscreenAsDialog(id)
-    }
-
-    func isWindowHeuristic(
+    func makeWindowFacts(
         axApp: AxUiElementMock,
-        _ id: KnownBundleId?,
-        _ activationPolicy: NSApplication.ActivationPolicy,
-        _ windowLevel: MacOsWindowLevel?,
-    ) -> Bool {
-        if shouldRejectNonNormalLevelWindow(id, windowLevel) { return false }
-        if id == .ghostty && get(Ax.identifierAttr) == "com.mitchellh.ghostty.quickTerminal" { return false }
-
-        lazy var fullscreenButton = get(Ax.fullscreenButtonAttr)
-
-        if id == .xcode && get(Ax.identifierAttr) == "open_quickly" { return false }
-        if id == .iterm2 && fullscreenButton == nil { return false }
-        if activationPolicy == .accessory && get(Ax.closeButtonAttr) == nil && id != .steam { return false }
-
-        if id?.isFirefox != true {
-            return isWindowHeuristicOld(axApp: axApp, id)
-        }
-
-        return get(Ax.closeButtonAttr) != nil ||
-            fullscreenButton != nil ||
-            get(Ax.zoomButtonAttr) != nil ||
-            get(Ax.minimizeButtonAttr) != nil ||
-            get(Ax.isFocused) == true ||
-            get(Ax.isMainAttr) == true ||
-            axApp.get(Ax.focusedWindowAttr)?.windowId == self.containingWindowId() ||
-            get(Ax.subroleAttr) == kAXStandardWindowSubrole
+        appId: String?,
+        knownBundleId: KnownBundleId?,
+        activationPolicy: NSApplication.ActivationPolicy,
+        windowLevel: MacOsWindowLevel?,
+    ) -> WindowFacts {
+        let windowId = containingWindowId() ?? 0
+        let closeButton = get(Ax.closeButtonAttr)
+        let minimizeButton = get(Ax.minimizeButtonAttr)
+        let zoomButton = get(Ax.zoomButtonAttr)
+        let fullscreenButton = get(Ax.fullscreenButtonAttr)
+        return WindowFacts(
+            appId: appId,
+            knownBundleId: knownBundleId,
+            windowId: windowId,
+            title: get(Ax.titleAttr),
+            role: get(Ax.roleAttr),
+            subrole: get(Ax.subroleAttr),
+            identifier: get(Ax.identifierAttr),
+            isFocused: get(Ax.isFocused),
+            isMain: get(Ax.isMainAttr),
+            isModal: get(Ax.modalAttr),
+            isMinimized: get(Ax.minimizedAttr),
+            isFullscreen: get(Ax.isFullscreenAttr),
+            matchesMainWindow: axApp.get(Ax.mainWindowAttr)?.windowId == windowId,
+            matchesFocusedWindow: axApp.get(Ax.focusedWindowAttr)?.windowId == windowId,
+            windowLevel: windowLevel,
+            activationPolicy: activationPolicy,
+            hasCloseButton: closeButton != nil,
+            hasMinimizeButton: minimizeButton != nil,
+            hasZoomButton: zoomButton != nil,
+            hasFullscreenButton: fullscreenButton != nil,
+            isCloseButtonEnabled: closeButton?.get(Ax.enabledAttr),
+            isMinimizeButtonEnabled: minimizeButton?.get(Ax.enabledAttr),
+            isZoomButtonEnabled: zoomButton?.get(Ax.enabledAttr),
+            isFullscreenButtonEnabled: fullscreenButton?.get(Ax.enabledAttr),
+        )
     }
 
-    private func isWindowHeuristicOld(axApp: AxUiElementMock, _ id: KnownBundleId?) -> Bool {
-        lazy var subrole = get(Ax.subroleAttr)
-        lazy var title = get(Ax.titleAttr) ?? ""
-
-        if get(Ax.closeButtonAttr) == nil &&
-            get(Ax.fullscreenButtonAttr) == nil &&
-            get(Ax.zoomButtonAttr) == nil &&
-            get(Ax.minimizeButtonAttr) == nil &&
-            get(Ax.isFocused) == false &&
-            get(Ax.isMainAttr) == false &&
-            axApp.get(Ax.focusedWindowAttr)?.windowId != containingWindowId() &&
-            subrole != kAXStandardWindowSubrole &&
-            (title.isEmpty || title == "Window")
-        {
-            return false
-        }
-        return subrole == kAXStandardWindowSubrole ||
-            subrole == kAXDialogSubrole ||
-            subrole == kAXFloatingWindowSubrole ||
-            id == .finder && subrole == "Quick Look"
+    func isDialogHeuristic(_ id: KnownBundleId?, _ windowLevel: MacOsWindowLevel?) -> Bool {
+        let facts = makeWindowFacts(
+            axApp: EmptyAxUiElementMock(),
+            appId: id?.rawValue,
+            knownBundleId: id,
+            activationPolicy: .regular,
+            windowLevel: windowLevel,
+        )
+        return WindowClassifier.isDialog(facts)
     }
 
     func getWindowType(
@@ -96,20 +153,66 @@ extension AxUiElementMock {
         _ activationPolicy: NSApplication.ActivationPolicy,
         _ windowLevel: MacOsWindowLevel?,
     ) -> AxUiElementWindowType {
-        .new(
-            isWindow: isWindowHeuristic(axApp: axApp, id, activationPolicy, windowLevel),
-            isDialog: { isDialogHeuristic(id, windowLevel) },
+        WindowClassifier.axWindowType(
+            makeWindowFacts(
+                axApp: axApp,
+                appId: id?.rawValue,
+                knownBundleId: id,
+                activationPolicy: activationPolicy,
+                windowLevel: windowLevel,
+            )
         )
     }
 
-    private func shouldRejectNonNormalLevelWindow(_ id: KnownBundleId?, _ windowLevel: MacOsWindowLevel?) -> Bool {
-        guard windowLevel != .normalWindow else { return false }
-        return id?.isFirefox == true || (id.map { nonNormalWindowPopupIds.contains($0) } ?? false)
+    func getWindowPlacementDecision(
+        axApp: AxUiElementMock,
+        appId: String?,
+        knownBundleId: KnownBundleId?,
+        activationPolicy: NSApplication.ActivationPolicy,
+        windowLevel: MacOsWindowLevel?,
+    ) -> WindowPlacementDecision {
+        WindowClassifier.classify(
+            makeWindowFacts(
+                axApp: axApp,
+                appId: appId,
+                knownBundleId: knownBundleId,
+                activationPolicy: activationPolicy,
+                windowLevel: windowLevel,
+            )
+        )
     }
 
-    private func shouldTreatNoFullscreenAsDialog(_ id: KnownBundleId?) -> Bool {
-        guard get(Ax.fullscreenButtonAttr)?.get(Ax.enabledAttr) != true else { return false }
-        if id?.isVscode == true { return false }
-        return !(id.map { noFullscreenDialogExemptIds.contains($0) } ?? false)
+    func getWindowRegistrationSnapshot(
+        axApp: AxUiElementMock,
+        appId: String?,
+        knownBundleId: KnownBundleId?,
+        activationPolicy: NSApplication.ActivationPolicy,
+        windowLevel: MacOsWindowLevel?,
+    ) -> WindowRegistrationSnapshot {
+        let topLeftCorner: CGPoint? = get(Ax.topLeftCornerAttr)
+        let size: CGSize? = get(Ax.sizeAttr)
+        let rect: Rect? = if let topLeftCorner, let size {
+            Rect(topLeftX: topLeftCorner.x, topLeftY: topLeftCorner.y, width: size.width, height: size.height)
+        } else {
+            nil
+        }
+        return WindowRegistrationSnapshot(
+            rect: rect,
+            placementDecision: getWindowPlacementDecision(
+                axApp: axApp,
+                appId: appId,
+                knownBundleId: knownBundleId,
+                activationPolicy: activationPolicy,
+                windowLevel: windowLevel,
+            ),
+        )
+    }
+}
+
+extension WindowRegistrationSnapshot {
+    fileprivate func withSource(_ source: WindowPlacementDecisionSource) -> WindowRegistrationSnapshot {
+        var copy = self
+        copy.placementDecision = copy.placementDecision.withSource(source)
+        return copy
     }
 }

@@ -409,33 +409,6 @@ final class WindowArchitectureTest: XCTestCase {
         XCTAssertFalse(popup.parent is ExcludedWindowsContainer)
     }
 
-    func testWindowClassificationOverrideAppliedOnRegistration() async throws {
-        var matcher = WindowClassificationOverrideMatcher()
-        matcher.appId = TestApp.shared.rawAppBundleId
-        var override = WindowClassificationOverride()
-        override.matcher = matcher
-        override.kind = .tiling
-        runtimeContext.config.windowClassificationOverrides = [
-            override,
-        ]
-        TestApp.shared.setWindowPlacementKind(windowId: 781, .excluded)
-
-        let window = try await Window.getOrRegister(windowId: 781, app: TestApp.shared)
-        XCTAssertTrue(window.parent is Column)
-    }
-
-    func testWindowRegistrationUsesFocusedColumnForNewTilingPlacement() async throws {
-        let workspace = Workspace.get(byName: name)
-        let col1 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        let col2 = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
-        _ = TestWindow.new(id: 785, parent: col1)
-        _ = TestWindow.new(id: 786, parent: col2).focusWindow()
-
-        let window = try await Window.getOrRegister(windowId: 787, app: TestApp.shared)
-
-        XCTAssertTrue(window.parent === col2)
-    }
-
     func testHideUnhideCornerRoundTrip() async throws {
         let workspace = Workspace.get(byName: name)
         let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)

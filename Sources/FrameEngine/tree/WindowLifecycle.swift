@@ -5,7 +5,7 @@ extension Window {
     func relayoutWindow(on workspace: Workspace, forceTile: Bool = false) async throws {
         let data = forceTile
             ? unbindAndGetBindingDataForNewTilingWindow(on: workspace, window: self)
-            : try await unbindAndGetBindingDataForNewWindow(platformWindowId, app, workspace, window: self)
+            : try await unbindAndGetBindingDataForNewWindow(platformWindowId, app, workspace, placementDecision: nil, window: self)
         bind(to: data.parent, adaptiveWeight: data.adaptiveWeight, index: data.index)
     }
 }
@@ -16,9 +16,15 @@ func unbindAndGetBindingDataForNewWindow(
     _ windowId: UInt32,
     _ app: any WindowPlatformApp,
     _ workspace: Workspace,
+    placementDecision: WindowPlacementDecision?,
     window: Window?,
 ) async throws -> BindingData {
-    let windowType = try await Window.resolvePlacementKind(windowId: windowId, app: app)
+    let resolvedDecision = if let placementDecision {
+        placementDecision
+    } else {
+        try await Window.resolvePlacementDecision(windowId: windowId, app: app)
+    }
+    let windowType = resolvedDecision.placementKind
 
     return switch windowType {
         case .excluded: BindingData(parent: excludedWindowsContainer, adaptiveWeight: WEIGHT_AUTO, index: INDEX_BIND_LAST)
