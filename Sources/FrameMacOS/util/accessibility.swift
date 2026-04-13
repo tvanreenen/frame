@@ -258,7 +258,12 @@ enum Ax {
     /// If some windows are located on not active macOS Spaces then they won't be returned
     static let windowsAttr = ReadableAttrImpl<[WindowIdAndAxUiElementMock]>(
         key: kAXWindowsAttribute,
-        getter: { ($0 as? NSArray)?.compactMap(windowOrNil) ?? [] },
+        getter: {
+            if let windows = $0 as? [Json] {
+                return windows.compactMap { windowOrNil($0.rawValue) }
+            }
+            return ($0 as? NSArray)?.compactMap(windowOrNil) ?? []
+        },
     )
     static let focusedWindowAttr = ReadableAttrImpl<WindowIdAndAxUiElementMock>(
         key: kAXFocusedWindowAttribute,
@@ -317,6 +322,9 @@ typealias WindowIdAndAxUiElementMock = (windowId: UInt32, ax: AxUiElementMock)
 
 private func windowOrNil(_ any: Any?) -> WindowIdAndAxUiElementMock? {
     guard let any else { return nil }
+    if let json = any as? Json {
+        return windowOrNil(json.rawValue)
+    }
     let potentialWindow = castToAxUiElementMock(any as AnyObject)
     // Filter out non-window objects (e.g. Finder's desktop)
     let windowId = potentialWindow.containingWindowId()
