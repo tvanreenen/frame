@@ -9,6 +9,36 @@ final class AxWindowKindTest: XCTestCase {
     func test() throws {
         try checkAxDumpsRecursive(projectRoot.appending(path: "Tests/FrameMacOSTests/fixtures/axDumps"))
     }
+
+    func testPowerPointSecondaryButtonlessFocusedWindowIsPopup() {
+        let popupWindowId: UInt32 = 37352
+        let mainWindowId: UInt32 = 36873
+        let axApp: [String: Json] = [
+            "AXFocusedWindow": .string("AXUIElement(AxWindowId=\(popupWindowId), title=\"\", role=\"AXWindow\", subrole=\"AXUnknown\")"),
+            "AXMainWindow": .string("AXUIElement(AxWindowId=\(mainWindowId), title=\"Deck\", role=\"AXWindow\", subrole=\"AXStandardWindow\")"),
+        ]
+        let popupWindow: [String: Json] = [
+            "Aero.axWindowId": .uint32(popupWindowId),
+            "AXCloseButton": .null,
+            "AXFocused": .bool(true),
+            "AXFullScreenButton": .null,
+            "AXMain": .bool(false),
+            "AXMinimizeButton": .null,
+            "AXSubrole": .string("AXUnknown"),
+            "AXTitle": .string(""),
+            "AXZoomButton": .null,
+        ]
+
+        assertEquals(
+            popupWindow.getWindowType(
+                axApp: axApp,
+                .powerPoint,
+                .regular,
+                .normalWindow,
+            ),
+            .popup,
+        )
+    }
 }
 
 func checkAxDumpsRecursive(_ dir: URL) throws {

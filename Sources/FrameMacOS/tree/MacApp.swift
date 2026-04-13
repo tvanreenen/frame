@@ -258,25 +258,35 @@ final class MacApp: WindowPlatformApp {
     }
 
     func getWindowRect(windowId: UInt32) async throws -> Rect? {
-        try await withWindow(windowId) { window, job in
-            guard let topLeftCorner = window.get(Ax.topLeftCornerAttr) else { return nil }
-            guard let size = window.get(Ax.sizeAttr) else { return nil }
-            return Rect(topLeftX: topLeftCorner.x, topLeftY: topLeftCorner.y, width: size.width, height: size.height)
-        }
+        try await getWindowRegistrationSnapshot(windowId: windowId)?.rect
     }
 
-    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
+    func getWindowRegistrationSnapshot(windowId: UInt32) async throws -> WindowRegistrationSnapshot? {
         let windowLevel = await MainActor.run {
             getWindowLevel(for: windowId)
         }
-        let rawType = try await withWindow(windowId) { [nsApp, axApp, appId] window, job in
-            return window.getWindowType(axApp: axApp.threadGuarded, appId, nsApp.activationPolicy, windowLevel)
-        } ?? .window
-        return switch rawType {
-            case .window: .tiling
-            case .dialog: .excluded
-            case .popup: .excluded
+        return try await thread?.runInLoop { [nsApp, axApp, appId, rawAppBundleId, windows] job in
+            WindowPlacementDecisionResolver.resolveRegistrationSnapshot(
+                windowId: windowId,
+                cachedWindow: windows.threadGuarded[windowId]?.ax,
+                axApp: axApp.threadGuarded,
+                appId: rawAppBundleId ?? appId?.rawValue,
+                knownBundleId: appId,
+                activationPolicy: nsApp.activationPolicy,
+                windowLevel: windowLevel,
+            )
         }
+    }
+
+    func getWindowPlacementDecision(windowId: UInt32) async throws -> WindowPlacementDecision {
+        if let snapshot = try await getWindowRegistrationSnapshot(windowId: windowId) {
+            return snapshot.placementDecision
+        }
+        return WindowPlacementDecision(
+            placementKind: .excluded,
+            reason: WindowPlacementDecisionSource.disappearedBeforeClassification.rawValue,
+            source: WindowPlacementDecisionSource.disappearedBeforeClassification.rawValue,
+        )
     }
 
     func setNativeFullscreen(_ windowId: UInt32, _ value: Bool) {
@@ -341,7 +351,7 @@ final class MacApp: WindowPlatformApp {
             let focusedWindowId = axApp.threadGuarded.get(Ax.focusedWindowAttr)?.windowId
             for (id, window) in axWindows {
                 try job.checkCancellation()
-                try cachedWindows.getOrRegisterAxWindow(windowId: id, window, nsApp, observerContext, "ax_windows", job)
+                try cachedWindows.getOrRegisterAxWindow(windowId: id, window.cast, nsApp, observerContext, "ax_windows", job)
             }
 
             if let focusedWindowId,

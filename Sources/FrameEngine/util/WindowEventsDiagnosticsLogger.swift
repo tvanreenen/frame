@@ -39,6 +39,8 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
         let unavailableReason: String?
         let placementKind: String?
         let title: String?
+        let classificationReason: String?
+        let windowFacts: WindowClassificationDebugInfo?
     }
 
     private var state = State()
@@ -258,6 +260,77 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
         }
     }
 
+    package func logWindowPlacementDebug(
+        bundleId: String?,
+        pid: Int32,
+        windowId: UInt32,
+        decision: WindowPlacementDecision,
+    ) {
+        queue.async {
+            self.log(
+                event: "window_placement_debug",
+                bundleId: bundleId,
+                pid: pid,
+                frameWindowId: nil,
+                windowId: windowId,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
+                notification: nil,
+                source: decision.source,
+                alreadyRegistered: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
+                focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
+                placementKind: decision.placementKind.rawValue,
+                title: decision.debugInfo?.title,
+                classificationReason: decision.reason,
+                windowFacts: decision.debugInfo,
+            )
+        }
+    }
+
+    package func logWindowRegistrationSkipped(
+        bundleId: String?,
+        pid: Int32,
+        windowId: UInt32,
+        reason: String,
+        source: String?,
+    ) {
+        queue.async {
+            self.log(
+                event: "window_registration_skipped",
+                bundleId: bundleId,
+                pid: pid,
+                frameWindowId: nil,
+                windowId: windowId,
+                oldPlatformWindowId: nil,
+                newPlatformWindowId: nil,
+                notification: nil,
+                source: source,
+                alreadyRegistered: nil,
+                axWindowIds: nil,
+                authoritativeWindowIds: nil,
+                focusedWindowId: nil,
+                existingPlatformWindowIds: nil,
+                unmatchedFrameWindowIds: nil,
+                unmatchedWindowIds: nil,
+                replacementFrameWindowId: nil,
+                replacementReason: nil,
+                applyResult: nil,
+                placementKind: nil,
+                title: nil,
+                classificationReason: reason,
+                windowFacts: nil,
+            )
+        }
+    }
+
     package func logWindowRebound(
         bundleId: String?,
         pid: Int32,
@@ -342,6 +415,8 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
         applyResult: String?,
         placementKind: String?,
         title: String?,
+        classificationReason: String? = nil,
+        windowFacts: WindowClassificationDebugInfo? = nil,
     ) {
         guard let bundleId, state.runtimeAppBundleId == bundleId else { return }
 
@@ -370,6 +445,8 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
             unavailableReason: nil,
             placementKind: placementKind,
             title: title,
+            classificationReason: classificationReason,
+            windowFacts: windowFacts,
         )
 
         guard let data = try? encoder.encode(line) else { return }
@@ -403,6 +480,8 @@ package final class WindowEventsDiagnosticsLogger: @unchecked Sendable {
             unavailableReason: reason,
             placementKind: nil,
             title: nil,
+            classificationReason: nil,
+            windowFacts: nil,
         )
         guard let data = try? encoder.encode(line) else { return }
         appendLine(data)

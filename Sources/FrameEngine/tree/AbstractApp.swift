@@ -44,5 +44,20 @@ package protocol WindowPlatformApp: AbstractApp {
     func getWindowTitle(windowId: UInt32) async throws -> String?
     func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json]
 
+    func getWindowRegistrationSnapshot(windowId: UInt32) async throws -> WindowRegistrationSnapshot?
+    func getWindowPlacementDecision(windowId: UInt32) async throws -> WindowPlacementDecision
     func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind
+}
+
+extension WindowPlatformApp {
+    package func getWindowRegistrationSnapshot(windowId: UInt32) async throws -> WindowRegistrationSnapshot? {
+        WindowRegistrationSnapshot(
+            rect: try await getWindowRect(windowId: windowId),
+            placementDecision: try await getWindowPlacementDecision(windowId: windowId),
+        )
+    }
+
+    package func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
+        try await getWindowPlacementDecision(windowId: windowId).placementKind
+    }
 }

@@ -91,6 +91,90 @@ final class WindowEventsDiagnosticsLoggerTest: XCTestCase {
         assertEquals(payload["title"] as? String, "Popup")
     }
 
+    func testWindowPlacementDebugIncludesFactsAndReason() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let logger = WindowEventsDiagnosticsLogger(logPath: url.path)
+        _ = logger.toggleRuntime(forBundleId: "com.microsoft.Powerpoint")
+        logger.logWindowPlacementDebug(
+            bundleId: "com.microsoft.Powerpoint",
+            pid: 7,
+            windowId: 55,
+            decision: WindowPlacementDecision(
+                placementKind: .excluded,
+                reason: "office_buttonless_popup",
+                source: WindowPlacementDecisionSource.focusedWindowLookup.rawValue,
+                debugInfo: WindowClassificationDebugInfo(
+                    appId: "com.microsoft.Powerpoint",
+                    windowId: 55,
+                    title: "",
+                    role: "AXWindow",
+                    subrole: "AXUnknown",
+                    identifier: nil,
+                    isFocused: true,
+                    isMain: false,
+                    isModal: false,
+                    isMinimized: false,
+                    isFullscreen: false,
+                    matchesMainWindow: false,
+                    matchesFocusedWindow: true,
+                    windowLevel: "normalWindow",
+                    activationPolicy: "regular",
+                    hasCloseButton: false,
+                    hasMinimizeButton: false,
+                    hasZoomButton: false,
+                    hasFullscreenButton: false,
+                    isCloseButtonEnabled: nil,
+                    isMinimizeButtonEnabled: nil,
+                    isZoomButtonEnabled: nil,
+                    isFullscreenButtonEnabled: nil,
+                    hasAnyStandardWindowControls: false,
+                    isButtonless: true,
+                    isPrimaryAppWindow: true,
+                    isStandardWindowLike: false,
+                ),
+            ),
+        )
+
+        logger.flush()
+
+        let line = try String(contentsOf: url, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload = try XCTUnwrap(parseLine(line))
+        assertEquals(payload["event"] as? String, "window_placement_debug")
+        assertEquals(payload["placementKind"] as? String, "excluded")
+        assertEquals(payload["source"] as? String, WindowPlacementDecisionSource.focusedWindowLookup.rawValue)
+        assertEquals(payload["classificationReason"] as? String, "office_buttonless_popup")
+        let windowFacts = try XCTUnwrap(payload["windowFacts"] as? [String: Any])
+        assertEquals(windowFacts["appId"] as? String, "com.microsoft.Powerpoint")
+        assertEquals(windowFacts["subrole"] as? String, "AXUnknown")
+        assertEquals(windowFacts["isButtonless"] as? Bool, true)
+    }
+
+    func testWindowRegistrationSkippedIncludesReasonAndSource() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let logger = WindowEventsDiagnosticsLogger(logPath: url.path)
+        _ = logger.toggleRuntime(forBundleId: "com.microsoft.Powerpoint")
+        logger.logWindowRegistrationSkipped(
+            bundleId: "com.microsoft.Powerpoint",
+            pid: 7,
+            windowId: 55,
+            reason: WindowPlacementDecisionSource.disappearedBeforeRegistration.rawValue,
+            source: WindowPlacementDecisionSource.disappearedBeforeRegistration.rawValue,
+        )
+
+        logger.flush()
+
+        let line = try String(contentsOf: url, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload = try XCTUnwrap(parseLine(line))
+        assertEquals(payload["event"] as? String, "window_registration_skipped")
+        assertEquals(payload["source"] as? String, WindowPlacementDecisionSource.disappearedBeforeRegistration.rawValue)
+        assertEquals(payload["classificationReason"] as? String, WindowPlacementDecisionSource.disappearedBeforeRegistration.rawValue)
+        XCTAssertNil(payload["placementKind"])
+    }
+
     func testSecondToggleStopsLogging() throws {
         let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
         defer { try? FileManager.default.removeItem(at: url) }

@@ -50,15 +50,33 @@ package final class Window: TreeNode, Hashable {
 
     @MainActor
     @discardableResult
-    package static func getOrRegister(windowId: UInt32, app: any WindowPlatformApp) async throws -> Window {
+    package static func getOrRegister(windowId: UInt32, app: any WindowPlatformApp) async throws -> Window? {
         if let existing = get(byPlatformWindowId: windowId) { return existing }
-        let rect = try await app.getWindowRect(windowId: windowId)
+        guard let registrationSnapshot = try await app.getWindowRegistrationSnapshot(windowId: windowId) else {
+            let session = currentSession
+            if session.windowEventsDiagnosticsLogger.isEnabled(forBundleId: app.rawAppBundleId) {
+                session.windowEventsDiagnosticsLogger.logWindowRegistrationSkipped(
+                    bundleId: app.rawAppBundleId,
+                    pid: app.pid,
+                    windowId: windowId,
+                    reason: WindowPlacementDecisionSource.disappearedBeforeRegistration.rawValue,
+                    source: WindowPlacementDecisionSource.disappearedBeforeRegistration.rawValue,
+                )
+            }
+            return nil
+        }
+        let rect = registrationSnapshot.rect
+        let placementDecision = try await Window.resolvePlacementDecision(
+            windowId: windowId,
+            snapshot: registrationSnapshot,
+            app: app,
+        )
         let data = try await unbindAndGetBindingDataForNewWindow(
             windowId,
             app,
-            isStartup
-                ? (rect?.center.monitorApproximation ?? mainMonitor).activeWorkspace
-                : focus.workspace,
+            rect?.center.monitorApproximation.activeWorkspace
+                ?? (isStartup ? mainMonitor.activeWorkspace : focus.workspace),
+            placementDecision: placementDecision,
             window: nil,
         )
 
@@ -77,13 +95,22 @@ package final class Window: TreeNode, Hashable {
         frameIdByPlatformWindowId[windowId] = window.windowId
         let session = currentSession
         if session.windowEventsDiagnosticsLogger.isEnabled(forBundleId: app.rawAppBundleId) {
-            let placementKind = try await Window.resolvePlacementKind(windowId: windowId, app: app)
-            let title = try await app.getWindowTitle(windowId: windowId)
+            let title = if let debugTitle = placementDecision.debugInfo?.title {
+                debugTitle
+            } else {
+                try await app.getWindowTitle(windowId: windowId)
+            }
+            session.windowEventsDiagnosticsLogger.logWindowPlacementDebug(
+                bundleId: app.rawAppBundleId,
+                pid: app.pid,
+                windowId: windowId,
+                decision: placementDecision,
+            )
             session.windowEventsDiagnosticsLogger.logWindowRegistered(
                 bundleId: app.rawAppBundleId,
                 pid: app.pid,
                 windowId: windowId,
-                placementKind: placementKind,
+                placementKind: placementDecision.placementKind,
                 title: title,
             )
         }
@@ -245,27 +272,73 @@ package final class Window: TreeNode, Hashable {
 
 extension Window {
     @MainActor
-    static func resolvePlacementKind(
+    static func resolvePlacementDecision(
         windowId: UInt32,
         app: any WindowPlatformApp,
-    ) async throws -> WindowPlacementKind {
-        let heuristicType = try await app.getWindowPlacementKind(windowId: windowId)
+    ) async throws -> WindowPlacementDecision {
+        if let registrationSnapshot = try await app.getWindowRegistrationSnapshot(windowId: windowId) {
+            return try await resolvePlacementDecision(windowId: windowId, snapshot: registrationSnapshot, app: app)
+        }
+        let baseDecision = try await app.getWindowPlacementDecision(windowId: windowId)
         let overrides = runtimeContext.config.windowClassificationOverrides
-        guard !overrides.isEmpty else { return heuristicType }
+        guard !overrides.isEmpty else { return baseDecision }
 
         let appBundleId = app.rawAppBundleId
         let appName = app.name
-        var cachedTitle: String? = nil
+        var cachedTitle = baseDecision.debugInfo?.title
 
         for override in overrides {
             if override.matcher.windowTitleRegexSubstring != nil, cachedTitle == nil {
                 cachedTitle = try await app.getWindowTitle(windowId: windowId) ?? ""
             }
             if override.matcher.matches(appBundleId: appBundleId, appName: appName, windowTitle: cachedTitle) {
-                return override.resolvedKind
+                return WindowPlacementDecision(
+                    placementKind: override.resolvedKind,
+                    reason: "config_override",
+                    source: baseDecision.source,
+                    debugInfo: baseDecision.debugInfo,
+                )
             }
         }
-        return heuristicType
+        return baseDecision
+    }
+
+    @MainActor
+    static func resolvePlacementDecision(
+        windowId: UInt32,
+        snapshot: WindowRegistrationSnapshot,
+        app: any WindowPlatformApp,
+    ) async throws -> WindowPlacementDecision {
+        let overrides = runtimeContext.config.windowClassificationOverrides
+        guard !overrides.isEmpty else { return snapshot.placementDecision }
+
+        let appBundleId = app.rawAppBundleId
+        let appName = app.name
+        var cachedTitle = snapshot.placementDecision.debugInfo?.title
+
+        for override in overrides {
+            if override.matcher.windowTitleRegexSubstring != nil, cachedTitle == nil {
+                cachedTitle = try await app.getWindowTitle(windowId: windowId) ?? ""
+            }
+            if override.matcher.matches(appBundleId: appBundleId, appName: appName, windowTitle: cachedTitle) {
+                return WindowPlacementDecision(
+                    placementKind: override.resolvedKind,
+                    reason: "config_override",
+                    source: snapshot.placementDecision.source,
+                    debugInfo: snapshot.placementDecision.debugInfo,
+                )
+            }
+        }
+        return snapshot.placementDecision
+    }
+
+
+    @MainActor
+    static func resolvePlacementKind(
+        windowId: UInt32,
+        app: any WindowPlatformApp,
+    ) async throws -> WindowPlacementKind {
+        try await resolvePlacementDecision(windowId: windowId, app: app).placementKind
     }
 }
 

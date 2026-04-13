@@ -47,7 +47,9 @@ package final class TestApp: WindowPlatformApp {
 
     private var windowRects: [UInt32: Rect] = [:]
     private var windowTitles: [UInt32: String] = [:]
-    private var windowPlacementKinds: [UInt32: WindowPlacementKind] = [:]
+    private var windowPlacementDecisions: [UInt32: WindowPlacementDecision] = [:]
+    private var explicitWindowRegistrationSnapshots: [UInt32: WindowRegistrationSnapshot] = [:]
+    private var missingRegistrationSnapshotWindowIds: Set<UInt32> = []
     private var macosFullscreen: [UInt32: Bool] = [:]
     private var macosMinimized: [UInt32: Bool] = [:]
 
@@ -79,7 +81,9 @@ package final class TestApp: WindowPlatformApp {
         windows = []
         windowRects = [:]
         windowTitles = [:]
-        windowPlacementKinds = [:]
+        windowPlacementDecisions = [:]
+        explicitWindowRegistrationSnapshots = [:]
+        missingRegistrationSnapshotWindowIds = []
         macosFullscreen = [:]
         macosMinimized = [:]
         isHidden = false
@@ -87,12 +91,31 @@ package final class TestApp: WindowPlatformApp {
 
     @MainActor
     package func setWindowPlacementKind(windowId: UInt32, _ kind: WindowPlacementKind) {
-        windowPlacementKinds[windowId] = kind
+        windowPlacementDecisions[windowId] = WindowPlacementDecision(
+            placementKind: kind,
+            reason: "test_override",
+        )
+    }
+
+    @MainActor
+    package func setWindowPlacementDecision(windowId: UInt32, _ decision: WindowPlacementDecision) {
+        windowPlacementDecisions[windowId] = decision
     }
 
     @MainActor
     package func setWindowRect(windowId: UInt32, _ rect: Rect?) {
         windowRects[windowId] = rect
+    }
+
+    @MainActor
+    package func setWindowRegistrationSnapshot(windowId: UInt32, _ snapshot: WindowRegistrationSnapshot?) {
+        if let snapshot {
+            explicitWindowRegistrationSnapshots[windowId] = snapshot
+            missingRegistrationSnapshotWindowIds.remove(windowId)
+        } else {
+            explicitWindowRegistrationSnapshots.removeValue(forKey: windowId)
+            missingRegistrationSnapshotWindowIds.insert(windowId)
+        }
     }
 
     @MainActor
@@ -152,7 +175,9 @@ package final class TestApp: WindowPlatformApp {
         }
         windowRects.removeValue(forKey: windowId)
         windowTitles.removeValue(forKey: windowId)
-        windowPlacementKinds.removeValue(forKey: windowId)
+        windowPlacementDecisions.removeValue(forKey: windowId)
+        explicitWindowRegistrationSnapshots.removeValue(forKey: windowId)
+        missingRegistrationSnapshotWindowIds.remove(windowId)
         macosFullscreen.removeValue(forKey: windowId)
         macosMinimized.removeValue(forKey: windowId)
     }
@@ -173,7 +198,23 @@ package final class TestApp: WindowPlatformApp {
         [:]
     }
 
-    package func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
-        windowPlacementKinds[windowId] ?? .tiling
+    package func getWindowRegistrationSnapshot(windowId: UInt32) async throws -> WindowRegistrationSnapshot? {
+        if missingRegistrationSnapshotWindowIds.contains(windowId) {
+            return nil
+        }
+        if let snapshot = explicitWindowRegistrationSnapshots[windowId] {
+            return snapshot
+        }
+        return WindowRegistrationSnapshot(
+            rect: windowRects[windowId],
+            placementDecision: try await getWindowPlacementDecision(windowId: windowId),
+        )
+    }
+
+    package func getWindowPlacementDecision(windowId: UInt32) async throws -> WindowPlacementDecision {
+        windowPlacementDecisions[windowId] ?? WindowPlacementDecision(
+            placementKind: .tiling,
+            reason: "test_default",
+        )
     }
 }

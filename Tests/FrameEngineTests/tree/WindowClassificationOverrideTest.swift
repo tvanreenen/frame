@@ -59,6 +59,24 @@ final class WindowClassificationOverrideTest: XCTestCase {
         let withOverride = try await Window.resolvePlacementKind(windowId: 1, app: app)
         assertEquals(withOverride, .excluded)
     }
+
+    func testPlacementResolutionDoesNotApplyLegacyOfficeFallbackAfterAppDecision() async throws {
+        let app = ClassificationTestApp(
+            pid: 103,
+            rawAppBundleId: KnownBundleId.powerPoint.rawValue,
+            name: "Microsoft PowerPoint",
+            placementDecision: WindowPlacementDecision(
+                placementKind: .tiling,
+                reason: "app_classifier",
+            ),
+            windowTitle: "",
+        )
+
+        let resolved = try await Window.resolvePlacementDecision(windowId: 1, app: app)
+
+        assertEquals(resolved.placementKind, .tiling)
+        assertEquals(resolved.reason, "app_classifier")
+    }
 }
 
 private final class ClassificationTestApp: WindowPlatformApp {
@@ -69,14 +87,22 @@ private final class ClassificationTestApp: WindowPlatformApp {
     let bundlePath: String? = nil
     let isHidden: Bool = false
 
-    private let placementKind: WindowPlacementKind
+    private let placementDecision: WindowPlacementDecision
     private let windowTitle: String?
 
     init(pid: Int32, rawAppBundleId: String?, name: String?, placementKind: WindowPlacementKind, windowTitle: String?) {
         self.pid = pid
         self.rawAppBundleId = rawAppBundleId
         self.name = name
-        self.placementKind = placementKind
+        self.placementDecision = WindowPlacementDecision(placementKind: placementKind, reason: "test_app")
+        self.windowTitle = windowTitle
+    }
+
+    init(pid: Int32, rawAppBundleId: String?, name: String?, placementDecision: WindowPlacementDecision, windowTitle: String?) {
+        self.pid = pid
+        self.rawAppBundleId = rawAppBundleId
+        self.name = name
+        self.placementDecision = placementDecision
         self.windowTitle = windowTitle
     }
 
@@ -93,7 +119,7 @@ private final class ClassificationTestApp: WindowPlatformApp {
     func isNativeMinimized(windowId: UInt32) async throws -> Bool? { false }
     func getWindowTitle(windowId: UInt32) async throws -> String? { windowTitle }
     func dumpWindowInfo(windowId: UInt32) async throws -> [String: Json] { [:] }
-    func getWindowPlacementKind(windowId: UInt32) async throws -> WindowPlacementKind {
-        placementKind
+    func getWindowPlacementDecision(windowId: UInt32) async throws -> WindowPlacementDecision {
+        placementDecision
     }
 }
