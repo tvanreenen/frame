@@ -20,11 +20,11 @@ extension [String: Json]: AxUiElementMock {
 
     public func containingWindowId() -> CGWindowID? {
         guard let rawWindowId = self["Aero.axWindowId"]?.rawValue else { return nil }
-        if let windowId = rawWindowId as? Int {
-            return UInt32(windowId)
-        } else {
-            return rawWindowId as? UInt32 ?? dieT()
-        }
+        if let windowId = rawWindowId as? UInt32 { return windowId }
+        if let windowId = rawWindowId as? Int { return UInt32(windowId) }
+        if let windowId = rawWindowId as? NSNumber { return windowId.uint32Value }
+        if let windowId = rawWindowId as? String, let parsed = UInt32(windowId) { return parsed }
+        return dieT("Unsupported Aero.axWindowId value \(rawWindowId) of type \(Swift.type(of: rawWindowId))")
     }
 }
 

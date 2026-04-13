@@ -44,7 +44,7 @@ private func parseWindowClassificationOverride(_ raw: TOMLValueConvertible, _ ba
 private func parseWindowClassificationOverrideMatcher(
     _ raw: TOMLValueConvertible,
     _ backtrace: TomlBacktrace,
-    _ errors: inout [TomlParseError]
+    _ errors: inout [TomlParseError],
 ) -> WindowClassificationOverrideMatcher {
     parseTable(raw, WindowClassificationOverrideMatcher(), windowClassificationOverrideMatcherParsers, backtrace, &errors)
 }

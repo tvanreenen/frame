@@ -10,7 +10,7 @@ extension AppSession {
             SecureInputPanelDependencies(
                 hasBindings: { !self.config.bindings.isEmpty },
                 mainMonitorWidth: { mainMonitor.width },
-            )
+            ),
         )
         syncTrayText()
         SecureInputPanel.shared.refresh()

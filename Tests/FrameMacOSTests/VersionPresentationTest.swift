@@ -87,14 +87,14 @@ final class VersionPresentationTest: XCTestCase {
             daemonVersion: "0.12.3+abc1234",
             configHealthy: false,
             configDetails: """
-            Failed to parse /tmp/frame.toml
+                Failed to parse /tmp/frame.toml
 
-            [binding.alt-h]
-              - [CFG001] Unknown key
+                [binding.alt-h]
+                  - [CFG001] Unknown key
 
-            Recovery:
-            1. Fix and retry
-            """,
+                Recovery:
+                1. Fix and retry
+                """,
         )
         XCTAssertEqual(
             result,

@@ -47,7 +47,7 @@ final class WindowIdentityReconciliationTest: XCTestCase {
                 frameWindowId: original.windowId,
                 platformWindowId: 4044,
                 appPid: TestApp.shared.pid,
-            )
+            ),
         ]
 
         let plan = try await currentSession.makeAppRefreshPlan(
@@ -179,7 +179,7 @@ final class WindowIdentityReconciliationTest: XCTestCase {
         assertEquals(Window.allWindows.count, 1)
     }
 
-    func testRebindLogsWindowReboundWithoutWindowRegistered() async throws {
+    func testRebindLogsWindowReboundWithoutWindowRegistered() throws {
         let logUrl = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
         defer { try? FileManager.default.removeItem(at: logUrl) }
 
@@ -233,7 +233,7 @@ final class WindowIdentityReconciliationTest: XCTestCase {
                 frameWindowId: original.windowId,
                 platformWindowId: 4044,
                 appPid: TestApp.shared.pid,
-            )
+            ),
         ]
 
         let plan = try await currentSession.makeAppRefreshPlan(

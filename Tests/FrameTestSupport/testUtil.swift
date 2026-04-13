@@ -48,8 +48,8 @@ package func clearWorkspaceChildrenForTests(_ workspace: Workspace) {
     }
 }
 
-package extension ParsedCmd {
-    var errorOrNil: String? {
+extension ParsedCmd {
+    package var errorOrNil: String? {
         if case .failure(let e) = self {
             return e
         } else {
@@ -57,9 +57,9 @@ package extension ParsedCmd {
         }
     }
 
-    var cmdOrDie: T { cmdOrNil ?? dieT() }
+    package var cmdOrDie: T { cmdOrNil ?? dieT() }
 
-    var isHelp: Bool {
+    package var isHelp: Bool {
         if case .help = self {
             return true
         } else {
@@ -77,22 +77,22 @@ package func testParseCommandFail(_ command: String, msg expected: String) {
     }
 }
 
-package extension WorkspaceCmdArgs {
-    init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
+extension WorkspaceCmdArgs {
+    package init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
         self = WorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(target)
         self._wrapAround = wrapAround
     }
 }
 
-package extension MoveNodeToWorkspaceCmdArgs {
-    init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
+extension MoveNodeToWorkspaceCmdArgs {
+    package init(target: WorkspaceTarget, wrapAround: Bool? = nil) {
         self = MoveNodeToWorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(target)
         self._wrapAround = wrapAround
     }
 
-    init(workspace: String) {
+    package init(workspace: String) {
         self = MoveNodeToWorkspaceCmdArgs(rawArgs: [])
         self.target = .initialized(.direct(.parse(workspace).getOrDie()))
     }

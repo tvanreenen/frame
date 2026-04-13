@@ -99,7 +99,7 @@ extension TreeNode {
     }
 
     package var isUnconventionalContainer: Bool {
-            self is NativeMinimizedWindowsContainer ||
+        self is NativeMinimizedWindowsContainer ||
             self is NativeFullscreenWindowsContainer ||
             self is HiddenAppWindowsContainer ||
             self is ExcludedWindowsContainer

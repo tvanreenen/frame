@@ -159,31 +159,30 @@ extension AppSession {
         let replacementFrameWindowId = unmatchedBindingSnapshots.singleOrNil()?.frameWindowId
         let candidateReplacementWindowId =
             unmatchedBindingSnapshots.count == 1
-            ? try await replacementPlatformWindowId(
-                for: unmatchedBindingSnapshots[0],
-                candidates: unmatchedWindowIds,
-                app: app,
-                focusedWindowId: snapshot.focusedWindowId,
-            )
-            : nil
+                ? try await replacementPlatformWindowId(
+                    for: unmatchedBindingSnapshots[0],
+                    candidates: unmatchedWindowIds,
+                    app: app,
+                    focusedWindowId: snapshot.focusedWindowId,
+                )
+                : nil
 
-        let replacementReason: String
-        if unmatchedBindingSnapshots.isEmpty && unmatchedWindowIds.isEmpty {
-            replacementReason = "exact_matches_only"
+        let replacementReason: String = if unmatchedBindingSnapshots.isEmpty && unmatchedWindowIds.isEmpty {
+            "exact_matches_only"
         } else if unmatchedBindingSnapshots.count != 1 {
-            replacementReason = "unmatched_windows_count_\(unmatchedBindingSnapshots.count)"
+            "unmatched_windows_count_\(unmatchedBindingSnapshots.count)"
         } else if candidateReplacementWindowId == nil {
-            replacementReason = "no_replacement_candidate"
+            "no_replacement_candidate"
         } else {
-            replacementReason = "rebind"
+            "rebind"
         }
 
         let rebind: PlannedWindowRebind?
         let garbageCollections: [PlannedWindowGarbageCollection]
         let registerWindowIds: [UInt32]
         if replacementReason == "rebind",
-            let replacementWindowId = candidateReplacementWindowId,
-            let reboundSnapshot = unmatchedBindingSnapshots.singleOrNil()
+           let replacementWindowId = candidateReplacementWindowId,
+           let reboundSnapshot = unmatchedBindingSnapshots.singleOrNil()
         {
             let rect = try await app.getWindowRect(windowId: replacementWindowId)
             rebind = PlannedWindowRebind(
@@ -272,15 +271,15 @@ extension AppSession {
     private func validateAppRefreshPlan(_ plan: AppRefreshPlan) -> String? {
         if let rebind = plan.rebind {
             guard let window = Window.get(byId: rebind.frameWindowId),
-                window.platformWindowId == rebind.expectedPlatformWindowId,
-                Window.get(byPlatformWindowId: rebind.newPlatformWindowId) == nil
+                  window.platformWindowId == rebind.expectedPlatformWindowId,
+                  Window.get(byPlatformWindowId: rebind.newPlatformWindowId) == nil
             else {
                 return "snapshot_drift"
             }
         }
         for garbageCollection in plan.garbageCollections {
             guard let window = Window.get(byId: garbageCollection.frameWindowId),
-                window.platformWindowId == garbageCollection.expectedPlatformWindowId
+                  window.platformWindowId == garbageCollection.expectedPlatformWindowId
             else {
                 return "snapshot_drift"
             }
@@ -306,10 +305,10 @@ extension AppSession {
         var matchingCandidates: [UInt32] = []
         for candidate in candidates {
             if let candidateRect = try await app.getWindowRect(windowId: candidate),
-                candidateRect.topLeftX == currentRect.topLeftX,
-                candidateRect.topLeftY == currentRect.topLeftY,
-                candidateRect.width == currentRect.width,
-                candidateRect.height == currentRect.height
+               candidateRect.topLeftX == currentRect.topLeftX,
+               candidateRect.topLeftY == currentRect.topLeftY,
+               candidateRect.width == currentRect.width,
+               candidateRect.height == currentRect.height
             {
                 matchingCandidates.append(candidate)
             }

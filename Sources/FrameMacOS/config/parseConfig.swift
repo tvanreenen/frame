@@ -315,7 +315,7 @@ func parseBool(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> Parse
     raw.bool.orFailure(expectedActualTypeError(expected: .bool, actual: raw.type, backtrace))
 }
 
-package indirect enum TomlBacktrace: CustomStringConvertible, Equatable {
+package indirect enum TomlBacktrace: CustomStringConvertible, Equatable, Sendable {
     case emptyRoot
     case rootKey(String)
     case key(String)

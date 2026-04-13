@@ -129,8 +129,8 @@ package struct WindowFacts: Equatable, Sendable {
     }
 }
 
-private extension NSApplication.ActivationPolicy {
-    var debugDescription: String {
+extension NSApplication.ActivationPolicy {
+    fileprivate var debugDescription: String {
         switch self {
             case .regular: "regular"
             case .accessory: "accessory"
@@ -140,8 +140,8 @@ private extension NSApplication.ActivationPolicy {
     }
 }
 
-private extension MacOsWindowLevel {
-    var debugDescription: String {
+extension MacOsWindowLevel {
+    fileprivate var debugDescription: String {
         switch self {
             case .normalWindow: "normalWindow"
             case .alwaysOnTopWindow: "alwaysOnTopWindow"

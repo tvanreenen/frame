@@ -5,6 +5,6 @@ import Common
 import Foundation
 import TOMLKit
 
-package extension [TomlParseError] {
-    var descriptions: [String] { map(\.description) }
+extension [TomlParseError] {
+    package var descriptions: [String] { map(\.description) }
 }

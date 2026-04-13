@@ -85,7 +85,7 @@ extension AppSession {
         }
         return try await withThrowingTaskGroup(
             of: (pid_t, PlatformAppRefreshSnapshot).self,
-            returning: [MacApp: PlatformAppRefreshSnapshot].self
+            returning: [MacApp: PlatformAppRefreshSnapshot].self,
         ) { group in
             func refreshTheApp(_ nsApp: NSRunningApplication) {
                 group.addTask { @Sendable @MainActor in
@@ -355,7 +355,7 @@ final class MacApp: WindowPlatformApp {
             }
 
             if let focusedWindowId,
-                let focusedAxWindow = axApp.threadGuarded.get(Ax.focusedWindowAttr)
+               let focusedAxWindow = axApp.threadGuarded.get(Ax.focusedWindowAttr)
             {
                 try cachedWindows.getOrRegisterAxWindow(
                     windowId: focusedWindowId,

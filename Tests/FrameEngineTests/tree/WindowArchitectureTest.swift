@@ -316,7 +316,6 @@ final class WindowArchitectureTest: XCTestCase {
                 XCTAssertFalse(currentSession === previousSession)
                 return true
             }
-
         }
 
         let previousSession = currentSession
