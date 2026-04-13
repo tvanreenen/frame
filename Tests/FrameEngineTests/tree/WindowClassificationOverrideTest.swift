@@ -77,6 +77,23 @@ final class WindowClassificationOverrideTest: XCTestCase {
         assertEquals(resolved.placementKind, .tiling)
         assertEquals(resolved.reason, "app_classifier")
     }
+
+    func testWindowClassificationOverrideAppliedOnRegistration() async throws {
+        var matcher = WindowClassificationOverrideMatcher()
+        matcher.appId = TestApp.shared.rawAppBundleId
+        var override = WindowClassificationOverride()
+        override.matcher = matcher
+        override.kind = .tiling
+        runtimeContext.config.windowClassificationOverrides = [
+            override,
+        ]
+        TestApp.shared.setWindowPlacementKind(windowId: 781, .excluded)
+
+        let window = try await Window.getOrRegister(windowId: 781, app: TestApp.shared)
+        let unwrappedWindow = try XCTUnwrap(window)
+
+        XCTAssertTrue(unwrappedWindow.parent is Column)
+    }
 }
 
 private final class ClassificationTestApp: WindowPlatformApp {

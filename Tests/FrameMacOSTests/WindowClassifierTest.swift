@@ -72,6 +72,18 @@ final class WindowClassifierTest: XCTestCase {
         assertEquals(decision.reason, "firefox_disabled_minimize_dialog")
     }
 
+    func testFirefoxFocusedStandardWindowUsesFirefoxWindowSignals() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .mozillaFirefox,
+                matchesFocusedWindow: true,
+            )
+        )
+
+        assertEquals(decision.placementKind, .tiling)
+        assertEquals(decision.reason, "firefox_window_signals")
+    }
+
     func testGhosttyQuickTerminalIsExcluded() {
         let decision = WindowClassifier.classify(
             makeFacts(
@@ -82,6 +94,133 @@ final class WindowClassifierTest: XCTestCase {
 
         assertEquals(decision.placementKind, .excluded)
         assertEquals(decision.reason, "ghostty_quick_terminal")
+    }
+
+    func testNonNormalLevelPopupIsExcluded() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .chrome,
+                windowLevel: .alwaysOnTopWindow,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "non_normal_level_popup")
+    }
+
+    func testXcodeOpenQuicklyIsExcluded() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .xcode,
+                identifier: "open_quickly",
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "xcode_open_quickly")
+    }
+
+    func testITermWindowWithoutFullscreenButtonIsExcluded() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .iterm2,
+                hasFullscreenButton: false,
+                isFullscreenButtonEnabled: nil,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "iterm_without_fullscreen_button")
+    }
+
+    func testAccessoryWindowWithoutCloseButtonIsExcluded() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .zoom,
+                activationPolicy: .accessory,
+                hasCloseButton: false,
+                isCloseButtonEnabled: nil,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "accessory_window_without_close_button")
+    }
+
+    func testOnePasswordNonNormalDialogIsExcluded() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: ._1password,
+                windowLevel: .alwaysOnTopWindow,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "onepassword_non_normal_dialog")
+    }
+
+    func testIPhoneSimulatorWindowIsDialog() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .iphonesimulator,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "iphone_simulator_dialog")
+    }
+
+    func testPhotoBoothWindowIsDialog() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .photoBooth,
+                hasFullscreenButton: false,
+                isFullscreenButtonEnabled: nil,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "photobooth_dialog")
+    }
+
+    func testGhosttyDialogIsExcluded() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .ghostty,
+                hasFullscreenButton: true,
+                isCloseButtonEnabled: true,
+                isFullscreenButtonEnabled: false,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "ghostty_dialog")
+    }
+
+    func testNoFullscreenDialogIsExcludedForNonExemptApp() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .zoom,
+                hasFullscreenButton: false,
+                isFullscreenButtonEnabled: nil,
+            )
+        )
+
+        assertEquals(decision.placementKind, .excluded)
+        assertEquals(decision.reason, "no_fullscreen_dialog")
+    }
+
+    func testVsCodeNoFullscreenWindowIsExempt() {
+        let decision = WindowClassifier.classify(
+            makeFacts(
+                knownBundleId: .vscode,
+                hasFullscreenButton: false,
+                isFullscreenButtonEnabled: nil,
+            )
+        )
+
+        assertEquals(decision.placementKind, .tiling)
+        assertEquals(decision.reason, "standard_window_like_subrole")
     }
 
     func testUnknownWindowShapeFallsBackDeterministically() {
@@ -275,6 +414,8 @@ final class WindowClassifierTest: XCTestCase {
         identifier: String? = nil,
         matchesMainWindow: Bool = false,
         matchesFocusedWindow: Bool = false,
+        windowLevel: MacOsWindowLevel? = .normalWindow,
+        activationPolicy: NSApplication.ActivationPolicy = .regular,
         hasCloseButton: Bool = true,
         hasMinimizeButton: Bool = true,
         hasZoomButton: Bool = true,
@@ -299,8 +440,8 @@ final class WindowClassifierTest: XCTestCase {
             isFullscreen: false,
             matchesMainWindow: matchesMainWindow,
             matchesFocusedWindow: matchesFocusedWindow,
-            windowLevel: .normalWindow,
-            activationPolicy: .regular,
+            windowLevel: windowLevel,
+            activationPolicy: activationPolicy,
             hasCloseButton: hasCloseButton,
             hasMinimizeButton: hasMinimizeButton,
             hasZoomButton: hasZoomButton,
