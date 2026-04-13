@@ -15,6 +15,7 @@ private let noFullscreenDialogExemptIds: Set<KnownBundleId> = [
     .chrome,
     .activityMonitor,
     .alacritty,
+    .ghostty,
     .kitty,
     .wezterm,
     .qutebrowser,

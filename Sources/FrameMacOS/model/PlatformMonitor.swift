@@ -88,8 +88,8 @@ package func monitors() -> [any Monitor] {
         : screens.enumerated().map { $0.element.toMonitor(systemMonitorIndex: $0.offset + 1, mainMonitorHeight: mainMonitorHeight) }
 }
 
-private extension CGRect {
-    func platformMonitorFrameNormalized(mainMonitorHeight: CGFloat) -> Rect {
+extension CGRect {
+    fileprivate func platformMonitorFrameNormalized(mainMonitorHeight: CGFloat) -> Rect {
         let rect = toRect()
         return rect.copy(\.topLeftY, mainMonitorHeight - rect.topLeftY)
     }

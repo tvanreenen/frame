@@ -160,7 +160,7 @@ extension AxUiElementMock {
                 knownBundleId: id,
                 activationPolicy: activationPolicy,
                 windowLevel: windowLevel,
-            )
+            ),
         )
     }
 
@@ -178,7 +178,7 @@ extension AxUiElementMock {
                 knownBundleId: knownBundleId,
                 activationPolicy: activationPolicy,
                 windowLevel: windowLevel,
-            )
+            ),
         )
     }
 

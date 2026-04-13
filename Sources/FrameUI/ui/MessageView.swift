@@ -52,7 +52,7 @@ public struct MessageView: View {
                 }
                 .font(.callout)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                    .focusable()
+                .focusable()
             }
             .padding()
             Text("Config errors:")

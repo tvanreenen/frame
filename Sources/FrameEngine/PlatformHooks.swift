@@ -57,7 +57,7 @@ package struct PlatformServices {
         syncUiState: @escaping @MainActor @Sendable (_ session: AppSession) -> Void = { _ in },
         mouseLocation: @escaping @MainActor @Sendable () -> CGPoint = { .zero },
         followFocusedMonitorWithMouse: @escaping @MainActor @Sendable (_ target: CGPoint) -> Void = { _ in },
-        nativeFocusWindow: @escaping @MainActor @Sendable (_ app: any WindowPlatformApp, _ windowId: UInt32) -> Void = { _, _ in }
+        nativeFocusWindow: @escaping @MainActor @Sendable (_ app: any WindowPlatformApp, _ windowId: UInt32) -> Void = { _, _ in },
     ) {
         self.mainMonitor = mainMonitor
         self.monitors = monitors

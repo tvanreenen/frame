@@ -18,7 +18,7 @@ public struct MenuBarMetadata {
 public func menuBar(
     viewModel: TrayMenuModel,
     metadata: MenuBarMetadata,
-    onQuit: @escaping @MainActor () async throws -> ()
+    onQuit: @escaping @MainActor () async throws -> (),
 ) -> some Scene {
     MenuBarExtra {
         menuMetadataBlock(metadata: metadata)

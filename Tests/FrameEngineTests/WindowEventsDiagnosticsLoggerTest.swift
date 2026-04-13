@@ -48,7 +48,7 @@ final class WindowEventsDiagnosticsLoggerTest: XCTestCase {
         assertEquals((gc["windowId"] as? NSNumber)?.intValue, 2)
     }
 
-    func testNonMatchingBundleDoesNotWrite() throws {
+    func testNonMatchingBundleDoesNotWrite() {
         let url = FileManager.default.temporaryDirectory.appending(path: "frame-window-events-\(UUID().uuidString).jsonl")
         defer { try? FileManager.default.removeItem(at: url) }
 

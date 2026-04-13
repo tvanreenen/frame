@@ -26,7 +26,7 @@ final class WindowClassifierTest: XCTestCase {
                 isMinimizeButtonEnabled: nil,
                 isZoomButtonEnabled: nil,
                 isFullscreenButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -40,7 +40,7 @@ final class WindowClassifierTest: XCTestCase {
                 matchesMainWindow: true,
                 hasFullscreenButton: true,
                 isFullscreenButtonEnabled: true,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .tiling)
@@ -53,7 +53,7 @@ final class WindowClassifierTest: XCTestCase {
                 knownBundleId: .chrome,
                 hasFullscreenButton: false,
                 isFullscreenButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .tiling)
@@ -65,7 +65,7 @@ final class WindowClassifierTest: XCTestCase {
             makeFacts(
                 knownBundleId: .mozillaFirefox,
                 isMinimizeButtonEnabled: false,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -77,7 +77,7 @@ final class WindowClassifierTest: XCTestCase {
             makeFacts(
                 knownBundleId: .mozillaFirefox,
                 matchesFocusedWindow: true,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .tiling)
@@ -89,7 +89,7 @@ final class WindowClassifierTest: XCTestCase {
             makeFacts(
                 knownBundleId: .ghostty,
                 identifier: "com.mitchellh.ghostty.quickTerminal",
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -101,7 +101,7 @@ final class WindowClassifierTest: XCTestCase {
             makeFacts(
                 knownBundleId: .chrome,
                 windowLevel: .alwaysOnTopWindow,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -113,7 +113,7 @@ final class WindowClassifierTest: XCTestCase {
             makeFacts(
                 knownBundleId: .xcode,
                 identifier: "open_quickly",
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -126,7 +126,7 @@ final class WindowClassifierTest: XCTestCase {
                 knownBundleId: .iterm2,
                 hasFullscreenButton: false,
                 isFullscreenButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -140,7 +140,7 @@ final class WindowClassifierTest: XCTestCase {
                 activationPolicy: .accessory,
                 hasCloseButton: false,
                 isCloseButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -152,7 +152,7 @@ final class WindowClassifierTest: XCTestCase {
             makeFacts(
                 knownBundleId: ._1password,
                 windowLevel: .alwaysOnTopWindow,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -163,7 +163,7 @@ final class WindowClassifierTest: XCTestCase {
         let decision = WindowClassifier.classify(
             makeFacts(
                 knownBundleId: .iphonesimulator,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -176,7 +176,7 @@ final class WindowClassifierTest: XCTestCase {
                 knownBundleId: .photoBooth,
                 hasFullscreenButton: false,
                 isFullscreenButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -190,11 +190,29 @@ final class WindowClassifierTest: XCTestCase {
                 hasFullscreenButton: true,
                 isCloseButtonEnabled: true,
                 isFullscreenButtonEnabled: false,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
         assertEquals(decision.reason, "ghostty_dialog")
+    }
+
+    func testGhosttyButtonlessStandardWindowIsNotGenericDialog() {
+        let facts = makeFacts(
+            knownBundleId: .ghostty,
+            title: "~",
+            hasCloseButton: false,
+            hasMinimizeButton: false,
+            hasZoomButton: false,
+            hasFullscreenButton: false,
+            isCloseButtonEnabled: nil,
+            isMinimizeButtonEnabled: nil,
+            isZoomButtonEnabled: nil,
+            isFullscreenButtonEnabled: nil,
+        )
+
+        assertEquals(WindowClassifier.axWindowType(facts), .window)
+        assertEquals(WindowClassifier.isDialog(facts), false)
     }
 
     func testNoFullscreenDialogIsExcludedForNonExemptApp() {
@@ -203,7 +221,7 @@ final class WindowClassifierTest: XCTestCase {
                 knownBundleId: .zoom,
                 hasFullscreenButton: false,
                 isFullscreenButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)
@@ -216,7 +234,7 @@ final class WindowClassifierTest: XCTestCase {
                 knownBundleId: .vscode,
                 hasFullscreenButton: false,
                 isFullscreenButtonEnabled: nil,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .tiling)
@@ -231,7 +249,7 @@ final class WindowClassifierTest: XCTestCase {
                 hasMinimizeButton: false,
                 hasZoomButton: false,
                 hasFullscreenButton: true,
-            )
+            ),
         )
 
         assertEquals(decision.placementKind, .excluded)

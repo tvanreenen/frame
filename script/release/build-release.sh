@@ -34,7 +34,7 @@ if [[ -z "$codesign_identity" ]]; then
     if [[ ${#identities[@]} -ne 1 ]]; then
         echo "Unable to auto-select 'Developer ID Application' identity (found ${#identities[@]})." >&2
         echo "Set FRAME_CODESIGN_IDENTITY or pass --codesign-identity explicitly." >&2
-        echo "For unsigned local smoke builds, use --codesign-identity -." >&2
+        echo "For unsigned local validation builds, use --codesign-identity -." >&2
         exit 1
     fi
     codesign_identity="${identities[0]}"

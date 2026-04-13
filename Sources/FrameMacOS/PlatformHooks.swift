@@ -3,7 +3,7 @@ import FrameEngine
 
 package func makePlatformObservationUnavailableReason(
     frontmostAppBundleId: String?,
-    isAccessibilityTrusted: Bool
+    isAccessibilityTrusted: Bool,
 ) -> PlatformObservationUnavailableReason? {
     if frontmostAppBundleId == lockScreenAppBundleId { return .screenLocked }
     if !isAccessibilityTrusted { return .accessibilityUnavailable }
@@ -46,6 +46,6 @@ func configureFrameMacOSPlatformServices(for session: AppSession) {
         },
         nativeFocusWindow: { app, windowId in
             (app as? MacApp)?.focusWindowNatively(windowId: windowId)
-        }
+        },
     )
 }

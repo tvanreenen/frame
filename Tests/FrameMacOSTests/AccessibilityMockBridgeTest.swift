@@ -65,4 +65,14 @@ final class AccessibilityMockBridgeTest: XCTestCase {
         assertEquals(axApp.get(Ax.focusedWindowAttr)?.windowId, focusedWindowId)
         assertEquals(axApp.get(Ax.mainWindowAttr)?.windowId, mainWindowId)
     }
+
+    func testContainingWindowIdParsesQuotedNumericFixtureValue() {
+        let axWindow: [String: Json] = [
+            "Aero.axWindowId": .string("197"),
+            "AXRole": .string(kAXWindowRole),
+            "AXSubrole": .string(kAXStandardWindowSubrole),
+        ]
+
+        assertEquals(axWindow.containingWindowId(), 197)
+    }
 }

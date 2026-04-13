@@ -20,19 +20,13 @@ run:
 test:
     swift test
 
-# Run CLI smoke checks against debug artifacts.
-smoke:
-    ./script/dev/smoke.sh
+# Apply formatting and lint fixes, or pass through formatter flags like --verify.
+format *ARGS:
+    ./script/dev/format.sh {{ARGS}}
 
-# Run pre-commit checks: unit tests, smoke checks, and format/lint verification.
-check:
-    just test
-    just smoke
-    ./script/dev/format.sh --verify
-
-# Apply formatting and lint fixes.
-fmt:
-    ./script/dev/format.sh
+# Alias for `format`.
+fmt *ARGS:
+    @just format {{ARGS}}
 
 # Remove local build artifacts.
 clean:
@@ -42,7 +36,11 @@ clean:
 regen:
     ./script/dev/generate.sh
 
-# Full release flow: preflight, checks, build, cask, tap update, tag push, and draft GitHub release.
+# Validate release prerequisites without publishing.
+release-preflight VERSION:
+    bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release-preflight.sh "${args[@]}"'
+
+# Full release flow: preflight, tests, build, cask, tap update, tag push, and draft GitHub release.
 release VERSION:
     bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release.sh "${args[@]}"'
 

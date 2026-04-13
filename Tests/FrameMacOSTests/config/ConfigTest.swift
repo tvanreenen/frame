@@ -146,9 +146,9 @@ final class ConfigTest: XCTestCase {
             .appendingPathComponent("frame-config-\(UUID().uuidString).toml")
         defer { try? FileManager.default.removeItem(at: configUrl) }
         try """
-        unknownKey = true
-        workspace-change-hook = ['/bin/bash', '   ']
-        """.write(to: configUrl, atomically: true, encoding: .utf8)
+            unknownKey = true
+            workspace-change-hook = ['/bin/bash', '   ']
+            """.write(to: configUrl, atomically: true, encoding: .utf8)
 
         guard case let .failure(message) = readConfig(forceConfigUrl: configUrl) else {
             XCTFail("Expected readConfig to fail")
