@@ -187,3 +187,7 @@ frame reload-config
 ```
 
 - Error output is grouped by section and includes stable `CFG###` codes to make failures easier to identify and fix.
+
+## Maintainer documentation
+
+- [Release process](docs/RELEASE.md)
