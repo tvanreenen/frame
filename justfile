@@ -16,17 +16,18 @@ build:
 run:
     ./script/dev/run-debug-app.sh
 
-# Run the Swift unit test suite.
+# Run the Swift unit suite and release-contract shell tests.
 test:
     swift test
+    ./Tests/Shell/release-contract-test.sh
 
 # Apply formatting and lint fixes, or pass through formatter flags like --verify.
 format *ARGS:
-    ./script/dev/format.sh {{ARGS}}
+    ./script/dev/format.sh {{ ARGS }}
 
 # Alias for `format`.
 fmt *ARGS:
-    @just format {{ARGS}}
+    @just format {{ ARGS }}
 
 # Remove local build artifacts.
 clean:
@@ -36,13 +37,17 @@ clean:
 regen:
     ./script/dev/generate.sh
 
-# Validate release prerequisites without publishing.
+# Validate release prerequisites without publishing (VERSION must be vX.Y.Z).
 release-preflight VERSION:
-    bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release-preflight.sh "${args[@]}"'
+    bash -euo pipefail -c 'args=(--version "$1"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release-preflight.sh "${args[@]}"' _ {{ quote(VERSION) }}
 
-# Full release flow: preflight, tests, build, cask, tap update, tag push, and draft GitHub release.
+# Build, verify, tag, and create the draft GitHub release (VERSION must be vX.Y.Z).
 release VERSION:
-    bash -euo pipefail -c 'args=(--build-version "{{VERSION}}"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release.sh "${args[@]}"'
+    bash -euo pipefail -c 'args=(--version "$1"); if [[ -n "${FRAME_CODESIGN_IDENTITY:-}" ]]; then args+=(--codesign-identity "$FRAME_CODESIGN_IDENTITY"); fi; ./script/release/release.sh "${args[@]}"' _ {{ quote(VERSION) }}
+
+# Ask the tap to propose the published release's Homebrew update.
+publish-homebrew VERSION:
+    ./script/release/publish-homebrew.sh {{ quote(VERSION) }}
 
 # Reset Accessibility permission for the local debug app.
 reset-accessibility:

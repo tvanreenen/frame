@@ -18,8 +18,8 @@ if [[ -z "$build_version" ]]; then
     exit 1
 fi
 
-if ! [[ "$build_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
-    echo "Invalid --build-version '$build_version'. Expected semantic-style version (example: 0.12.3 or 0.12.3-rc.1)." >&2
+if ! [[ "$build_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+    echo "Invalid --build-version '$build_version'. Expected a stable Semantic Version without a v prefix (example: 0.12.3)." >&2
     exit 1
 fi
 
