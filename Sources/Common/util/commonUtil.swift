@@ -51,7 +51,7 @@ public func dieT<T>(
     }
     if !recursionDetectorDuringTermination {
         let semaphore = DispatchSemaphore(value: 0)
-        Task {
+        _ = Task {
             defer { semaphore.signal() }
             try await $recursionDetectorDuringTermination.withValue(true) {
                 try await terminationHandler.beforeTermination()

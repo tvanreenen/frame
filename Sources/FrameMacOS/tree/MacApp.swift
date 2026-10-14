@@ -25,61 +25,62 @@ extension AppSession {
         // Don't perceive any of the lock screen windows as real windows
         // Otherwise, false positive ax notifications might trigger that lead to gcWindows
         if nsApp.bundleIdentifier == lockScreenAppBundleId { return nil }
-        let pid = nsApp.processIdentifier
+        guard let pid = nsApp.resolveAccessibilityProcessIdentifier() else { return nil }
         // AX requests crash if you send them to yourself
         if pid == myPid { return nil }
 
-        while true {
-            if let existing = appsByPid[pid] as? MacApp { return existing }
-            try checkCancellation()
-            if let wip = appsWipByPid[pid] {
-                try await wip.await()
-                continue
-            }
-            let wip = AwaitableOneTimeBroadcastLatch()
-            appsWipByPid[pid] = wip
-            let observerContext = callbackContext
+        if let existing = appsByPid[pid] as? MacApp { return existing }
+        try checkCancellation()
+        if let wip = appsWipByPid[pid] {
+            try await wip.await()
+            return appsByPid[pid] as? MacApp
+        }
+        let wip = AwaitableOneTimeBroadcastLatch()
+        appsWipByPid[pid] = wip
+        let observerContext = callbackContext
 
-            let thread = Thread {
-                $axTaskLocalAppThreadToken.withValue(AxAppThreadToken(pid: pid, idForDebug: nsApp.idForDebug)) {
-                    let axApp = AXUIElementCreateApplication(nsApp.processIdentifier)
-                    let handlers: HandlerToNotifKeyMapping = [
-                        (refreshObs, [kAXWindowCreatedNotification, kAXFocusedWindowChangedNotification]),
-                    ]
-                    let job = RunLoopJob()
-                    let subscriptions = (try? AxSubscription.bulkSubscribe(
-                        nsApp,
-                        axApp,
-                        job,
-                        handlers,
-                        observerContext: observerContext,
-                    )) ?? []
-                    let isGood = !subscriptions.isEmpty
-                    let app = isGood ? MacApp(nsApp, axApp, subscriptions, observerContext, Thread.current) : nil
-                    Task { @MainActor in
-                        if let app {
-                            self.appsByPid[pid] = app
-                        } else {
-                            self.appsByPid.removeValue(forKey: pid)
-                        }
-                        await wip.signal()
-                        self.appsWipByPid[pid] = nil
+        let thread = Thread {
+            $axTaskLocalAppThreadToken.withValue(AxAppThreadToken(pid: pid, idForDebug: nsApp.idForDebug)) {
+                let axApp = AXUIElementCreateApplication(pid)
+                let handlers: HandlerToNotifKeyMapping = [
+                    (refreshObs, [kAXWindowCreatedNotification, kAXFocusedWindowChangedNotification]),
+                ]
+                let job = RunLoopJob()
+                let subscriptions = (try? AxSubscription.bulkSubscribe(
+                    axApp,
+                    job,
+                    handlers,
+                    observerContext: observerContext,
+                )) ?? []
+                let isGood = !subscriptions.isEmpty
+                let app = isGood ? MacApp(nsApp, pid, axApp, subscriptions, observerContext, Thread.current) : nil
+                Task { @MainActor in
+                    if let app {
+                        self.appsByPid[pid] = app
+                    } else {
+                        self.appsByPid.removeValue(forKey: pid)
                     }
-                    if isGood {
-                        CFRunLoopRun()
-                    }
+                    self.appsWipByPid[pid] = nil
+                    await wip.signal()
+                }
+                if isGood {
+                    CFRunLoopRun()
                 }
             }
-            thread.name = "AxAppThread \(nsApp.idForDebug)"
-            thread.start()
         }
+        thread.name = "AxAppThread PID: \(pid) ID: \(nsApp.bundleIdentifier ?? "")"
+        thread.start()
+        // A failed observer subscription must not retry indefinitely and block
+        // the refresh of every other app. A later refresh can try again.
+        try await wip.await()
+        return appsByPid[pid] as? MacApp
     }
 
     func refreshAllMacAppsAndGetWindowSnapshots() async throws -> [MacApp: PlatformAppRefreshSnapshot] {
         for (_, app) in appsByPid { // gc dead apps
             try checkCancellation()
             guard let app = app as? MacApp else { continue }
-            if app.nsApp.isTerminated {
+            if app.isTerminated {
                 await app.destroy()
             }
         }
@@ -92,7 +93,7 @@ extension AppSession {
                     guard let app = try await self.getOrRegisterMacApp(nsApp) else {
                         return (nsApp.processIdentifier, PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil))
                     }
-                    return (nsApp.processIdentifier, try await app.refreshAndGetWindowSnapshot())
+                    return (app.pid, try await app.refreshAndGetWindowSnapshot())
                 }
             }
             // Register new apps
@@ -145,8 +146,16 @@ final class MacApp: WindowPlatformApp {
     /*conforms*/ var bundlePath: String? { nsApp.bundleURL?.path }
     /*conforms*/ var isHidden: Bool { nsApp.isHidden }
 
+    var isTerminated: Bool {
+        if nsApp.isTerminated { return true }
+        if nsApp.processIdentifier == pid { return false }
+        // A recovered PID must still belong to the same application instance.
+        return NSRunningApplication(processIdentifier: pid)?.isEqual(nsApp) != true
+    }
+
     fileprivate init(
         _ nsApp: NSRunningApplication,
+        _ pid: pid_t,
         _ axApp: AXUIElement,
         _ axSubscriptions: [AxSubscription],
         _ observerContext: AppSessionCallbackContext,
@@ -154,7 +163,7 @@ final class MacApp: WindowPlatformApp {
     ) {
         self.nsApp = nsApp
         self.axApp = .init(axApp)
-        self.pid = nsApp.processIdentifier
+        self.pid = pid
         self.rawAppBundleId = nsApp.bundleIdentifier
         self.appId = nsApp.bundleIdentifier.flatMap { KnownBundleId.init(rawValue: $0) }
         assert(!axSubscriptions.isEmpty)
@@ -334,7 +343,7 @@ final class MacApp: WindowPlatformApp {
     }
 
     fileprivate func refreshAndGetWindowSnapshot() async throws -> PlatformAppRefreshSnapshot {
-        if nsApp.isTerminated {
+        if isTerminated {
             await destroy()
             return PlatformAppRefreshSnapshot(windowIds: [], focusedWindowId: nil)
         }
@@ -436,7 +445,6 @@ private final class AxWindow {
     static func new(
         windowId: UInt32,
         _ ax: AXUIElement,
-        _ nsApp: NSRunningApplication,
         _ observerContext: AppSessionCallbackContext,
         _ job: RunLoopJob,
     ) throws -> AxWindow? {
@@ -446,7 +454,6 @@ private final class AxWindow {
             (resizedObs, [kAXResizedNotification]),
         ]
         let subscriptions = try AxSubscription.bulkSubscribe(
-            nsApp,
             ax,
             job,
             handlers,
@@ -469,7 +476,7 @@ extension [UInt32: AxWindow] {
         let alreadyRegistered = self[id] != nil
         AppSession.fromCallbackContext(observerContext)?.windowEventsDiagnosticsLogger.logAxWindowSeen(
             bundleId: nsApp.bundleIdentifier,
-            pid: nsApp.processIdentifier,
+            pid: axTaskLocalAppThreadToken.orDie("AX window registration must run on its app thread").pid,
             windowId: id,
             source: source,
             alreadyRegistered: alreadyRegistered,
@@ -480,7 +487,7 @@ extension [UInt32: AxWindow] {
         // https://github.com/tvanreenen/frame/issues/1001
         if isLeftMouseButtonDown { return nil }
 
-        if let window = try AxWindow.new(windowId: id, axWindow, nsApp, observerContext, job) {
+        if let window = try AxWindow.new(windowId: id, axWindow, observerContext, job) {
             self[id] = window
             return window
         } else {
