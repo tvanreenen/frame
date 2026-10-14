@@ -75,13 +75,17 @@ expected_display_version="${build_version}+${expected_git_short_hash}"
 #############
 
 echo "[1/4] Building CLI ($FRAME_CLI_NAME)..."
-swift build \
-    -c release \
-    --build-path "$build_dir" \
-    --arch arm64 \
-    --arch x86_64 \
-    --product "$FRAME_CLI_NAME" \
-    -Xswiftc -warnings-as-errors # CLI
+cli_build_args=(
+    -c release
+    --build-path "$build_dir"
+    --arch arm64
+    --arch x86_64
+    --product "$FRAME_CLI_NAME"
+    -Xswiftc -warnings-as-errors
+)
+swift build "${cli_build_args[@]}"
+# SwiftPM's output layout depends on its build backend.
+cli_bin_dir="$(swift build "${cli_build_args[@]}" --show-bin-path)"
 
 xcode_configuration="Release"
 echo "[2/4] Building app bundle (${FRAME_PRODUCT_NAME}.app)..."
@@ -96,7 +100,7 @@ xcodebuild-pretty "$work_dir/xcodebuild.log" build \
     CODE_SIGN_IDENTITY="$codesign_identity"
 
 cp -r "$xcode_build_dir/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" "$stage_dir"
-cp -r "$build_dir/apple/Products/Release/$FRAME_CLI_NAME" "$stage_dir"
+cp -r "$cli_bin_dir/$FRAME_CLI_NAME" "$stage_dir"
 
 app_bundle="$stage_dir/${FRAME_PRODUCT_NAME}.app"
 cli_binary="$stage_dir/${FRAME_CLI_NAME}"

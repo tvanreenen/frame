@@ -1,5 +1,6 @@
 excluded:
   - .build
+  - .debug
   - .xcode-build
   - ./ShellParserGenerated
 
