@@ -38,7 +38,7 @@ Learn the core defaults:
 
 These are intentionally layered: keep direction/number keys the same, add modifiers for stronger variants (focus -> move/resize, workspace -> move-to-workspace).
 
-New tiled windows open in a second column to the right when the workspace has only one column. With multiple columns, new windows open at the bottom of the focused column. An empty workspace starts with one column. This behavior requires no configuration.
+On landscape monitors (width > height), new tiled windows open in a second column to the right when the workspace has only one column. On portrait or square monitors, or with multiple columns, new windows open at the bottom of the focused column. An empty workspace starts with one column. This behavior requires no configuration.
 
 ## Configuration
 

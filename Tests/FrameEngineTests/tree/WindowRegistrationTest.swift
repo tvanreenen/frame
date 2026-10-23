@@ -70,6 +70,52 @@ final class WindowRegistrationTest: XCTestCase {
         assertEquals(firstColumn.children.compactMap { ($0 as? Window)?.windowId }, [1, 2])
     }
 
+    func testWindowRegistrationAppendsToOnlyColumnOnPortraitMonitor() async throws {
+        configureMonitor(rect: Rect(topLeftX: 0, topLeftY: 0, width: 1080, height: 1920))
+        let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        _ = TestWindow.new(id: 1, parent: column).focusWindow()
+
+        let registeredWindow = try await Window.getOrRegister(windowId: 2, app: TestApp.shared)
+        let window = try XCTUnwrap(registeredWindow)
+
+        assertEquals(workspace.columns.count, 1)
+        XCTAssertTrue(window.parent === column)
+        assertEquals(column.children.compactMap { ($0 as? Window)?.windowId }, [1, window.windowId])
+    }
+
+    func testWindowRegistrationAppendsToOnlyColumnOnSquareMonitor() async throws {
+        configureMonitor(rect: Rect(topLeftX: 0, topLeftY: 0, width: 1200, height: 1200))
+        let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        _ = TestWindow.new(id: 1, parent: column).focusWindow()
+
+        let registeredWindow = try await Window.getOrRegister(windowId: 2, app: TestApp.shared)
+        let window = try XCTUnwrap(registeredWindow)
+
+        assertEquals(workspace.columns.count, 1)
+        XCTAssertTrue(window.parent === column)
+        assertEquals(column.children.compactMap { ($0 as? Window)?.windowId }, [1, window.windowId])
+    }
+
+    func testWindowRegistrationUsesFullMonitorDimensionsForSecondColumnPlacement() async throws {
+        configureMonitor(
+            rect: Rect(topLeftX: 0, topLeftY: 0, width: 1920, height: 1080),
+            visibleRect: Rect(topLeftX: 0, topLeftY: 0, width: 900, height: 1080),
+        )
+        let workspace = Workspace.get(byName: name)
+        let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
+        _ = TestWindow.new(id: 1, parent: column).focusWindow()
+
+        let registeredWindow = try await Window.getOrRegister(windowId: 2, app: TestApp.shared)
+        let window = try XCTUnwrap(registeredWindow)
+
+        assertEquals(workspace.columns.count, 2)
+        XCTAssertTrue(workspace.columns.first === column)
+        XCTAssertTrue(window.parent === workspace.columns.last)
+        assertEquals(column.children.compactMap { ($0 as? Window)?.windowId }, [1])
+    }
+
     func testExcludedWindowRegistrationDoesNotCreateSecondColumn() async throws {
         let workspace = Workspace.get(byName: name)
         let column = Column.newVTiles(parent: workspace.columnsRoot, adaptiveWeight: 1)
@@ -155,5 +201,17 @@ final class WindowRegistrationTest: XCTestCase {
 
         XCTAssertNil(window)
         XCTAssertNil(Window.get(byPlatformWindowId: 789))
+    }
+
+    private func configureMonitor(rect: Rect, visibleRect: Rect? = nil) {
+        let monitor = RegistrationTestMonitor(
+            systemMonitorIndex: 1,
+            name: "Test Monitor",
+            rect: rect,
+            visibleRect: visibleRect ?? rect,
+            isMain: true,
+        )
+        currentSession.platformServices.mainMonitor = { monitor }
+        currentSession.platformServices.monitors = { [monitor] }
     }
 }

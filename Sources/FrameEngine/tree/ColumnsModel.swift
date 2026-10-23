@@ -17,11 +17,12 @@ extension Workspace {
     }
 
     /// Returns the column that should receive a newly tiled window.
-    /// Creates a second column when only one exists. Otherwise uses the focused column
-    /// when available, or creates a new trailing column.
+    /// Creates a second column when only one exists on a landscape monitor (width > height).
+    /// Otherwise uses the focused column when available, or creates a new trailing column.
     @MainActor
     package func targetColumnForNewTilingWindow() -> Column {
-        if let onlyColumn = columns.singleOrNil() {
+        let monitor = workspaceMonitor
+        if monitor.width > monitor.height, let onlyColumn = columns.singleOrNil() {
             return addColumn(after: onlyColumn)
         }
         return focusedColumn ?? addColumn(after: nil)
