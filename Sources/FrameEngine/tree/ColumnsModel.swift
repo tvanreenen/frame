@@ -17,10 +17,14 @@ extension Workspace {
     }
 
     /// Returns the column that should receive a newly tiled window.
-    /// Uses the focused column when available, otherwise creates a new trailing column.
+    /// Creates a second column when only one exists. Otherwise uses the focused column
+    /// when available, or creates a new trailing column.
     @MainActor
     package func targetColumnForNewTilingWindow() -> Column {
-        focusedColumn ?? addColumn(after: nil)
+        if let onlyColumn = columns.singleOrNil() {
+            return addColumn(after: onlyColumn)
+        }
+        return focusedColumn ?? addColumn(after: nil)
     }
 
     /// Binding data for placing a newly tiled window into the columns model.

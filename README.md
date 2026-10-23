@@ -38,6 +38,8 @@ Learn the core defaults:
 
 These are intentionally layered: keep direction/number keys the same, add modifiers for stronger variants (focus -> move/resize, workspace -> move-to-workspace).
 
+New tiled windows open in a second column to the right when the workspace has only one column. With multiple columns, new windows open at the bottom of the focused column. An empty workspace starts with one column. This behavior requires no configuration.
+
 ## Configuration
 
 Frame works without a user config file on first launch. Create `~/.frame.toml` only if you want to customize the defaults:
