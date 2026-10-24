@@ -9,6 +9,22 @@ import FrameTestSupport
 final class WindowTreeRefactorCharacterizationTest: XCTestCase {
     override func setUp() async throws { setUpWorkspacesForTests() }
 
+    func testMoveWindowToWorkspace_tiledWindowAppendsToOnlyTargetColumn() {
+        let sourceWorkspace = Workspace.get(byName: "a")
+        let sourceColumn = Column.newVTiles(parent: sourceWorkspace.columnsRoot, adaptiveWeight: 1)
+        let window = TestWindow.new(id: 1, parent: sourceColumn)
+        let targetWorkspace = Workspace.get(byName: "b")
+        let targetColumn = Column.newVTiles(parent: targetWorkspace.columnsRoot, adaptiveWeight: 1)
+        _ = TestWindow.new(id: 2, parent: targetColumn)
+        let io = CmdIo(stdin: .emptyStdin)
+
+        let didMove = moveWindowToWorkspace(window, targetWorkspace, io, focusFollowsWindow: false, failIfNoop: false)
+
+        XCTAssertTrue(didMove)
+        XCTAssertTrue(window.parent === targetColumn)
+        assertColumnChildren(targetWorkspace, [[2, 1]])
+    }
+
     func testMoveWindowToWorkspace_tiledWindowBindsDirectlyIntoLastTargetColumn() {
         let sourceWorkspace = Workspace.get(byName: "a")
         let sourceColumn = Column.newVTiles(parent: sourceWorkspace.columnsRoot, adaptiveWeight: 1)
