@@ -2,6 +2,8 @@
 
 Frame owns its build, signing, release archive, checksum manifest, annotated tag, and GitHub release. The Homebrew tap owns cask rendering, verification, tests, and the update pull request. Frame never checks out, edits, commits to, or stores a credential for the tap.
 
+Pull requests are verified by [credential-free CI](CI.md), including a disposable ad-hoc package check. Those CI packages are not Developer ID-signed releases or notarized artifacts. The [ownership transfer plan](OWNERSHIP-TRANSFER.md) is planning only; the personal source/tap endpoints below remain authoritative until the staged move is approved and completed.
+
 Use the `just` recipes below as the maintainer interface. Every version argument must be a stable, v-prefixed Semantic Version such as `v0.12.3`. Prerelease versions, build metadata, omitted `v` prefixes, and numeric components with leading zeroes are rejected.
 
 ## Release order
