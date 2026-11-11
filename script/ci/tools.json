@@ -1,0 +1,23 @@
+{
+  "actionlint": {
+    "version": "1.7.12",
+    "url": "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz",
+    "sha256": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
+    "member": "actionlint",
+    "platform": "Linux"
+  },
+  "swiftformat": {
+    "version": "0.63.1",
+    "url": "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.1/swiftformat.zip",
+    "sha256": "385ef1a263ba28685157b98c5536b9c9105e124518f28b7ef8a2bee4b167eaeb",
+    "member": "swiftformat",
+    "platform": "Darwin"
+  },
+  "swiftlint": {
+    "version": "0.65.1",
+    "url": "https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip",
+    "sha256": "c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0",
+    "member": "swiftlint",
+    "platform": "Darwin"
+  }
+}

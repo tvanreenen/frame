@@ -51,6 +51,9 @@ xcode_build_dir="$work_dir/.xcode-build"
 cleanup() {
     local exit_code=$?
     trap - EXIT
+    if [[ $exit_code -ne 0 && -n "${FRAME_BUILD_LOG_DIR:-}" && -f "$work_dir/xcodebuild.log" ]]; then
+        mkdir -p "$FRAME_BUILD_LOG_DIR" && cp "$work_dir/xcodebuild.log" "$FRAME_BUILD_LOG_DIR/xcodebuild.log" || true
+    fi
     git restore Sources/Common/versionGenerated.swift Sources/Common/gitHashGenerated.swift >/dev/null 2>&1 || true
     rm -rf "$work_dir"
     exit "$exit_code"

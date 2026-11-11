@@ -46,3 +46,5 @@ dist/
 .DS_Store
 # LLVM raw coverage/profile output file
 default.profraw
+# Python CI helper bytecode
+__pycache__/
