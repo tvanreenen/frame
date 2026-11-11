@@ -43,6 +43,12 @@ class TestExecutionEvidence(unittest.TestCase):
         complete = "".join(map(completed_target, TARGETS))
         self.check_log(complete.replace("Executed 1 test", "Executed 2 tests", 1), False)
 
+    def test_accepts_the_combined_xcode_26_bundle(self):
+        cases = "".join(f"Test Case '-[{target}.ExampleTest testExample]' passed (0.001 seconds).\n" for target in TARGETS)
+        summary = "Test Suite 'FramePackagePackageTests.xctest' passed at 2026-11-11.\nExecuted 3 tests, with 0 failures (0 unexpected) in 0.001 seconds\n"
+        self.check_log(cases + summary, True)
+        self.check_log(cases + summary.replace("Executed 3", "Executed 2"), False)
+
 
 if __name__ == "__main__":
     unittest.main()

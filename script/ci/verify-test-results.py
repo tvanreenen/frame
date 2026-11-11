@@ -18,13 +18,16 @@ def main():
     counts = {}
     for target in sorted(expected):
         passed_cases = re.findall(r"Test Case '-\[" + target + r"\.[^\]]+\]' passed ", text)
-        summary = re.search(
-            r"Test Suite '" + target + r"\.xctest' passed[^\n]*\n\s*"
-            r"Executed (\d+) tests?, with 0 failures \(0 unexpected\)", text,
-        )
-        if not summary or not passed_cases or int(summary[1]) != len(passed_cases):
-            parser.error(f"missing, empty, or inconsistent executed tests for {target}")
+        if not passed_cases:
+            parser.error(f"missing executed tests for {target}")
         counts[target] = len(passed_cases)
+    # Xcode 26.2 combines targets into one XCTest bundle; newer SwiftPM can split them.
+    summaries = re.findall(
+        r"Test Suite '[^'\n]+\.xctest' passed[^\n]*\n\s*"
+        r"Executed (\d+) tests?, with 0 failures \(0 unexpected\)", text,
+    )
+    if not summaries or sum(map(int, summaries)) != sum(counts.values()):
+        parser.error("missing or inconsistent completed XCTest bundle summaries")
     args.log.with_suffix(".json").write_text(json.dumps(counts, indent=2) + "\n")
     print(f"Verified {sum(counts.values())} executed XCTest cases: {counts}")
 
