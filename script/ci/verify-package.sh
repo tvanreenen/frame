@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-# Only a disposable CI version is accepted. This script never publishes or launches the app.
+# Use only a disposable CI version. --version exits before the daemon starts.
 build_version=0.0.0
 expected_version="$build_version+$(git rev-parse --short HEAD)"
 archive="$(pwd)/dist/Frame-v$build_version.zip"

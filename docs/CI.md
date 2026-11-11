@@ -1,5 +1,7 @@
 # Frame verification
 
+See [CI-QUALIFICATION.md](CI-QUALIFICATION.md) for the recorded local and hosted success/failure/recovery evidence.
+
 `Verify Frame` in `.github/workflows/ci.yml` verifies pull requests, pushes to `main` and `codex/**`, and manual dispatches. It has no distribution step. It does not create tags, releases, casks, or installable build artifacts on GitHub, and it does not use signing credentials, repository secrets, or tap access.
 
 ## Checks and their boundaries
@@ -42,4 +44,4 @@ FRAME_BUILD_LOG_DIR="$PWD/.build/ci-results" script/release/build-release.sh --b
 script/ci/verify-package.sh
 ```
 
-An ad-hoc signature is not a Developer ID signature or a notarization ticket. This CI verifies build/package mechanics; real display events, permission prompts, physical display rotation, hotkeys, and macOS trust behavior require separate device qualification. The signed/manual distribution boundary remains in [RELEASE.md](RELEASE.md).
+An ad-hoc signature is not a Developer ID signature or a notarization ticket. This CI verifies build/package mechanics; real display events, permission prompts, physical display rotation, hotkeys, and macOS trust behavior require separate device qualification. Universal compilation also does not replace native Intel or minimum-supported-macOS runtime qualification. The signed/manual distribution boundary remains in [RELEASE.md](RELEASE.md).

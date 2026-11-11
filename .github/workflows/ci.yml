@@ -124,7 +124,7 @@ jobs:
           xcodebuild -version
           script/release/build-release.sh --build-version 0.0.0 --codesign-identity - \
             2>&1 | tee .build/ci-results/package-build.log
-      - name: Validate the packaged artifact without installing or launching it
+      - name: Validate the archive and metadata without starting the daemon
         run: script/ci/verify-package.sh
       - name: Retain package failure diagnostics, never distributable binaries
         if: failure()
