@@ -2,7 +2,7 @@
 
 See [CI-QUALIFICATION.md](CI-QUALIFICATION.md) for the recorded local and hosted success/failure/recovery evidence.
 
-`Verify Frame` in `.github/workflows/ci.yml` verifies pull requests, pushes to `main` and `codex/**`, and manual dispatches. It has no distribution step. It does not create tags, releases, casks, or installable build artifacts on GitHub, and it does not use signing credentials, repository secrets, or tap access.
+`Verify Frame` in `.github/workflows/ci.yml` verifies all pull requests and manual dispatches. Pushes do not start additional runs before a PR exists or after it merges. It has no distribution step. It does not create tags, releases, casks, or installable build artifacts on GitHub, and it does not use signing credentials, repository secrets, or tap access.
 
 ## Checks and their boundaries
 
@@ -23,7 +23,7 @@ Blacksmith is [available only for organization repositories](https://docs.blacks
 
 `swift test` must return success, and `verify-test-results.py` independently requires passed cases from `FrameEngineTests`, `FrameMacOSTests`, and `FrameUITests`. Their total must match completed XCTest bundle summaries. It accepts the combined bundle produced by Xcode 26.2 and separate bundles observed with newer SwiftPM. Empty Swift Testing XML reports do not prove XCTest execution. Unexpected skips and failures are rejected. The parsed per-target counts are retained with the process log.
 
-Test/format reports are retained for three days. Portable and package logs are uploaded only after failure, also for three days. Package failures can preserve the raw Xcode log through the optional `FRAME_BUILD_LOG_DIR` environment variable; the release builder otherwise retains its original cleanup behavior. Diagnostic artifacts contain logs and test counts, never the ad-hoc app or release archive. Jobs have 3/10/25/30-minute limits; superseded branch runs are cancelled, while pushes to `main` are allowed to finish.
+Test/format reports are retained for three days. Portable and package logs are uploaded only after failure, also for three days. Package failures can preserve the raw Xcode log through the optional `FRAME_BUILD_LOG_DIR` environment variable; the release builder otherwise retains its original cleanup behavior. Diagnostic artifacts contain logs and test counts, never the ad-hoc app or release archive. Jobs have 3/10/25/30-minute limits; superseded runs for the same PR or manually selected ref are cancelled.
 
 Before extracting a package, the verifier compares `checksums.txt` with the SHA-256 line computed for the expected ZIP. The manifest must use the builder's exact single-entry format. An unrelated-file checksum, an extra or duplicate entry, a missing file, or changed archive bytes fails validation before extraction.
 

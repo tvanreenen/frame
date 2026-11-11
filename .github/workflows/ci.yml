@@ -2,8 +2,6 @@ name: Verify Frame
 
 on:
   pull_request:
-  push:
-    branches: [main, 'codex/**']
   workflow_dispatch:
 
 permissions:
@@ -11,7 +9,7 @@ permissions:
 
 concurrency:
   group: frame-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: true
 
 defaults:
   run:
