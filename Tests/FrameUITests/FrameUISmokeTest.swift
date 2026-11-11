@@ -5,6 +5,6 @@ import XCTest
 final class FrameUISmokeTest: XCTestCase {
     func testFrameUIExportsSharedModels() {
         let model = TrayMenuModel.shared
-        XCTAssertNotNil(model)
+        XCTAssertNil(model) // Deliberate failure confined to the CI qualification branch.
     }
 }
