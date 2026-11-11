@@ -9,7 +9,11 @@ archive="$(pwd)/dist/Frame-v$build_version.zip"
 inspection_dir="$(mktemp -d "${TMPDIR:-/tmp}/frame-ci-package.XXXXXX")"
 trap 'rm -rf "$inspection_dir"' EXIT
 
-(cd dist && shasum -a 256 -c checksums.txt)
+# Match the builder's single-entry manifest against the actual release ZIP.
+if ! (cd dist && shasum -a 256 "Frame-v$build_version.zip") | cmp -s - dist/checksums.txt; then
+    echo "checksums.txt must contain exactly the SHA-256 entry for Frame-v$build_version.zip" >&2
+    exit 1
+fi
 ditto -x -k "$archive" "$inspection_dir"
 package_root="$inspection_dir/Frame-v$build_version"
 app="$package_root/Frame.app"

@@ -8,7 +8,7 @@ See [CI-QUALIFICATION.md](CI-QUALIFICATION.md) for the recorded local and hosted
 
 | Job | Contract |
 | --- | --- |
-| Workflow and release contracts | Pinned actionlint validates the workflow; Bash parses tracked shell scripts; the existing shell suite checks version rejection and the source-release/tap-dispatch boundary. Python tests exercise the XCTest evidence gate's false-green cases. |
+| Workflow and release contracts | Pinned actionlint validates the workflow; Bash parses tracked shell scripts; the existing shell suite checks version rejection and the source-release/tap-dispatch boundary. Python tests exercise false-green cases in the XCTest evidence and package checksum gates. |
 | macOS checks and tests | Xcode 26.2 / Swift 6.2.3, matching `.swift-version`; checksum-pinned SwiftFormat and SwiftLint; locked package resolution; all three XCTest targets. The suites use synthetic accessibility fixtures and test platform services. No GUI or AX permission is requested. |
 | Ad-hoc universal package | The existing release builder creates only a disposable `0.0.0` package using identity `-`. The packaged ZIP is extracted and checked for its checksum, app/CLI versions, bundle identity, minimum macOS version, executable permissions, universal architectures, licenses/resources, and valid ad-hoc signatures. Only `--version` is executed, which exits before the daemon starts; the app is never installed or launched as a window manager. |
 | Required checks | Every preceding job must succeed. Failed, cancelled, or skipped dependencies cannot certify the branch. This is the suggested future required status check; this task does not change branch protections. |
@@ -24,6 +24,8 @@ Blacksmith is [available only for organization repositories](https://docs.blacks
 `swift test` must return success, and `verify-test-results.py` independently requires passed cases from `FrameEngineTests`, `FrameMacOSTests`, and `FrameUITests`. Their total must match completed XCTest bundle summaries. It accepts the combined bundle produced by Xcode 26.2 and separate bundles observed with newer SwiftPM. Empty Swift Testing XML reports do not prove XCTest execution. Unexpected skips and failures are rejected. The parsed per-target counts are retained with the process log.
 
 Test/format reports are retained for three days. Portable and package logs are uploaded only after failure, also for three days. Package failures can preserve the raw Xcode log through the optional `FRAME_BUILD_LOG_DIR` environment variable; the release builder otherwise retains its original cleanup behavior. Diagnostic artifacts contain logs and test counts, never the ad-hoc app or release archive. Jobs have 3/10/25/30-minute limits; superseded branch runs are cancelled, while pushes to `main` are allowed to finish.
+
+Before extracting a package, the verifier compares `checksums.txt` with the SHA-256 line computed for the expected ZIP. The manifest must use the builder's exact single-entry format. An unrelated-file checksum, an extra or duplicate entry, a missing file, or changed archive bytes fails validation before extraction.
 
 ## Local checks
 

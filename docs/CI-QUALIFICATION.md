@@ -6,6 +6,7 @@ Recorded November 11, 2026. The review branch is `codex/ci-hardening-transfer-pl
 
 - All 210 XCTest cases passed: 113 in FrameEngineTests, 96 in FrameMacOSTests, and 1 in FrameUITests. These use test platform services and synthetic AX fixtures.
 - The five Python evidence-gate tests passed, including combined/split XCTest bundle output, empty runs, missing targets, inconsistent totals, failures, and skips.
+- Seven package checksum tests cover the canonical manifest, unrelated/extra/duplicate entries, incorrect/malformed digests, empty/missing manifests, missing archives, and changed bytes. Before the review fix, the unrelated-entry case and both extra/duplicate-entry cases reached extraction and failed their assertions; afterward all seven tests passed. The updated complete verifier also accepted the existing local ad-hoc package with its builder-generated manifest and rejected the unrelated-only manifest that had previously passed.
 - Actionlint, Bash syntax, ShellCheck for the new CI shell scripts, and the existing release-contract suite passed. Checksum-pinned SwiftFormat 0.63.1 and SwiftLint 0.65.1 passed.
 - The actual release builder produced a disposable `0.0.0` ad-hoc package. The ZIP checksum, extracted permissions/resources/licenses, stable bundle identity, minimum OS metadata, matching app/CLI versions, universal architectures, and signatures passed validation. No app was installed or launched as a window manager.
 
