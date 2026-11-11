@@ -17,7 +17,7 @@ defaults:
 
 jobs:
   portable:
-    name: Workflow and release contracts
+    name: Check CI and release scripts
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -42,7 +42,7 @@ jobs:
           if-no-files-found: ignore
 
   macos:
-    name: macOS checks and tests
+    name: Build and test Frame
     runs-on: macos-26
     timeout-minutes: 25
     env:
@@ -87,7 +87,7 @@ jobs:
           if-no-files-found: warn
 
   required-checks:
-    name: Required checks
+    name: Overall CI result
     needs: [portable, macos, package]
     if: always()
     runs-on: ubuntu-24.04
@@ -105,7 +105,7 @@ jobs:
           test "$PACKAGE_RESULT" = success
 
   package:
-    name: Ad-hoc universal package
+    name: Build and verify release package
     needs: [portable, macos]
     runs-on: macos-26
     timeout-minutes: 30
