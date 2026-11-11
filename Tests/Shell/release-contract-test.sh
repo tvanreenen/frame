@@ -66,13 +66,13 @@ set -euo pipefail
 
 if [[ "$1 $2" == "release view" ]]; then
     [[ "${FAKE_RELEASE_STATE:-missing}" != "missing" ]] || exit 1
-    printf '%s|%s|https://github.com/tvanreenen/frame/releases/tag/%s\n' \
+    printf '%s|%s|https://github.com/tvr-works/frame/releases/tag/%s\n' \
         "${FAKE_RELEASE_TAG:-$3}" "$FAKE_RELEASE_STATE" "${FAKE_RELEASE_TAG:-$3}"
     exit
 fi
 if [[ "$1 $2" == "workflow run" ]]; then
     printf '%s\n' "$@" > "$FAKE_GH_LOG"
-    echo "https://github.com/tvanreenen/homebrew-tap/actions"
+    echo "https://github.com/tvr-works/homebrew-tap/actions"
     exit
 fi
 
@@ -135,7 +135,7 @@ printf '%s\n' \
     run \
     publish-package.yml \
     --repo \
-    tvanreenen/homebrew-tap \
+    tvr-works/homebrew-tap \
     --ref \
     main \
     -f \

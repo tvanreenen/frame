@@ -2,7 +2,7 @@
 
 Frame owns its build, signing, release archive, checksum manifest, annotated tag, and GitHub release. The Homebrew tap owns cask rendering, verification, tests, and the update pull request. Frame never checks out, edits, commits to, or stores a credential for the tap.
 
-Pull requests are verified by [credential-free CI](CI.md), including a disposable ad-hoc package check. Those CI packages are not Developer ID-signed releases or notarized artifacts. The [ownership transfer plan](OWNERSHIP-TRANSFER.md) is planning only; the personal source/tap endpoints below remain authoritative until the staged move is approved and completed.
+Pull requests are verified by [credential-free CI](CI.md), including a disposable ad-hoc package check. Those CI packages are not Developer ID-signed releases or notarized artifacts. The source repository is now `tvr-works/frame`; the [ownership migration record](OWNERSHIP-TRANSFER.md) describes preserved identities, historical assets, and the ordered Homebrew cutover. Integrate the organization's verified Frame cask before activating this source's organization-tap publication route.
 
 Use the `just` recipes below as the maintainer interface. Every version argument must be a stable, v-prefixed Semantic Version such as `v0.12.3`. Prerelease versions, build metadata, omitted `v` prefixes, and numeric components with leading zeroes are rejected.
 
@@ -40,13 +40,13 @@ Use the `just` recipes below as the maintainer interface. Every version argument
    just publish-homebrew v0.12.3
    ```
 
-   This command refuses a missing or draft Frame release, then uses the operator's existing `gh` login to dispatch only `tvanreenen/homebrew-tap/.github/workflows/publish-package.yml` from `main` with `package=frame` and `version=v0.12.3`. It does not wait for the workflow or modify the tap.
+   This command refuses a missing or draft Frame release, then uses the operator's existing `gh` login to dispatch only `tvr-works/homebrew-tap/.github/workflows/publish-package.yml` from `main` with `package=frame` and `version=v0.12.3`. It does not wait for the workflow or modify the tap.
 
 5. Follow the tap run and review the pull request it creates:
 
    ```sh
    gh run list \
-     --repo tvanreenen/homebrew-tap \
+     --repo tvr-works/homebrew-tap \
      --workflow publish-package.yml
    ```
 
