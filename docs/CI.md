@@ -2,7 +2,7 @@
 
 See [CI-QUALIFICATION.md](CI-QUALIFICATION.md) for the recorded local and hosted success/failure/recovery evidence.
 
-`Verify Frame` in `.github/workflows/ci.yml` verifies all pull requests and manual dispatches. Pushes do not start additional runs before a PR exists or after it merges. It has no publication step. It does not publish tags, releases, casks, or installable build artifacts on GitHub, and it does not use signing credentials, repository secrets, or tap access.
+`Verify Frame` in `.github/workflows/ci.yml` verifies all pull requests and manual dispatches. Pushes do not start additional runs before a PR exists or after it merges. It has no publication step. It does not publish tags, releases, casks, or installable build artifacts on GitHub, and it does not use Apple signing credentials, repository secrets, or write access to the shared tap.
 
 ## Checks and their boundaries
 
@@ -12,7 +12,7 @@ The first three jobs check automation, Frame's existing application tests, and t
 | --- | --- |
 | Check CI and release scripts | Pinned actionlint validates the workflow; Bash parses tracked shell scripts; the existing shell suite checks version rejection and the source-release/tap-dispatch boundary. Python tests exercise false-green cases in the XCTest evidence and package checksum gates. |
 | Build and test Frame | Xcode 26.2 / Swift 6.2.3, matching `.swift-version`; checksum-pinned SwiftFormat and SwiftLint; locked package resolution; all three XCTest targets. The suites use synthetic accessibility fixtures and test platform services. No GUI or AX permission is requested. |
-| Build and verify release package | The existing release builder creates only a disposable `0.0.0` package using identity `-`. The packaged ZIP is extracted and checked for its checksum, app/CLI versions, bundle identity, minimum macOS version, executable permissions, universal architectures, licenses/resources, and valid ad-hoc signatures. Only `--version` is executed, which exits before the daemon starts; the app is never installed or launched as a window manager. |
+| Build and verify release package | The release builder creates a disposable ad-hoc `3.3.0` package using identity `-`. The extracted ZIP is checked for its checksum, app/CLI versions, bundle identity, minimum macOS version, executable permissions, universal architectures, resources, nested signatures and compatibility link. A temporary local Homebrew fixture then exercises an ordinary upgrade from published 3.2.1, checks link/receipt/configuration-marker continuity and removes the test installation. Only metadata/help commands are executed; the GUI daemon is never started. |
 | Overall CI result | Every preceding job must succeed. Failed, cancelled, or skipped dependencies cannot certify the branch. This is the suggested future required status check; this task does not change branch protections. |
 
 All jobs run with repository read permission; the aggregate gate needs no token permission. Checkout does not persist credentials. Actions are pinned to full commit SHAs. Downloaded tools are pinned by version and SHA-256 in `script/ci/tools.json`, verified before extracting only the named executable into the checkout's ignored `.build/ci-tools/bin`.
