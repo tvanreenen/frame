@@ -12,14 +12,20 @@ ditto -c -k --keepParent "$package_root" "$submission"
 submit_status=0
 xcrun notarytool submit "$submission" --keychain-profile "$FRAME_NOTARY_PROFILE" \
     --wait --timeout 20m --output-format json > "$evidence/submission.json" || submit_status=$?
-submission_id="$(python3 - "$evidence/submission.json" <<'PY'
+if ! submission_id="$(python3 - "$evidence/submission.json" <<'PY'
 import json
 from pathlib import Path
 import sys
 import uuid
-print(uuid.UUID(json.loads(Path(sys.argv[1]).read_text())['id']))
+try:
+    print(uuid.UUID(json.loads(Path(sys.argv[1]).read_text())['id']))
+except (OSError, ValueError, KeyError, TypeError, AttributeError):
+    sys.exit('Notary response has no valid submission ID')
 PY
-)"
+)"; then
+    echo "Notarization could not identify a submission; inspect $evidence before retrying." >&2
+    exit 1
+fi
 echo "Notary submission: $submission_id; evidence: $evidence"
 # Retain the service log even for a completed rejection. On timeout, preserve
 # the submission/evidence for inspection rather than issuing a tag or release.

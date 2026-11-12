@@ -116,8 +116,10 @@ xcodebuild-pretty "$work_dir/xcodebuild.log" build \
 cp -r "$xcode_build_dir/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" "$stage_dir"
 
 app_bundle="$stage_dir/${FRAME_PRODUCT_NAME}.app"
-app_requirement="$(codesign -dr - "$app_bundle" 2>&1 | sed -n 's/^designated => //p')"
-[[ -n "$app_requirement" ]] || { echo 'Missing app designated requirement' >&2; exit 1; }
+if [[ "$signing_mode" == developer-id ]]; then
+    app_requirement="$(codesign -dr - "$app_bundle" 2>&1 | sed -n 's/^designated => //p')"
+    [[ -n "$app_requirement" ]] || { echo 'Missing app designated requirement' >&2; exit 1; }
+fi
 cli_binary="$app_bundle/Contents/MacOS/${FRAME_CLI_NAME}"
 # Frame and frame collide on case-insensitive volumes. Release uses FrameApp.
 cp "$cli_bin_dir/$FRAME_CLI_NAME" "$cli_binary"
@@ -129,12 +131,17 @@ cp "$cli_bin_dir/$FRAME_CLI_NAME" "$cli_binary"
 # Sign nested code first, then seal it into the enclosing app. Do not use
 # --deep for signing: the CLI keeps its own identifier and no app entitlements.
 codesign -s "$codesign_identity" --identifier "$FRAME_CLI_NAME" --options runtime "$timestamp_flag" "$cli_binary"
-codesign --force -s "$codesign_identity" --identifier "$FRAME_BUNDLE_ID_STABLE" \
-    --options runtime "$timestamp_flag" --preserve-metadata=requirements \
-    --entitlements resources/frame.entitlements "$app_bundle"
-[[ "$(codesign -dr - "$app_bundle" 2>&1 | sed -n 's/^designated => //p')" == "$app_requirement" ]] || {
-    echo 'Embedding the CLI changed the app designated requirement' >&2; exit 1;
-}
+app_sign_args=(--force -s "$codesign_identity" --identifier "$FRAME_BUNDLE_ID_STABLE"
+    --options runtime "$timestamp_flag" --entitlements resources/frame.entitlements)
+if [[ "$signing_mode" == developer-id ]]; then
+    app_sign_args+=(--preserve-metadata=requirements)
+fi
+codesign "${app_sign_args[@]}" "$app_bundle"
+if [[ "$signing_mode" == developer-id ]]; then
+    [[ "$(codesign -dr - "$app_bundle" 2>&1 | sed -n 's/^designated => //p')" == "$app_requirement" ]] || {
+        echo 'Embedding the CLI changed the app designated requirement' >&2; exit 1;
+    }
+fi
 
 ################
 ### VALIDATE ###

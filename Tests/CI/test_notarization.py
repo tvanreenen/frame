@@ -87,6 +87,8 @@ elif "--check-notarization" in args and args[-1].endswith("Frame.app/Contents/Ma
         self.tool("xcrun", '''import hashlib
 job = "12345678-1234-1234-1234-123456789abc"
 if args[:2] == ["notarytool", "submit"]:
+    if os.environ.get("EMPTY_SUBMISSION"):
+        sys.exit(65)
     print(json.dumps({"id": job, "status": os.environ.get("NOTARY_STATUS", "Accepted")}))
     sys.exit(int(os.environ.get("SUBMIT_FAILURE", "0")))
 elif args[:2] == ["notarytool", "log"]:
@@ -145,6 +147,15 @@ else:
         self.assertIn("--keychain-profile", submit)
         self.assertEqual([call[1:3] for call in calls if call[1:2] == ["stapler"]],
                          [["stapler", "staple"], ["stapler", "validate"]])
+
+    def test_missing_submission_id_retains_evidence_without_a_traceback(self):
+        result = self.run_script("notarize-package.sh", self.package, self.root / "evidence", EMPTY_SUBMISSION="1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no valid submission ID", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertTrue((self.root / "evidence/submission.zip").exists())
+        self.assertFalse(any(call[1:3] == ["notarytool", "log"] or call[1:2] == ["stapler"]
+                             for call in self.invocations()))
 
     def test_final_distribution_requires_the_cli_ticket_and_app_assessment(self):
         result = self.run_script("verify-distribution.sh", self.package)
