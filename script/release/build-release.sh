@@ -147,22 +147,7 @@ for path in "${required_paths[@]}"; do
     fi
 done
 
-cli_version_output="$("$cli_binary" --version)"
-if [[ "$cli_version_output" != "$expected_display_version" ]]; then
-    echo "Release metadata mismatch for CLI version." >&2
-    echo "Expected: $expected_display_version" >&2
-    echo "Actual:   $cli_version_output" >&2
-    exit 1
-fi
-
 app_binary="$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
-app_version_output="$("$app_binary" --version)"
-if [[ "$app_version_output" != "$expected_display_version" ]]; then
-    echo "Release metadata mismatch for app daemon version." >&2
-    echo "Expected: $expected_display_version" >&2
-    echo "Actual:   $app_version_output" >&2
-    exit 1
-fi
 
 check-universal-binary() {
     if ! file "$1" | grep --fixed-string -q "Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit executable x86_64] [arm64"; then
@@ -202,11 +187,30 @@ mv "$work_dir/$zip_filename" "$zip_path"
 
 # Verify the bytes users will extract, including preservation of the stapled
 # app ticket. A failed distribution check must not produce a release manifest.
+version_root="$release_root"
 if [[ "$signing_mode" == developer-id ]]; then
     mkdir "$work_dir/inspection"
     ditto -x -k "$zip_path" "$work_dir/inspection"
-    ./script/release/verify-distribution.sh "$work_dir/inspection/${FRAME_RELEASE_PREFIX}$build_version" \
+    version_root="$work_dir/inspection/${FRAME_RELEASE_PREFIX}$build_version"
+    ./script/release/verify-distribution.sh "$version_root" \
         2>&1 | tee "$dist_dir/notarization/distribution-check.log"
+fi
+
+# Do not execute distribution code before notarization/ticket verification.
+# Early execution can prime a negative trust result for the native CLI slice.
+cli_version_output="$("$version_root/bin/${FRAME_CLI_NAME}" --version)"
+if [[ "$cli_version_output" != "$expected_display_version" ]]; then
+    echo "Release metadata mismatch for CLI version." >&2
+    echo "Expected: $expected_display_version" >&2
+    echo "Actual:   $cli_version_output" >&2
+    exit 1
+fi
+app_version_output="$("$version_root/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_PRODUCT_NAME}" --version)"
+if [[ "$app_version_output" != "$expected_display_version" ]]; then
+    echo "Release metadata mismatch for app daemon version." >&2
+    echo "Expected: $expected_display_version" >&2
+    echo "Actual:   $app_version_output" >&2
+    exit 1
 fi
 
 zip_sha="$(shasum -a 256 "$zip_path" | awk '{print $1}')"
