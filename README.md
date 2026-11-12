@@ -15,7 +15,7 @@ brew tap tvr-works/tap
 brew install --cask tvr-works/tap/frame
 ```
 
-The organization cask uses Homebrew's standard quarantine handling. The preserved release has a separate [notarization qualification gap](docs/OWNERSHIP-TRANSFER.md#notarization-is-a-separate-qualification); installation alone does not qualify first-launch Gatekeeper acceptance or Accessibility approval on your device.
+The organization cask uses Homebrew's standard quarantine handling. v3.2.1 is Developer ID-signed and notarized; Accessibility approval is still managed by macOS on your device.
 
 ## App and CLI
 
@@ -26,6 +26,8 @@ Frame installs both a menu bar app and a CLI:
 
 Most people will interact with Frame through key bindings and the menu bar app. The CLI is there when you want automation, shell integration, or quick inspection from the terminal.
 On first launch, open `Frame.app` and grant Accessibility access if macOS prompts for it.
+
+Starting with v3.3.0, `frame` is embedded in `Frame.app` and Homebrew links the command from there. Normal upgrades keep the same command and configuration. [Manual installation and archive compatibility](docs/BUNDLED-CLI.md#archive-and-manual-install-compatibility) explain the supported paths.
 
 ## Quick Start
 

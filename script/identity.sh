@@ -4,6 +4,7 @@
 export FRAME_PRODUCT_NAME="Frame"
 export FRAME_PRODUCT_NAME_DEBUG="Frame-Debug"
 export FRAME_CLI_NAME="frame"
+export FRAME_APP_BINARY="FrameApp"
 export FRAME_DEBUG_APP_BINARY="FrameApp"
 export FRAME_XCODE_SCHEME="Frame"
 export FRAME_BUNDLE_ID_STABLE="com.frame.app"

@@ -42,6 +42,7 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: com.frame.app.debug
         Release:
           PRODUCT_NAME: Frame
+          EXECUTABLE_NAME: FrameApp
           PRODUCT_BUNDLE_IDENTIFIER: com.frame.app
           ENABLE_HARDENED_RUNTIME: YES
           CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO

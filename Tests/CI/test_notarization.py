@@ -54,9 +54,8 @@ class ReleaseTrustGates(unittest.TestCase):
         self.env = dict(os.environ, PATH=f"{self.bin}{os.pathsep}{os.environ['PATH']}",
                         CALLS=str(self.calls), FRAME_NOTARY_PROFILE="fixture-profile")
         self.package = self.root / "Frame-v0.0.0"
-        (self.package / "Frame.app").mkdir(parents=True)
-        (self.package / "bin").mkdir()
-        (self.package / "bin/frame").touch()
+        (self.package / "Frame.app/Contents/MacOS").mkdir(parents=True)
+        (self.package / "Frame.app/Contents/MacOS/frame").touch()
         # Model the external tools' interfaces, not Apple's signing/notary
         # implementation. Real universal ad-hoc signatures are checked by CI.
         self.tool("codesign", '''import plistlib
@@ -74,9 +73,9 @@ elif "-d" in args:
     print("CodeDirectory v=20500 flags=0x10002(" + runtime + ") hashes=1+1")
     if os.environ.get("BAD_TIMESTAMP") != arch:
         print("Timestamp=Nov 11, 2026")
-elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.environ.get("CLI_NOT_NOTARIZED"):
+elif "--check-notarization" in args and args[-1].endswith("Frame.app/Contents/MacOS/frame") and os.environ.get("CLI_NOT_NOTARIZED"):
     sys.exit(1)
-elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.environ.get("CLI_TICKET_DELAYED"):
+elif "--check-notarization" in args and args[-1].endswith("Frame.app/Contents/MacOS/frame") and os.environ.get("CLI_TICKET_DELAYED"):
     marker = Path(os.environ["CALLS"]).with_suffix(".ticket-pending")
     if not marker.exists():
         marker.touch()
@@ -120,7 +119,7 @@ else:
         return [json.loads(line) for line in self.calls.read_text().splitlines()]
 
     def test_requires_hardened_runtime_and_timestamp_on_both_architectures(self):
-        args = ("developer-id", self.package / "Frame.app", self.package / "bin/frame")
+        args = ("developer-id", self.package / "Frame.app", self.package / "Frame.app/Contents/MacOS/frame")
         self.assertEqual(self.run_script("verify-signatures.sh", *args).returncode, 0)
         for variable in ("BAD_RUNTIME", "BAD_TIMESTAMP"):
             for arch in ("arm64", "x86_64"):
@@ -152,7 +151,7 @@ else:
         self.assertEqual(result.returncode, 0, result.stderr)
         checks = [call for call in self.invocations() if "--check-notarization" in call]
         self.assertEqual({(call[-1], call[call.index("--arch") + 1]) for call in checks},
-                         {(str(self.package / path), arch) for path in ("Frame.app", "bin/frame")
+                         {(str(self.package / path), arch) for path in ("Frame.app", "Frame.app/Contents/MacOS/frame")
                           for arch in ("arm64", "x86_64")})
         for change in ({"CLI_NOT_NOTARIZED": "1"}, {"ASSESSMENT_FAILURE": "1"}, {"STAPLE_FAILURE": "1"}):
             with self.subTest(change=change):

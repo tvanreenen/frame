@@ -2,11 +2,12 @@
 set -euo pipefail
 [[ $# -eq 1 ]] || { echo "usage: $0 <extracted-package-root>" >&2; exit 1; }
 app="$1/Frame.app"
-cli="$1/bin/frame"
+cli="$app/Contents/MacOS/frame"
 "$(dirname "$0")/verify-signatures.sh" developer-id "$app" "$cli"
 xcrun stapler validate "$app"
-# A bare CLI cannot carry a stapled ticket. Check its own online ticket for
-# every architecture; the app's stapling success alone is insufficient.
+# The app staple carries the ticket for its nested CLI too. Continue checking
+# each code item online as a release gate; offline CLI-first execution requires
+# separate fresh-machine acceptance and is not established by these lookups.
 check_notarization() {
     local target="$1" arch="$2" attempt
     echo "Checking notarization: $target ($arch)"

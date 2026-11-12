@@ -7,7 +7,7 @@ package_root="$(cd "$1" && pwd)"
 mkdir -p "$2"
 evidence="$(cd "$2" && pwd)"
 submission="$evidence/submission.zip"
-# Submit the complete payload, including the standalone CLI, before stapling.
+# Submit the complete payload, including the CLI sealed inside the app, before stapling.
 ditto -c -k --keepParent "$package_root" "$submission"
 submit_status=0
 xcrun notarytool submit "$submission" --keychain-profile "$FRAME_NOTARY_PROFILE" \

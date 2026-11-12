@@ -2,7 +2,7 @@
 
 See [CI-QUALIFICATION.md](CI-QUALIFICATION.md) for the recorded local and hosted success/failure/recovery evidence.
 
-`Verify Frame` in `.github/workflows/ci.yml` verifies all pull requests and manual dispatches. Pushes do not start additional runs before a PR exists or after it merges. It has no distribution step. It does not create tags, releases, casks, or installable build artifacts on GitHub, and it does not use signing credentials, repository secrets, or tap access.
+`Verify Frame` in `.github/workflows/ci.yml` verifies all pull requests and manual dispatches. Pushes do not start additional runs before a PR exists or after it merges. It has no publication step. It does not publish tags, releases, casks, or installable build artifacts on GitHub, and it does not use signing credentials, repository secrets, or tap access.
 
 ## Checks and their boundaries
 
@@ -51,3 +51,7 @@ script/ci/verify-package.sh
 The package check now requires Hardened Runtime on both architectures of both executables and checks their entitlements through the same signature verifier used for distribution. Ad-hoc validation explicitly omits the secure timestamp and notarization steps, so PR CI still has no signing identity, Apple credential, or Apple submission. Portable release-trust regressions cover rejected/incomplete notarization, wrong submission or payload, missing runtime/timestamp on either architecture, runtime exception entitlements, missing CLI tickets, failed stapling/assessment, and rejection of ad-hoc publication.
 
 An ad-hoc signature is not a Developer ID signature or a notarization ticket. This CI verifies build/package mechanics; real display events, permission prompts, physical display rotation, hotkeys, and macOS trust behavior require separate device qualification. Universal compilation also does not replace native Intel or minimum-supported-macOS runtime qualification. The signed/manual distribution boundary remains in [RELEASE.md](RELEASE.md), with the acceptance procedure in [DISTRIBUTION-QUALIFICATION.md](DISTRIBUTION-QUALIFICATION.md).
+
+## Bundled CLI upgrade qualification
+
+The package job builds a disposable ad-hoc 3.3.0 candidate with `FrameApp` and `frame` in the app bundle and checks the fixed archive compatibility symlink. It uses a temporary local Homebrew fixture on the ephemeral runner to install the published 3.2.1 baseline and perform an ordinary upgrade to that candidate in a temporary app directory. It checks installed link replacement, versions, receipt origin/version, signatures, configuration marker preservation and removal. The GUI daemon is never started, and no built archive is uploaded. This test exercises Homebrew mechanics, not Developer ID trust or fresh-snapshot offline execution; those remain [distribution acceptance gates](BUNDLED-CLI.md#verification-and-release-gate). Workflow triggers, job names, credentials policy and required aggregate check are unchanged.
