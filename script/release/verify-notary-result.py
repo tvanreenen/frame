@@ -12,11 +12,12 @@ def verify(result, log, archive):
         raise ValueError("Expected JSON objects for the result and service log")
     if result.get("status") != "Accepted" or log.get("status") != "Accepted":
         raise ValueError("Notarization was not accepted")
-    if not isinstance(result.get("id"), str) or result["id"].lower() != str(log.get("jobId", "")).lower():
+    if (not isinstance(result.get("id"), str) or not result["id"]
+            or result["id"].lower() != str(log.get("jobId", "")).lower()):
         raise ValueError("Notary log belongs to a different submission")
     if log.get("sha256") != hashlib.sha256(archive.read_bytes()).hexdigest():
         raise ValueError("Notary log does not match the submitted archive")
-    issues = log.get("issues") or []
+    issues = [] if log.get("issues") is None else log["issues"]
     if not isinstance(issues, list) or any(not isinstance(issue, dict) or issue.get("severity") == "error" for issue in issues):
         raise ValueError("Notary log contains errors")
     print(f"Notarization accepted; {len(issues)} reported issue(s). Review the retained log.")

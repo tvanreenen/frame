@@ -44,6 +44,7 @@ targets:
           PRODUCT_NAME: Frame
           PRODUCT_BUNDLE_IDENTIFIER: com.frame.app
           ENABLE_HARDENED_RUNTIME: YES
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
           SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
           GCC_TREAT_WARNINGS_AS_ERRORS: YES
     entitlements:

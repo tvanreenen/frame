@@ -34,6 +34,10 @@ class NotaryEvidence(unittest.TestCase):
                     RESULT.verify(result, dict(log, **change), archive)
             with self.assertRaises(ValueError):
                 RESULT.verify(dict(result, status="Invalid"), log, archive)
+            with self.assertRaises(ValueError):
+                RESULT.verify(dict(result, id=""), dict(log, jobId=""), archive)
+            with self.assertRaises(ValueError):
+                RESULT.verify([], log, archive)
             archive.write_bytes(b"different payload")
             with self.assertRaises(ValueError):
                 RESULT.verify(result, log, archive)
@@ -120,7 +124,7 @@ else:
         self.assertNotEqual(self.run_script("verify-signatures.sh", *args, BAD_ENTITLEMENT="1").returncode, 0)
 
     def test_rejection_timeout_and_wrong_payload_cannot_reach_stapling(self):
-        for changes in ({"NOTARY_STATUS": "Invalid"}, {"SUBMIT_FAILURE": "65"}, {"WRONG_ARCHIVE": "1"}):
+        for changes in ({"NOTARY_STATUS": "Invalid"}, {"NOTARY_STATUS": "In Progress", "SUBMIT_FAILURE": "65"}, {"WRONG_ARCHIVE": "1"}):
             with self.subTest(changes=changes):
                 result = self.run_script("notarize-package.sh", self.package, self.root / "evidence", **changes)
                 self.assertNotEqual(result.returncode, 0, result.stdout)
