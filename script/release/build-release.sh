@@ -197,7 +197,7 @@ if [[ "$signing_mode" == developer-id ]]; then
 fi
 
 # Do not execute distribution code before notarization/ticket verification.
-# Early execution can prime a negative trust result for the native CLI slice.
+# Assess the unrun distribution first, then check its executable metadata.
 cli_version_output="$("$version_root/bin/${FRAME_CLI_NAME}" --version)"
 if [[ "$cli_version_output" != "$expected_display_version" ]]; then
     echo "Release metadata mismatch for CLI version." >&2
