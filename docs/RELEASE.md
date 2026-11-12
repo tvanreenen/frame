@@ -2,7 +2,7 @@
 
 Frame owns its build, signing, release archive, checksum manifest, annotated tag, and GitHub release. The Homebrew tap owns cask rendering, verification, tests, and the update pull request. Frame never checks out, edits, commits to, or stores a credential for the tap.
 
-Pull requests are verified by [credential-free CI](CI.md), including a disposable ad-hoc package check. Those CI packages are not Developer ID-signed releases or notarized artifacts. The source repository is now `tvr-works/frame`; the [ownership migration record](OWNERSHIP-TRANSFER.md) describes preserved identities, historical assets, and the ordered Homebrew cutover. Integrate the organization's verified Frame cask before activating this source's organization-tap publication route.
+Pull requests are verified by [credential-free CI](CI.md), including a disposable ad-hoc package check. Those CI packages are not Developer ID-signed releases or notarized artifacts. The source repository and verified Homebrew route are now under `tvr-works`; the [ownership migration record](OWNERSHIP-TRANSFER.md) preserves the transfer baseline and rationale.
 
 Use the `just` recipes below as the maintainer interface. Every version argument must be a stable, v-prefixed Semantic Version such as `v0.12.3`. Prerelease versions, build metadata, omitted `v` prefixes, and numeric components with leading zeroes are rejected.
 
@@ -14,10 +14,11 @@ Use the `just` recipes below as the maintainer interface. Every version argument
    git switch main
    git pull --ff-only
    gh auth status
+   export FRAME_NOTARY_PROFILE=tvr-works-notary
    just release-preflight v0.12.3
    ```
 
-   Set `FRAME_CODESIGN_IDENTITY` when preflight cannot select the intended `Developer ID Application` identity unambiguously. `FRAME_CODESIGN_IDENTITY=-` is only for unsigned local validation, not publication.
+   Set `FRAME_CODESIGN_IDENTITY` when preflight cannot select the intended `Developer ID Application` identity unambiguously. Distribution verification requires the existing team `9Q355KSV85`. Preflight rejects ad-hoc publication and checks that the selected notarization profile can authenticate before any build, tag, or release mutation. [Credential setup and device acceptance](DISTRIBUTION-QUALIFICATION.md) explain the local profile and remaining release gates.
 
 2. Build and stage the source release:
 
@@ -25,14 +26,18 @@ Use the `just` recipes below as the maintainer interface. Every version argument
    just release v0.12.3
    ```
 
-   The command repeats preflight, runs the test suite, builds and signs Frame, validates the staged binaries and version metadata, creates `dist/Frame-v0.12.3.zip` and `dist/checksums.txt`, pushes the annotated `v0.12.3` tag, and creates a draft GitHub release containing both files. Signing happens before packaging. Notarization is not currently automated; its defined integration point remains after signature validation and before packaging in `script/release/build-release.sh`.
+   The command repeats preflight, runs the test suite, and builds the universal app and CLI with Hardened Runtime and secure signing timestamps. It checks Developer ID Application signatures, the existing team and signing identifiers, both architectures, entitlements, and version metadata. The complete package is submitted to Apple, including the standalone CLI. Acceptance and the service log must match that exact submission and its SHA-256 before the app's ticket is stapled.
+
+   The builder creates `dist/Frame-v0.12.3.zip`, extracts it into a fresh directory, and repeats distribution checks on the extracted payload: signatures, stapled app ticket, online notarization tickets for each app/CLI architecture, and the app's Gatekeeper assessment. Online ticket lookup has a short bounded retry; persistent failure stops the release. Only after these checks does the builder execute the extracted app/CLI's `--version` and require the expected version/commit metadata, then generate `dist/checksums.txt`. Qualification exposed temporary native CLI trust failures when version execution preceded notarization; the builder now assesses the unrun distribution first. A failed trust or version check stops before any tag or release is created. The standalone CLI cannot carry a stapled ticket and requires online ticket discovery; the app's stapling success alone does not qualify it. This follows [Apple's custom notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
+
+   Local evidence is retained in `dist/notarization/`: the submitted ZIP, submission result, Apple service log, and extracted-distribution check log. Review the service log for warnings even after acceptance. These files stay local and are not release assets or ordinary CI artifacts. After all checks succeed, the command pushes the annotated tag and creates a draft GitHub release containing only the final ZIP and checksum manifest.
 
 3. Inspect the draft release before publishing it. Confirm the tag and title are `v0.12.3`, the generated notes are appropriate, and the only assets are:
 
    - `Frame-v0.12.3.zip`
    - `checksums.txt`
 
-   Publish the draft only after those checks pass. A published release is immutable: do not replace its tag or assets.
+   Complete the [device and upgrade acceptance record](DISTRIBUTION-QUALIFICATION.md) for the exact artifact, then publish the draft. A published release is immutable: do not replace its tag or assets.
 
 4. At the separate Homebrew checkpoint, dispatch the tap workflow:
 
@@ -55,6 +60,7 @@ Use the `just` recipes below as the maintainer interface. Every version argument
 ## Failure recovery
 
 - If preflight, tests, or the build fails before the tag is created, fix the cause and rerun the same command and version.
+- If notarization is rejected, inspect `dist/notarization/notary-log.json` and fix the reported cause. If waiting times out, Apple may still be processing the submission. Retain `dist/notarization/` before another build replaces `dist/`; use the recorded submission ID with `xcrun notarytool info`, `wait`, or `log` and the same Keychain profile to inspect it. A timeout, missing log, mismatched payload, failed staple, or failed extracted-distribution assessment cannot produce a release manifest or create a tag through `just release`. Rebuilding changes the submitted bytes and requires its own qualification; do not reuse an earlier acceptance for new bytes.
 - If local tag creation succeeds but the tag push fails, first confirm that `v0.12.3` does not exist on the remote. Delete only the local tag with `git tag -d v0.12.3`, then rerun. Never move an existing remote release tag.
 - If the tag push succeeds but draft creation fails, keep the remote tag and built artifacts. Create the draft for that existing tag with `gh release create`, attaching `dist/Frame-v0.12.3.zip` and `dist/checksums.txt` and using the same draft, generated-notes, and title settings shown in `script/release/release.sh`.
 - If review finds a problem while the release is still a draft, correct the draft before publication. If the release has already been published, leave it unchanged and release a new patch version.

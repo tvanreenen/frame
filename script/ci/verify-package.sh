@@ -25,8 +25,7 @@ test -f "$app/Contents/Resources/default-config.toml"
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist")" = com.frame.app
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$build_version"
 test "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$app/Contents/Info.plist")" = 13.0
-codesign --verify --deep --strict "$app"
-codesign --verify --strict "$cli"
+script/release/verify-signatures.sh ad-hoc "$app" "$cli"
 
 for binary in "$app/Contents/MacOS/Frame" "$cli"; do
     test -x "$binary"
