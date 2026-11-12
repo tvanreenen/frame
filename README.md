@@ -11,9 +11,11 @@ The project originated as a fork of [AeroSpace](https://github.com/nikitabobko/A
 ## Install
 
 ```bash
-brew tap tvanreenen/tap
-brew install --cask frame
+brew tap tvr-works/tap
+brew install --cask tvr-works/tap/frame
 ```
+
+The organization cask uses Homebrew's standard quarantine handling. The preserved release has a separate [notarization qualification gap](docs/OWNERSHIP-TRANSFER.md#notarization-is-a-separate-qualification); installation alone does not qualify first-launch Gatekeeper acceptance or Accessibility approval on your device.
 
 ## App and CLI
 
