@@ -14,7 +14,7 @@ Use the `just` recipes below as the maintainer interface. Every version argument
    git switch main
    git pull --ff-only
    gh auth status
-   export FRAME_NOTARY_PROFILE=key-notary
+   export FRAME_NOTARY_PROFILE=tvr-works-notary
    just release-preflight v0.12.3
    ```
 

@@ -21,6 +21,8 @@ The release builder requires Hardened Runtime, valid Developer ID Application si
 
 The submitted ZIP contains both executables. The accepted result and downloaded Apple log must agree on the submission ID and the exact submitted ZIP hash. The app is stapled before the final archive is created. Extracted final bytes must retain the staple, pass signature validation, satisfy the online `notarized` requirement for every app/CLI architecture, and pass the app's Gatekeeper assessment. The CLI uses Apple's online ticket lookup because a standalone executable cannot be stapled. Offline first use of the standalone CLI is not promised by this ZIP layout. See [Apple's notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow) and [ticket behavior](https://developer.apple.com/forums/thread/720093).
 
+Online ticket lookup has six attempts with five seconds between failures. The first real qualification was accepted with no issues and all four executable architecture hashes in Apple's log; the extracted arm64 CLI initially failed the online check, then passed on unchanged bytes. A lookup delay is the inferred cause. Persistent lookup failure still blocks the manifest/tag/release, while signature, entitlement, stapling, and Gatekeeper checks fail immediately. A later successful assessment cannot qualify rebuilt or altered bytes.
+
 These checks assess artifacts without starting the window manager. They do not establish a real quarantined first launch, actual Accessibility access, login-item restoration, native Intel execution, or minimum-supported-macOS execution. The existing PR workflow remains credential-free; its real universal ad-hoc package exercises Hardened Runtime/signature mechanics, while external-tool fixtures test failure boundaries without contacting Apple.
 
 ## Acceptance before publication
@@ -40,9 +42,9 @@ The first new release must use a genuine patch version, such as `v3.2.1`, after 
 | Gate | Evidence/status |
 | --- | --- |
 | Existing signing identity | Developer ID Application certificate for team `9Q355KSV85` is available on the inspected release Mac. No certificate or product identity change is planned. |
-| Existing notarization setup | Key's scripts reference `key-notary`; `notarytool` reported that profile missing on this Mac during preparation. A usable local profile is required before Apple submission. |
+| Existing notarization setup | Key's scripts reference `key-notary`, which was missing on this Mac. The operator created `tvr-works-notary` locally under the existing team, and authentication succeeded on November 11, 2026. No credential is stored in the repository or CI. |
 | Local and hosted mechanical checks | Record exact candidate checks in the distribution-hardening PR. They do not replace Apple acceptance. |
-| Apple acceptance and final artifact trust | Pending a usable profile and signed candidate; do not claim notarization from fixture tests or ad-hoc CI. |
+| Apple acceptance and final artifact trust | Disposable `0.0.0` candidate at `1e9a33ca`: Apple submission `fd568457-86f3-456c-94a5-9745bb032d9b` was Accepted with no issues; app staple survived ZIP extraction, all app/CLI architecture tickets passed on recheck, and Gatekeeper reported `Notarized Developer ID`. The initial CLI lookup delay above stopped the builder before a manifest. Full builder qualification with the bounded retry is recorded in the PR. This is not a published release or a newer-version upgrade test. |
 | Quarantined first launch and ordinary upgrade | Pending the exact notarized candidate and designated test environment. |
 | Accessibility/login continuity and platform coverage | Pending real-device acceptance; preserve existing grants and record OS/architecture coverage. |
 

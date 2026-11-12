@@ -76,9 +76,15 @@ elif "-d" in args:
         print("Timestamp=Nov 11, 2026")
 elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.environ.get("CLI_NOT_NOTARIZED"):
     sys.exit(1)
+elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.environ.get("CLI_TICKET_DELAYED"):
+    marker = Path(os.environ["CALLS"]).with_suffix(".ticket-pending")
+    if not marker.exists():
+        marker.touch()
+        sys.exit(1)
 ''')
         self.tool("ditto", 'Path(args[-1]).write_bytes(b"submitted payload")\n')
         self.tool("spctl", 'sys.exit(int(os.environ.get("ASSESSMENT_FAILURE", "0")))\n')
+        self.tool("sleep", 'pass\n')
         self.tool("xcrun", '''import hashlib
 job = "12345678-1234-1234-1234-123456789abc"
 if args[:2] == ["notarytool", "submit"]:
@@ -151,6 +157,16 @@ else:
         for change in ({"CLI_NOT_NOTARIZED": "1"}, {"ASSESSMENT_FAILURE": "1"}, {"STAPLE_FAILURE": "1"}):
             with self.subTest(change=change):
                 self.assertNotEqual(self.run_script("verify-distribution.sh", self.package, **change).returncode, 0)
+
+    def test_delayed_cli_ticket_can_recover_but_persistent_failure_is_bounded(self):
+        result = self.run_script("verify-distribution.sh", self.package, CLI_TICKET_DELAYED="1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(sum(call[0] == "sleep" for call in self.invocations()), 1)
+        result = self.run_script("verify-distribution.sh", self.package, CLI_NOT_NOTARIZED="1")
+        self.assertNotEqual(result.returncode, 0)
+        calls = self.invocations()
+        self.assertEqual(sum(call[0] == "sleep" for call in calls), 5)
+        self.assertFalse(any(call[0] == "spctl" for call in calls))
 
     def test_publication_rejects_ad_hoc_and_missing_notary_profile_early(self):
         for args in (("--codesign-identity", "-"), ()):
