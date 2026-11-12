@@ -20,11 +20,22 @@ if [[ -z "$release_version" ]]; then
 fi
 validate_release_version "$release_version"
 
+if [[ "$codesign_identity" == - ]]; then
+    echo "Publication requires Developer ID signing; use build-release.sh for ad-hoc validation." >&2
+    exit 1
+fi
+if [[ -z "${FRAME_NOTARY_PROFILE:-}" ]]; then
+    echo "Set FRAME_NOTARY_PROFILE to an existing notarytool Keychain profile before releasing." >&2
+    exit 1
+fi
+
 require_command git
 require_command just
 require_command gh
 require_command swift
 require_command xcodebuild
+require_command xcrun
+require_command python3
 
 if ! git diff --quiet || ! git diff --cached --quiet; then
     echo "Working tree must be clean before releasing." >&2
@@ -71,11 +82,14 @@ if [[ -z "$codesign_identity" ]]; then
     if [[ ${#identities[@]} -ne 1 ]]; then
         echo "Unable to auto-select 'Developer ID Application' identity (found ${#identities[@]})." >&2
         echo "Set FRAME_CODESIGN_IDENTITY or pass --codesign-identity explicitly." >&2
-        echo "For unsigned local validation builds, use --codesign-identity -." >&2
         exit 1
     fi
     codesign_identity="${identities[0]}"
 fi
+
+# Check access before tests/builds or any tag/release mutation. Credentials stay
+# in the operator's Keychain; ordinary PR CI never invokes notarization.
+xcrun notarytool history --keychain-profile "$FRAME_NOTARY_PROFILE" --output-format json >/dev/null
 
 echo "✅ Preflight OK"
 echo "   Version: $release_version"

@@ -43,6 +43,7 @@ targets:
         Release:
           PRODUCT_NAME: Frame
           PRODUCT_BUNDLE_IDENTIFIER: com.frame.app
+          ENABLE_HARDENED_RUNTIME: YES
           SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
           GCC_TREAT_WARNINGS_AS_ERRORS: YES
     entitlements:

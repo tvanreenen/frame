@@ -42,6 +42,16 @@ fi
 
 echo "Using codesign identity: $codesign_identity"
 
+signing_mode=developer-id
+timestamp_flag=--timestamp
+if [[ "$codesign_identity" == - ]]; then
+    signing_mode=ad-hoc
+    timestamp_flag=--timestamp=none
+elif [[ -z "${FRAME_NOTARY_PROFILE:-}" ]]; then
+    echo "Set FRAME_NOTARY_PROFILE to an existing notarytool Keychain profile for distribution builds." >&2
+    exit 1
+fi
+
 dist_dir="$FRAME_DIST_DIR"
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/${FRAME_RELEASE_WORK_PREFIX}.XXXXXX")"
 stage_dir="$work_dir/stage"
@@ -100,7 +110,8 @@ xcodebuild-pretty "$work_dir/xcodebuild.log" build \
     -derivedDataPath "$xcode_build_dir" \
     MARKETING_VERSION="$build_version" \
     CODE_SIGN_STYLE=Manual \
-    CODE_SIGN_IDENTITY="$codesign_identity"
+    CODE_SIGN_IDENTITY="$codesign_identity" \
+    OTHER_CODE_SIGN_FLAGS="$timestamp_flag"
 
 cp -r "$xcode_build_dir/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" "$stage_dir"
 cp -r "$cli_bin_dir/$FRAME_CLI_NAME" "$stage_dir"
@@ -112,7 +123,7 @@ cli_binary="$stage_dir/${FRAME_CLI_NAME}"
 ### SIGN CLI ###
 ################
 
-codesign -s "$codesign_identity" "$cli_binary"
+codesign -s "$codesign_identity" --identifier "$FRAME_CLI_NAME" --options runtime "$timestamp_flag" "$cli_binary"
 
 ################
 ### VALIDATE ###
@@ -164,14 +175,7 @@ check-universal-binary "$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
 check-universal-binary "$cli_binary"
 
 echo "[3/4] Validating signatures and binaries..."
-codesign --verify --deep --strict "$app_bundle"
-codesign --verify --strict "$cli_binary"
-
-# TODO: Add notarization + stapling here before packaging.
-# Suggested flow:
-# 1) Submit "$app_bundle" and "$cli_binary" to notary service.
-# 2) Wait for success.
-# 3) Staple ticket to "$app_bundle".
+./script/release/verify-signatures.sh "$signing_mode" "$app_bundle" "$cli_binary"
 
 ############
 ### PACK ###
@@ -184,6 +188,10 @@ cp -r "$app_bundle" "$release_root"
 cp ./LICENSE "$release_root/LICENSE"
 cp -r ./licenses "$release_root/licenses"
 
+if [[ "$signing_mode" == developer-id ]]; then
+    ./script/release/notarize-package.sh "$release_root" "$dist_dir/notarization"
+fi
+
 zip_filename="${FRAME_RELEASE_PREFIX}$build_version.zip"
 zip_path="$dist_dir/$zip_filename"
 (
@@ -191,6 +199,15 @@ zip_path="$dist_dir/$zip_filename"
     zip -r "$(pwd)/../$zip_filename" "${FRAME_RELEASE_PREFIX}$build_version"
 )
 mv "$work_dir/$zip_filename" "$zip_path"
+
+# Verify the bytes users will extract, including preservation of the stapled
+# app ticket. A failed distribution check must not produce a release manifest.
+if [[ "$signing_mode" == developer-id ]]; then
+    mkdir "$work_dir/inspection"
+    ditto -x -k "$zip_path" "$work_dir/inspection"
+    ./script/release/verify-distribution.sh "$work_dir/inspection/${FRAME_RELEASE_PREFIX}$build_version" \
+        2>&1 | tee "$dist_dir/notarization/distribution-check.log"
+fi
 
 zip_sha="$(shasum -a 256 "$zip_path" | awk '{print $1}')"
 printf "%s  %s\n" "$zip_sha" "$zip_filename" > "$dist_dir/checksums.txt"
