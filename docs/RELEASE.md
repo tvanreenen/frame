@@ -6,6 +6,8 @@ Pull requests are verified by [credential-free CI](CI.md), including a disposabl
 
 Use the `just` recipes below as the maintainer interface. Every version argument must be a stable, v-prefixed Semantic Version such as `v0.12.3`. Prerelease versions, build metadata, omitted `v` prefixes, and numeric components with leading zeroes are rejected.
 
+The v3.3.0 [bundled CLI design and rollout](BUNDLED-CLI.md) changes the internal app executable to `FrameApp`, embeds `frame`, and preserves archive-relative `bin/frame` as a fixed internal symlink. Integrate the companion tap compatibility PR before publishing v3.3.0; existing releases and assets remain unchanged.
+
 ## Release order
 
 1. Start from an up-to-date, clean `main` branch with the release signing identity available and GitHub CLI authenticated:
@@ -26,9 +28,9 @@ Use the `just` recipes below as the maintainer interface. Every version argument
    just release v0.12.3
    ```
 
-   The command repeats preflight, runs the test suite, and builds the universal app and CLI with Hardened Runtime and secure signing timestamps. It checks Developer ID Application signatures, the existing team and signing identifiers, both architectures, entitlements, and version metadata. The complete package is submitted to Apple, including the standalone CLI. Acceptance and the service log must match that exact submission and its SHA-256 before the app's ticket is stapled.
+   The command repeats preflight, runs the test suite, and builds the universal app and CLI with Hardened Runtime and secure signing timestamps. It checks Developer ID Application signatures, the existing team and signing identifiers, both architectures, entitlements, and version metadata. The complete package is submitted to Apple, including the CLI embedded in the app. Acceptance and the service log must match that exact submission and its SHA-256 before the app's ticket is stapled.
 
-   The builder creates `dist/Frame-v0.12.3.zip`, extracts it into a fresh directory, and repeats distribution checks on the extracted payload: signatures, stapled app ticket, online notarization tickets for each app/CLI architecture, and the app's Gatekeeper assessment. Online ticket lookup has a short bounded retry; persistent failure stops the release. Only after these checks does the builder execute the extracted app/CLI's `--version` and require the expected version/commit metadata, then generate `dist/checksums.txt`. Qualification exposed temporary native CLI trust failures when version execution preceded notarization; the builder now assesses the unrun distribution first. A failed trust or version check stops before any tag or release is created. The standalone CLI cannot carry a stapled ticket and requires online ticket discovery; the app's stapling success alone does not qualify it. This follows [Apple's custom notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
+   The builder creates `dist/Frame-v0.12.3.zip`, extracts it into a fresh directory, and repeats distribution checks on the extracted payload: signatures, stapled app ticket, online notarization tickets for each app/CLI architecture, and the app's Gatekeeper assessment. Online ticket lookup has a short bounded retry; persistent failure stops the release. Only after these checks does the builder execute the extracted app/CLI's `--version` and require the expected version/commit metadata, then generate `dist/checksums.txt`. Qualification exposed temporary native CLI trust failures when version execution preceded notarization; the builder now assesses the unrun distribution first. A failed trust or version check stops before any tag or release is created. The app staple now carries the nested CLI's ticket. The per-code-item online checks remain release gates; fresh-system offline CLI-first execution remains an explicitly untested scenario and is not proven by a warm machine's successful lookup. This follows [Apple's custom notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow).
 
    Local evidence is retained in `dist/notarization/`: the submitted ZIP, submission result, Apple service log, and extracted-distribution check log. Review the service log for warnings even after acceptance. These files stay local and are not release assets or ordinary CI artifacts. After all checks succeed, the command pushes the annotated tag and creates a draft GitHub release containing only the final ZIP and checksum manifest.
 
@@ -37,7 +39,7 @@ Use the `just` recipes below as the maintainer interface. Every version argument
    - `Frame-v0.12.3.zip`
    - `checksums.txt`
 
-   Complete the [device and upgrade acceptance record](DISTRIBUTION-QUALIFICATION.md) for the exact artifact, then publish the draft. A published release is immutable: do not replace its tag or assets.
+   Complete the [qualification record](DISTRIBUTION-QUALIFICATION.md) for the exact artifact, including passed checks and untested device scenarios, and obtain approval of that concrete release checkpoint before publishing the draft. A published release is immutable: do not replace its tag or assets.
 
 4. At the separate Homebrew checkpoint, dispatch the tap workflow:
 

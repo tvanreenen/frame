@@ -114,16 +114,34 @@ xcodebuild-pretty "$work_dir/xcodebuild.log" build \
     OTHER_CODE_SIGN_FLAGS="$timestamp_flag"
 
 cp -r "$xcode_build_dir/Build/Products/$xcode_configuration/${FRAME_PRODUCT_NAME}.app" "$stage_dir"
-cp -r "$cli_bin_dir/$FRAME_CLI_NAME" "$stage_dir"
 
 app_bundle="$stage_dir/${FRAME_PRODUCT_NAME}.app"
-cli_binary="$stage_dir/${FRAME_CLI_NAME}"
+if [[ "$signing_mode" == developer-id ]]; then
+    app_requirement="$(codesign -dr - "$app_bundle" 2>&1 | sed -n 's/^designated => //p')"
+    [[ -n "$app_requirement" ]] || { echo 'Missing app designated requirement' >&2; exit 1; }
+fi
+cli_binary="$app_bundle/Contents/MacOS/${FRAME_CLI_NAME}"
+# Frame and frame collide on case-insensitive volumes. Release uses FrameApp.
+cp "$cli_bin_dir/$FRAME_CLI_NAME" "$cli_binary"
 
 ################
-### SIGN CLI ###
+### SIGN BUNDLE ###
 ################
 
+# Sign nested code first, then seal it into the enclosing app. Do not use
+# --deep for signing: the CLI keeps its own identifier and no app entitlements.
 codesign -s "$codesign_identity" --identifier "$FRAME_CLI_NAME" --options runtime "$timestamp_flag" "$cli_binary"
+app_sign_args=(--force -s "$codesign_identity" --identifier "$FRAME_BUNDLE_ID_STABLE"
+    --options runtime "$timestamp_flag" --entitlements resources/frame.entitlements)
+if [[ "$signing_mode" == developer-id ]]; then
+    app_sign_args+=(--preserve-metadata=requirements)
+fi
+codesign "${app_sign_args[@]}" "$app_bundle"
+if [[ "$signing_mode" == developer-id ]]; then
+    [[ "$(codesign -dr - "$app_bundle" 2>&1 | sed -n 's/^designated => //p')" == "$app_requirement" ]] || {
+        echo 'Embedding the CLI changed the app designated requirement' >&2; exit 1;
+    }
+fi
 
 ################
 ### VALIDATE ###
@@ -132,7 +150,7 @@ codesign -s "$codesign_identity" --identifier "$FRAME_CLI_NAME" --options runtim
 required_paths=(
     "$app_bundle/Contents"
     "$app_bundle/Contents/_CodeSignature/CodeResources"
-    "$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
+    "$app_bundle/Contents/MacOS/${FRAME_APP_BINARY}"
     "$app_bundle/Contents/Resources/default-config.toml"
     "$app_bundle/Contents/Resources/AppIcon.icns"
     "$app_bundle/Contents/Resources/Assets.car"
@@ -147,7 +165,7 @@ for path in "${required_paths[@]}"; do
     fi
 done
 
-app_binary="$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
+app_binary="$app_bundle/Contents/MacOS/${FRAME_APP_BINARY}"
 
 check-universal-binary() {
     if ! file "$1" | grep --fixed-string -q "Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit executable x86_64] [arm64"; then
@@ -156,7 +174,7 @@ check-universal-binary() {
     fi
 }
 
-check-universal-binary "$app_bundle/Contents/MacOS/${FRAME_PRODUCT_NAME}"
+check-universal-binary "$app_bundle/Contents/MacOS/${FRAME_APP_BINARY}"
 check-universal-binary "$cli_binary"
 
 echo "[3/4] Validating signatures and binaries..."
@@ -168,8 +186,9 @@ echo "[3/4] Validating signatures and binaries..."
 
 release_root="$stage_dir/${FRAME_RELEASE_PREFIX}$build_version"
 mkdir -p "$release_root/bin"
-cp -r "$cli_binary" "$release_root/bin"
 cp -r "$app_bundle" "$release_root"
+# Preserve archive-relative callers without distributing a second executable.
+ln -s "../${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_CLI_NAME}" "$release_root/bin/${FRAME_CLI_NAME}"
 cp ./LICENSE "$release_root/LICENSE"
 cp -r ./licenses "$release_root/licenses"
 
@@ -181,7 +200,7 @@ zip_filename="${FRAME_RELEASE_PREFIX}$build_version.zip"
 zip_path="$dist_dir/$zip_filename"
 (
     cd "$stage_dir"
-    zip -r "$(pwd)/../$zip_filename" "${FRAME_RELEASE_PREFIX}$build_version"
+    zip -yr "$(pwd)/../$zip_filename" "${FRAME_RELEASE_PREFIX}$build_version"
 )
 mv "$work_dir/$zip_filename" "$zip_path"
 
@@ -198,14 +217,14 @@ fi
 
 # Do not execute distribution code before notarization/ticket verification.
 # Assess the unrun distribution first, then check its executable metadata.
-cli_version_output="$("$version_root/bin/${FRAME_CLI_NAME}" --version)"
+cli_version_output="$("$version_root/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_CLI_NAME}" --version)"
 if [[ "$cli_version_output" != "$expected_display_version" ]]; then
     echo "Release metadata mismatch for CLI version." >&2
     echo "Expected: $expected_display_version" >&2
     echo "Actual:   $cli_version_output" >&2
     exit 1
 fi
-app_version_output="$("$version_root/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_PRODUCT_NAME}" --version)"
+app_version_output="$("$version_root/${FRAME_PRODUCT_NAME}.app/Contents/MacOS/${FRAME_APP_BINARY}" --version)"
 if [[ "$app_version_output" != "$expected_display_version" ]]; then
     echo "Release metadata mismatch for app daemon version." >&2
     echo "Expected: $expected_display_version" >&2

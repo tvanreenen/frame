@@ -54,9 +54,8 @@ class ReleaseTrustGates(unittest.TestCase):
         self.env = dict(os.environ, PATH=f"{self.bin}{os.pathsep}{os.environ['PATH']}",
                         CALLS=str(self.calls), FRAME_NOTARY_PROFILE="fixture-profile")
         self.package = self.root / "Frame-v0.0.0"
-        (self.package / "Frame.app").mkdir(parents=True)
-        (self.package / "bin").mkdir()
-        (self.package / "bin/frame").touch()
+        (self.package / "Frame.app/Contents/MacOS").mkdir(parents=True)
+        (self.package / "Frame.app/Contents/MacOS/frame").touch()
         # Model the external tools' interfaces, not Apple's signing/notary
         # implementation. Real universal ad-hoc signatures are checked by CI.
         self.tool("codesign", '''import plistlib
@@ -74,9 +73,9 @@ elif "-d" in args:
     print("CodeDirectory v=20500 flags=0x10002(" + runtime + ") hashes=1+1")
     if os.environ.get("BAD_TIMESTAMP") != arch:
         print("Timestamp=Nov 11, 2026")
-elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.environ.get("CLI_NOT_NOTARIZED"):
+elif "--check-notarization" in args and args[-1].endswith("Frame.app/Contents/MacOS/frame") and os.environ.get("CLI_NOT_NOTARIZED"):
     sys.exit(1)
-elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.environ.get("CLI_TICKET_DELAYED"):
+elif "--check-notarization" in args and args[-1].endswith("Frame.app/Contents/MacOS/frame") and os.environ.get("CLI_TICKET_DELAYED"):
     marker = Path(os.environ["CALLS"]).with_suffix(".ticket-pending")
     if not marker.exists():
         marker.touch()
@@ -88,6 +87,8 @@ elif "--check-notarization" in args and args[-1].endswith("bin/frame") and os.en
         self.tool("xcrun", '''import hashlib
 job = "12345678-1234-1234-1234-123456789abc"
 if args[:2] == ["notarytool", "submit"]:
+    if os.environ.get("EMPTY_SUBMISSION"):
+        sys.exit(65)
     print(json.dumps({"id": job, "status": os.environ.get("NOTARY_STATUS", "Accepted")}))
     sys.exit(int(os.environ.get("SUBMIT_FAILURE", "0")))
 elif args[:2] == ["notarytool", "log"]:
@@ -120,7 +121,7 @@ else:
         return [json.loads(line) for line in self.calls.read_text().splitlines()]
 
     def test_requires_hardened_runtime_and_timestamp_on_both_architectures(self):
-        args = ("developer-id", self.package / "Frame.app", self.package / "bin/frame")
+        args = ("developer-id", self.package / "Frame.app", self.package / "Frame.app/Contents/MacOS/frame")
         self.assertEqual(self.run_script("verify-signatures.sh", *args).returncode, 0)
         for variable in ("BAD_RUNTIME", "BAD_TIMESTAMP"):
             for arch in ("arm64", "x86_64"):
@@ -147,12 +148,21 @@ else:
         self.assertEqual([call[1:3] for call in calls if call[1:2] == ["stapler"]],
                          [["stapler", "staple"], ["stapler", "validate"]])
 
+    def test_missing_submission_id_retains_evidence_without_a_traceback(self):
+        result = self.run_script("notarize-package.sh", self.package, self.root / "evidence", EMPTY_SUBMISSION="1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no valid submission ID", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertTrue((self.root / "evidence/submission.zip").exists())
+        self.assertFalse(any(call[1:3] == ["notarytool", "log"] or call[1:2] == ["stapler"]
+                             for call in self.invocations()))
+
     def test_final_distribution_requires_the_cli_ticket_and_app_assessment(self):
         result = self.run_script("verify-distribution.sh", self.package)
         self.assertEqual(result.returncode, 0, result.stderr)
         checks = [call for call in self.invocations() if "--check-notarization" in call]
         self.assertEqual({(call[-1], call[call.index("--arch") + 1]) for call in checks},
-                         {(str(self.package / path), arch) for path in ("Frame.app", "bin/frame")
+                         {(str(self.package / path), arch) for path in ("Frame.app", "Frame.app/Contents/MacOS/frame")
                           for arch in ("arm64", "x86_64")})
         for change in ({"CLI_NOT_NOTARIZED": "1"}, {"ASSESSMENT_FAILURE": "1"}, {"STAPLE_FAILURE": "1"}):
             with self.subTest(change=change):
